@@ -27,8 +27,9 @@ import { ObserverRegistry } from "@attestia/chain-observer";
 import {
   verifyByReplay,
   verifyHash,
+  computeGlobalStateHash,
 } from "@attestia/verify";
-import type { ReplayInput, ReplayResult, VerificationResult } from "@attestia/verify";
+import type { ReplayInput, ReplayResult, VerificationResult, GlobalStateHash } from "@attestia/verify";
 
 // =============================================================================
 // Configuration
@@ -183,6 +184,29 @@ export class AttestiaService {
 
   listAttestations(): readonly AttestationRecord[] {
     return this._attestations;
+  }
+
+  // ─── Export ──────────────────────────────────────────────────────
+
+  /**
+   * Get a state snapshot with GlobalStateHash for export/audit.
+   */
+  getStateSnapshot(): {
+    ledgerSnapshot: ReturnType<Ledger["snapshot"]>;
+    registrumSnapshot: ReturnType<StructuralRegistrar["snapshot"]>;
+    globalStateHash: GlobalStateHash;
+  } {
+    const ledgerSnapshot = this.ledger.snapshot();
+    const registrumSnapshot = this.registrar.snapshot();
+    const globalStateHash = computeGlobalStateHash(ledgerSnapshot, registrumSnapshot);
+    return { ledgerSnapshot, registrumSnapshot, globalStateHash };
+  }
+
+  /**
+   * Get all events for export (NDJSON streaming).
+   */
+  getAllEventsForExport(): readonly StoredEvent[] {
+    return this.eventStore.readAll();
   }
 
   // ─── Health & Integrity ──────────────────────────────────────────

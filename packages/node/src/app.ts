@@ -35,6 +35,7 @@ import { createEventRoutes } from "./routes/events.js";
 import { createVerifyRoutes } from "./routes/verify.js";
 import { createAttestationRoutes } from "./routes/attestation.js";
 import { createMetricsRoute } from "./routes/metrics.js";
+import { createExportRoutes } from "./routes/export.js";
 import { AuditLog } from "./services/audit-log.js";
 
 // =============================================================================
@@ -139,6 +140,7 @@ export function createApp(options: CreateAppOptions): AppInstance {
   app.route("/api/v1/events", createEventRoutes());
   app.route("/api/v1/verify", createVerifyRoutes());
   app.route("/api/v1", createAttestationRoutes(routeDeps));
+  app.route("/api/v1/export", createExportRoutes());
 
   return { app, tenantRegistry, idempotencyStore, metricsCollector, auditLog, rateLimitStore };
 }
