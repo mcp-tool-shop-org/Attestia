@@ -6,22 +6,24 @@ Last updated: February 11, 2026
 
 ## Where We Are
 
-**8 packages, 672 tests, all green. No external infrastructure dependencies.**
+**11 packages, 947 tests, all green. CI enforced. Coverage gated.**
 
 | Package | Status | Tests | Purpose |
 |---------|--------|-------|---------|
-| `@attestia/types` | ✅ Complete | — | Shared domain types (zero deps) |
-| `@attestia/registrum` | ✅ Complete | 279 | Constitutional governance — 11 invariants, dual-witness |
-| `@attestia/ledger` | ✅ Complete | 131 | Append-only double-entry engine |
+| `@attestia/types` | ✅ Complete | 52 | Shared domain types (zero deps) |
+| `@attestia/registrum` | ✅ Complete | 297 | Constitutional governance — 11 invariants, dual-witness |
+| `@attestia/ledger` | ✅ Complete | 144 | Append-only double-entry engine |
 | `@attestia/chain-observer` | ✅ Complete | 55 | Multi-chain read-only observation (EVM + XRPL) |
 | `@attestia/vault` | ✅ Complete | 59 | Personal vault — portfolios, budgets, intents |
 | `@attestia/treasury` | ✅ Complete | 63 | Org treasury — payroll, distributions, funding gates |
 | `@attestia/reconciler` | ✅ Complete | 36 | 3D cross-system matching + Registrum attestation |
-| `@attestia/witness` | ✅ Complete | 49 | XRPL on-chain attestation via payment memos |
+| `@attestia/witness` | ✅ Complete | 81 | XRPL on-chain attestation via payment memos |
+| `@attestia/verify` | ✅ Complete | 24 | Deterministic replay verification + GlobalStateHash |
+| `@attestia/event-store` | ✅ Complete | 136 | Append-only event persistence, JSONL, catalog, snapshots |
 
-**What we have:** All core domain logic — from intent declaration to on-chain proof. Pure functions, deterministic state machines, zero runtime deps on the critical path.
+**What we have:** All core domain logic, event sourcing infrastructure, CI pipeline with coverage enforcement, property-based testing, RFC 8785 canonicalization.
 
-**What we don't have:** Persistence, networking, CI, end-to-end integration, API surfaces, or any user-facing layer.
+**What we don't have:** Rehydration (fromEvents), networking, end-to-end integration, API surfaces, or any user-facing layer.
 
 ---
 
@@ -84,11 +86,11 @@ The current test suite is example-based. Financial systems need invariant testin
 
 A new package for append-only event persistence.
 
-- [ ] Define `EventStore` interface: `append(event)`, `read(streamId, fromVersion?)`, `subscribe(streamId)`
-- [ ] In-memory implementation (for tests — replace raw arrays in vault/treasury/reconciler)
-- [ ] File-based implementation (JSONL — one event per line, crash-safe via fsync)
+- [x] Define `EventStore` interface: `append(event)`, `read(streamId, fromVersion?)`, `subscribe(streamId)`
+- [x] In-memory implementation (for tests — replace raw arrays in vault/treasury/reconciler)
+- [x] File-based implementation (JSONL — one event per line, crash-safe via fsync)
 - [ ] Optional: SQLite implementation (single-file, zero-config, good for desktop/server)
-- [ ] Snapshot support for registrum state (avoid full replay on startup)
+- [x] Snapshot support: `SnapshotStore` interface + InMemory + File implementations
 
 ### 7.2 — Rehydration
 
@@ -102,9 +104,9 @@ Each package's state machines need to rebuild from events.
 
 ### 7.3 — Event Catalog
 
-- [ ] Formalize all domain events across packages into a unified catalog
-- [ ] Schema versioning strategy (so old events remain readable after code changes)
-- [ ] Event migration support (transform v1 events to v2 shape)
+- [x] Formalize all domain events across packages into a unified catalog (20 event types)
+- [x] Schema versioning strategy (so old events remain readable after code changes)
+- [x] Event migration support (transform v1 events to v2 shape via chained migrations)
 
 ---
 
@@ -301,9 +303,9 @@ Typed client SDK for API consumers.
 
 | Milestone | Packages | Key Deliverable | Status |
 |-----------|----------|-----------------|--------|
-| **M1: Domain Logic** | types, registrum, ledger, chain-observer, vault, treasury, reconciler, witness | All core business logic with 672 tests | ✅ Done |
-| **M2: Production-Grade** | CI, canonicalization, property tests, types tests, Docker XRPL | Hardened for real-world use | 🔄 In Progress |
-| **M3: Durable** | event-store, rehydration | State survives restarts | Planned |
+| **M1: Domain Logic** | types, registrum, ledger, chain-observer, vault, treasury, reconciler, witness | All core business logic with 947 tests | ✅ Done |
+| **M2: Production-Grade** | CI, canonicalization, property tests, types tests, verify, Docker XRPL | Hardened + replay verification | ✅ Done |
+| **M3: Durable** | event-store (done), rehydration (pending) | Event persistence + snapshots + catalog | 🔄 In Progress |
 | **M4: Integrated** | pipeline, e2e tests, XRPL testnet | Full intent→proof flow proven | Planned |
 | **M5: Accessible** | api, sdk, websocket | External consumers can use Attestia | Planned |
 | **M6: Multi-Chain** | solana, L2s, multi-sig witness | Beyond EVM + XRPL | Planned |

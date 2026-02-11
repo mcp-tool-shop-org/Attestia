@@ -437,6 +437,41 @@ describe("createAtlestiaCatalog", () => {
     ).toBe(true);
   });
 
+  it("validates all event type payloads", () => {
+    const catalog = createAtlestiaCatalog();
+
+    // Vault events
+    expect(catalog.validate(ATTESTIA_EVENTS.INTENT_APPROVED, { intentId: "i1", approvedBy: "alice" })).toBe(true);
+    expect(catalog.validate(ATTESTIA_EVENTS.INTENT_REJECTED, { intentId: "i1", rejectedBy: "bob", reason: "bad" })).toBe(true);
+    expect(catalog.validate(ATTESTIA_EVENTS.INTENT_EXECUTED, { intentId: "i1", correlationId: "c1" })).toBe(true);
+    expect(catalog.validate(ATTESTIA_EVENTS.INTENT_VERIFIED, { intentId: "i1", verifiedAt: "2025-01-01" })).toBe(true);
+    expect(catalog.validate(ATTESTIA_EVENTS.INTENT_FAILED, { intentId: "i1", reason: "timeout", failedAt: "2025-01-01" })).toBe(true);
+    expect(catalog.validate(ATTESTIA_EVENTS.BUDGET_ALLOCATED, { budgetId: "b1", envelopeId: "e1", amount: "100", currency: "USD" })).toBe(true);
+    expect(catalog.validate(ATTESTIA_EVENTS.PORTFOLIO_OBSERVED, { portfolioId: "p1", chainRef: "evm:1", observedAt: "2025-01-01" })).toBe(true);
+
+    // Ledger events
+    expect(catalog.validate(ATTESTIA_EVENTS.TRANSACTION_APPENDED, { correlationId: "c1", entryCount: 2, currency: "USD", totalAmount: "100" })).toBe(true);
+    expect(catalog.validate(ATTESTIA_EVENTS.ACCOUNT_REGISTERED, { accountId: "a1", accountType: "asset", name: "Cash" })).toBe(true);
+
+    // Treasury events
+    expect(catalog.validate(ATTESTIA_EVENTS.PAYROLL_EXECUTED, { runId: "r1", recipientCount: 5, totalAmount: "5000", currency: "USD" })).toBe(true);
+    expect(catalog.validate(ATTESTIA_EVENTS.DISTRIBUTION_EXECUTED, { planId: "p1", recipientCount: 3, totalAmount: "1000", currency: "USD" })).toBe(true);
+    expect(catalog.validate(ATTESTIA_EVENTS.FUNDING_GATE_APPROVED, { gateId: "g1", approverId: "alice", level: 1 })).toBe(true);
+
+    // Registrum events
+    expect(catalog.validate(ATTESTIA_EVENTS.ATTESTATION_EMITTED, { registrumVersion: "1.0", snapshotHash: "abc", stateCount: 3 })).toBe(true);
+
+    // Observer events
+    expect(catalog.validate(ATTESTIA_EVENTS.BALANCE_OBSERVED, { chainId: "evm:1", address: "0x123", balance: "100", currency: "ETH" })).toBe(true);
+
+    // Reconciler events
+    expect(catalog.validate(ATTESTIA_EVENTS.RECONCILIATION_COMPLETED, { reportId: "r1", matchedCount: 5, mismatchCount: 0, missingCount: 0 })).toBe(true);
+    expect(catalog.validate(ATTESTIA_EVENTS.ATTESTATION_RECORDED, { reportId: "r1", stateId: "s1", snapshotHash: "abc" })).toBe(true);
+
+    // Witness events
+    expect(catalog.validate(ATTESTIA_EVENTS.WITNESS_RECORD_SUBMITTED, { txHash: "0x123", witnessAddress: "rXXX", payloadHash: "abc" })).toBe(true);
+  });
+
   it("event types follow naming convention", () => {
     const catalog = createAtlestiaCatalog();
 
