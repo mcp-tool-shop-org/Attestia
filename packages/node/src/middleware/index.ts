@@ -1,8 +1,8 @@
 /**
  * Middleware barrel — re-exports all middleware.
- * Populated incrementally across commits.
  */
 
-// Commit 2 adds: error-handler, request-id, logger
-// Commit 3 adds: validate, idempotency, etag
-// Commit 4 adds: auth, tenant, rate-limit, metrics
+export { handleError } from "./error-handler.js";
+export { requestIdMiddleware, REQUEST_ID_HEADER } from "./request-id.js";
+export { loggerMiddleware } from "./logger.js";
+export type { RequestLogEntry } from "./logger.js";

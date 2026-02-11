@@ -51,7 +51,7 @@ export class AttestiaService {
   private _ready = false;
 
   constructor(config: AttestiaServiceConfig) {
-    this.registrar = new StructuralRegistrar();
+    this.registrar = new StructuralRegistrar({ mode: "legacy" });
     this.ledger = new Ledger();
     this.eventStore = new InMemoryEventStore();
 
