@@ -239,6 +239,33 @@ export interface AttestationRecordedPayload {
 }
 
 // =============================================================================
+// Verification Events (Phase 12)
+// =============================================================================
+
+export interface VerificationExternalRequestedPayload {
+  readonly bundleHash: string;
+  readonly requestedBy: string;
+  readonly requestedAt: string;
+}
+
+export interface VerificationExternalCompletedPayload {
+  readonly reportId: string;
+  readonly verifierId: string;
+  readonly bundleHash: string;
+  readonly verdict: "PASS" | "FAIL";
+  readonly discrepancyCount: number;
+  readonly completedAt: string;
+}
+
+export interface VerificationConsensusReachedPayload {
+  readonly bundleHash: string;
+  readonly verdict: "PASS" | "FAIL";
+  readonly totalVerifiers: number;
+  readonly agreementRatio: number;
+  readonly consensusAt: string;
+}
+
+// =============================================================================
 // Witness Events
 // =============================================================================
 
@@ -306,6 +333,11 @@ export const ATTESTIA_EVENTS = {
 
   // Witness
   WITNESS_RECORD_SUBMITTED: "witness.record.submitted",
+
+  // Verification (Phase 12)
+  VERIFICATION_EXTERNAL_REQUESTED: "verification.external.requested",
+  VERIFICATION_EXTERNAL_COMPLETED: "verification.external.completed",
+  VERIFICATION_CONSENSUS_REACHED: "verification.consensus.reached",
 } as const;
 
 export type AttestiaEventType =
@@ -604,6 +636,47 @@ const WITNESS_SCHEMAS: readonly EventSchema[] = [
   },
 ];
 
+const VERIFICATION_SCHEMAS: readonly EventSchema[] = [
+  {
+    type: ATTESTIA_EVENTS.VERIFICATION_EXTERNAL_REQUESTED,
+    version: 1,
+    description: "An external verification of a state bundle was requested",
+    source: "registrum",
+    validate: (p): p is VerificationExternalRequestedPayload =>
+      isObject(p) &&
+      hasString(p, "bundleHash") &&
+      hasString(p, "requestedBy") &&
+      hasString(p, "requestedAt"),
+  },
+  {
+    type: ATTESTIA_EVENTS.VERIFICATION_EXTERNAL_COMPLETED,
+    version: 1,
+    description: "An external verifier completed verification of a state bundle",
+    source: "registrum",
+    validate: (p): p is VerificationExternalCompletedPayload =>
+      isObject(p) &&
+      hasString(p, "reportId") &&
+      hasString(p, "verifierId") &&
+      hasString(p, "bundleHash") &&
+      hasString(p, "verdict") &&
+      hasNumber(p, "discrepancyCount") &&
+      hasString(p, "completedAt"),
+  },
+  {
+    type: ATTESTIA_EVENTS.VERIFICATION_CONSENSUS_REACHED,
+    version: 1,
+    description: "Multiple verifiers reached consensus on a state bundle",
+    source: "registrum",
+    validate: (p): p is VerificationConsensusReachedPayload =>
+      isObject(p) &&
+      hasString(p, "bundleHash") &&
+      hasString(p, "verdict") &&
+      hasNumber(p, "totalVerifiers") &&
+      hasNumber(p, "agreementRatio") &&
+      hasString(p, "consensusAt"),
+  },
+];
+
 // =============================================================================
 // Factory
 // =============================================================================
@@ -612,7 +685,7 @@ const WITNESS_SCHEMAS: readonly EventSchema[] = [
  * Create a pre-populated EventCatalog with all Attestia domain events.
  *
  * This is the standard catalog for production use.
- * All 28 event types are registered at version 1.
+ * All 31 event types are registered at version 1.
  */
 export function createAtlestiaCatalog(): EventCatalog {
   const catalog = new EventCatalog();
@@ -626,6 +699,7 @@ export function createAtlestiaCatalog(): EventCatalog {
     ...RECONCILER_SCHEMAS,
     ...GOVERNANCE_SCHEMAS,
     ...WITNESS_SCHEMAS,
+    ...VERIFICATION_SCHEMAS,
   ];
 
   for (const schema of allSchemas) {

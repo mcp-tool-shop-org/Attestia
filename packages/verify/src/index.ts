@@ -37,6 +37,12 @@ export {
 // Verifier node (external verification)
 export { runVerification, VerifierNode } from "./verifier-node.js";
 
+// Verification consensus (multi-verifier)
+export {
+  aggregateVerifierReports,
+  isConsensusReached,
+} from "./verification-consensus.js";
+
 // Cross-chain invariants
 export {
   checkAssetConservation,

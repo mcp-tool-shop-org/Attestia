@@ -7,7 +7,7 @@
  * - Schema version migration (v1 → v2 → v3)
  * - Forward compatibility (unknown events preserved)
  * - Versioned event creation and schema extraction
- * - Attestia catalog factory (all 21 event types)
+ * - Attestia catalog factory (all 31 event types)
  */
 
 import { describe, it, expect } from "vitest";
@@ -364,10 +364,10 @@ describe("versioned event helpers", () => {
 // =============================================================================
 
 describe("createAtlestiaCatalog", () => {
-  it("creates a catalog with all 28 event types", () => {
+  it("creates a catalog with all 31 event types", () => {
     const catalog = createAtlestiaCatalog();
 
-    expect(catalog.size).toBe(28);
+    expect(catalog.size).toBe(31);
   });
 
   it("all ATTESTIA_EVENTS constants are registered", () => {
@@ -605,6 +605,72 @@ describe("createAtlestiaCatalog", () => {
         previousQuorum: 1,
         newQuorum: 2,
         totalSigners: 3,
+      }),
+    ).toBe(false);
+  });
+
+  it("validates verification event payloads", () => {
+    const catalog = createAtlestiaCatalog();
+
+    expect(
+      catalog.validate(ATTESTIA_EVENTS.VERIFICATION_EXTERNAL_REQUESTED, {
+        bundleHash: "a".repeat(64),
+        requestedBy: "operator",
+        requestedAt: "2025-06-15T00:00:00Z",
+      }),
+    ).toBe(true);
+
+    expect(
+      catalog.validate(ATTESTIA_EVENTS.VERIFICATION_EXTERNAL_COMPLETED, {
+        reportId: "report-1",
+        verifierId: "verifier-alice",
+        bundleHash: "a".repeat(64),
+        verdict: "PASS",
+        discrepancyCount: 0,
+        completedAt: "2025-06-15T00:00:00Z",
+      }),
+    ).toBe(true);
+
+    expect(
+      catalog.validate(ATTESTIA_EVENTS.VERIFICATION_CONSENSUS_REACHED, {
+        bundleHash: "a".repeat(64),
+        verdict: "PASS",
+        totalVerifiers: 3,
+        agreementRatio: 1.0,
+        consensusAt: "2025-06-15T00:00:00Z",
+      }),
+    ).toBe(true);
+  });
+
+  it("rejects invalid verification event payloads", () => {
+    const catalog = createAtlestiaCatalog();
+
+    // Missing bundleHash
+    expect(
+      catalog.validate(ATTESTIA_EVENTS.VERIFICATION_EXTERNAL_REQUESTED, {
+        requestedBy: "operator",
+        requestedAt: "2025-06-15T00:00:00Z",
+      }),
+    ).toBe(false);
+
+    // Missing verdict
+    expect(
+      catalog.validate(ATTESTIA_EVENTS.VERIFICATION_EXTERNAL_COMPLETED, {
+        reportId: "report-1",
+        verifierId: "verifier-alice",
+        bundleHash: "a".repeat(64),
+        discrepancyCount: 0,
+        completedAt: "2025-06-15T00:00:00Z",
+      }),
+    ).toBe(false);
+
+    // Missing totalVerifiers (number)
+    expect(
+      catalog.validate(ATTESTIA_EVENTS.VERIFICATION_CONSENSUS_REACHED, {
+        bundleHash: "a".repeat(64),
+        verdict: "PASS",
+        agreementRatio: 1.0,
+        consensusAt: "2025-06-15T00:00:00Z",
       }),
     ).toBe(false);
   });
