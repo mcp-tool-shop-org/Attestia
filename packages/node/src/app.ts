@@ -36,6 +36,8 @@ import { createVerifyRoutes } from "./routes/verify.js";
 import { createAttestationRoutes } from "./routes/attestation.js";
 import { createMetricsRoute } from "./routes/metrics.js";
 import { createExportRoutes } from "./routes/export.js";
+import { createPublicVerifyRoutes } from "./routes/public-verify.js";
+import type { PublicVerifyDeps } from "./routes/public-verify.js";
 import { AuditLog } from "./services/audit-log.js";
 
 // =============================================================================
@@ -54,6 +56,8 @@ export interface CreateAppOptions {
   readonly rateLimit?: { rpm: number; burst: number } | undefined;
   /** Enable metrics collection. Default: true */
   readonly enableMetrics?: boolean | undefined;
+  /** Public verification endpoint configuration */
+  readonly publicVerify?: PublicVerifyDeps | undefined;
 }
 
 // =============================================================================
@@ -111,6 +115,9 @@ export function createApp(options: CreateAppOptions): AppInstance {
   if (enableMetrics) {
     app.route("/", createMetricsRoute(metricsCollector));
   }
+
+  // ─── Public Routes (no auth required) ──────────────────────────
+  app.route("/public/v1/verify", createPublicVerifyRoutes(options.publicVerify));
 
   // ─── API Routes ─────────────────────────────────────────────────
   if (options.auth !== undefined) {
