@@ -1,0 +1,54 @@
+{
+  "name": "@attestia/node",
+  "version": "0.1.0",
+  "description": "Attestia HTTP service — REST API for intent lifecycle, reconciliation, and attestation",
+  "type": "module",
+  "main": "dist/main.js",
+  "types": "dist/main.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/main.js",
+      "types": "./dist/main.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/main.js",
+    "dev": "node --watch dist/main.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@attestia/chain-observer": "workspace:*",
+    "@attestia/event-store": "workspace:*",
+    "@attestia/ledger": "workspace:*",
+    "@attestia/reconciler": "workspace:*",
+    "@attestia/registrum": "workspace:*",
+    "@attestia/treasury": "workspace:*",
+    "@attestia/types": "workspace:*",
+    "@attestia/vault": "workspace:*",
+    "@attestia/verify": "workspace:*",
+    "@attestia/witness": "workspace:*",
+    "@hono/node-server": "^1.8.0",
+    "hono": "^4.0.0",
+    "pino": "^9.0.0",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@vitest/coverage-v8": "^1.6.1",
+    "pino-pretty": "^11.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.2.0"
+  },
+  "keywords": [
+    "attestia",
+    "api",
+    "http",
+    "hono",
+    "service"
+  ],
+  "license": "MIT"
+}
