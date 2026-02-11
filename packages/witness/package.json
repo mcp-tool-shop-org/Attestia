@@ -18,16 +18,23 @@
     "test:integration": "vitest run --config vitest.integration.config.ts"
   },
   "dependencies": {
-    "@attestia/types": "workspace:*",
-    "@attestia/registrum": "workspace:*",
     "@attestia/reconciler": "workspace:*",
+    "@attestia/registrum": "workspace:*",
+    "@attestia/types": "workspace:*",
+    "json-canonicalize": "^2.0.0",
     "xrpl": "^4.2.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
-    "vitest": "^1.2.0",
-    "typescript": "^5.4.0"
+    "typescript": "^5.4.0",
+    "vitest": "^1.2.0"
   },
-  "keywords": ["xrpl", "witness", "attestation", "blockchain", "attestia"],
+  "keywords": [
+    "xrpl",
+    "witness",
+    "attestation",
+    "blockchain",
+    "attestia"
+  ],
   "license": "MIT"
 }

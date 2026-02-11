@@ -17,18 +17,25 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@attestia/types": "workspace:*",
+    "@attestia/chain-observer": "workspace:*",
     "@attestia/ledger": "workspace:*",
     "@attestia/registrum": "workspace:*",
-    "@attestia/chain-observer": "workspace:*",
+    "@attestia/treasury": "workspace:*",
+    "@attestia/types": "workspace:*",
     "@attestia/vault": "workspace:*",
-    "@attestia/treasury": "workspace:*"
+    "json-canonicalize": "^2.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
-    "vitest": "^1.2.0",
-    "typescript": "^5.4.0"
+    "typescript": "^5.4.0",
+    "vitest": "^1.2.0"
   },
-  "keywords": ["reconciliation", "audit", "attestation", "cross-system", "attestia"],
+  "keywords": [
+    "reconciliation",
+    "audit",
+    "attestation",
+    "cross-system",
+    "attestia"
+  ],
   "license": "MIT"
 }

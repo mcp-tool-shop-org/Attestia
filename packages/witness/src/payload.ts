@@ -10,6 +10,7 @@
  */
 
 import { createHash } from "node:crypto";
+import { canonicalize } from "json-canonicalize";
 import type { AttestationRecord, ReconciliationReport } from "@attestia/reconciler";
 import type { AttestationPayload, AttestationSource, PayloadSummary } from "./types.js";
 
@@ -88,20 +89,6 @@ export function verifyPayloadHash(payload: AttestationPayload): boolean {
 // =============================================================================
 // Internal helpers
 // =============================================================================
-
-function canonicalize(obj: unknown): string {
-  return JSON.stringify(sortKeys(obj));
-}
-
-function sortKeys(value: unknown): unknown {
-  if (value === null || typeof value !== "object") return value;
-  if (Array.isArray(value)) return value.map(sortKeys);
-  const sorted: Record<string, unknown> = {};
-  for (const key of Object.keys(value as Record<string, unknown>).sort()) {
-    sorted[key] = sortKeys((value as Record<string, unknown>)[key]);
-  }
-  return sorted;
-}
 
 function sha256(data: string): string {
   return createHash("sha256").update(data).digest("hex");
