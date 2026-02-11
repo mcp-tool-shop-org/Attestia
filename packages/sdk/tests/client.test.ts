@@ -143,16 +143,15 @@ describe("AttestiaClient intents", () => {
   });
 
   it("lists intents with pagination", async () => {
+    // List endpoint returns { data: T[], pagination: {...} } directly (no outer envelope)
     const mockFetch = createRoutedMockFetch([
       {
         method: "GET",
         pathPrefix: "/api/v1/intents",
         status: 200,
         body: {
-          data: {
-            data: [SAMPLE_INTENT],
-            pagination: { total: 1, hasMore: false, limit: 20 },
-          },
+          data: [SAMPLE_INTENT],
+          pagination: { total: 1, hasMore: false, limit: 20 },
         },
       },
     ]);
@@ -179,10 +178,8 @@ describe("AttestiaClient intents", () => {
         pathPrefix: "/api/v1/intents",
         status: 200,
         body: {
-          data: {
-            data: [],
-            pagination: { total: 0, hasMore: false, limit: 10 },
-          },
+          data: [],
+          pagination: { total: 0, hasMore: false, limit: 10 },
         },
       },
     ]);

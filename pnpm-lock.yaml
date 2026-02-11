@@ -235,6 +235,9 @@ importers:
         specifier: workspace:*
         version: link:../types
     devDependencies:
+      '@attestia/node':
+        specifier: workspace:*
+        version: link:../node
       '@types/node':
         specifier: ^22.0.0
         version: 22.19.11

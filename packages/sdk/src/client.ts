@@ -209,7 +209,8 @@ export class IntentsNamespace {
     const qs = query.toString();
     const path = qs.length > 0 ? `/api/v1/intents?${qs}` : "/api/v1/intents";
 
-    const result = await this.http.get<PaginatedList<Intent>>(path);
+    // List endpoint returns { data: T[], pagination: {...} } directly (no outer envelope)
+    const result = await this.http.getFullBody<PaginatedList<Intent>>(path);
     return { data: result.data, status: result.status, headers: result.headers };
   }
 

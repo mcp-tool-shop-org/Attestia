@@ -34,6 +34,7 @@
     "@attestia/types": "workspace:*"
   },
   "devDependencies": {
+    "@attestia/node": "workspace:*",
     "@types/node": "^22.0.0",
     "@vitest/coverage-v8": "^1.6.1",
     "typescript": "^5.3.0",

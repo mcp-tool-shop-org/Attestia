@@ -103,10 +103,80 @@ export class HttpClient {
   }
 
   /**
+   * Perform a GET request returning the full response body (no envelope unwrapping).
+   * Used for paginated list endpoints where the body IS the data+pagination structure.
+   */
+  async getFullBody<T>(path: string): Promise<{ data: T; status: number; headers: Record<string, string> }> {
+    return this.requestRaw<T>("GET", path);
+  }
+
+  /**
    * Perform a POST request with a JSON body.
    */
   async post<T>(path: string, body: unknown): Promise<{ data: T; status: number; headers: Record<string, string> }> {
     return this.request<T>("POST", path, body);
+  }
+
+  /**
+   * Raw request method that returns the full body without unwrapping .data envelope.
+   */
+  private async requestRaw<T>(
+    method: string,
+    path: string,
+    body?: unknown,
+  ): Promise<{ data: T; status: number; headers: Record<string, string> }> {
+    const url = `${this.baseUrl}${path}`;
+    const requestId = generateRequestId();
+
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+      "X-Request-Id": requestId,
+    };
+
+    if (this.apiKey !== undefined) {
+      headers["X-Api-Key"] = this.apiKey;
+    }
+
+    const init: RequestInit = {
+      method,
+      headers,
+    };
+
+    if (body !== undefined) {
+      init.body = JSON.stringify(body);
+    }
+
+    const response = await this.fetchWithTimeout(url, init);
+    const responseBody = await parseResponseBody(response);
+    const responseHeaders = extractHeaders(response);
+
+    if (response.ok) {
+      return {
+        data: responseBody as T,
+        status: response.status,
+        headers: responseHeaders,
+      };
+    }
+
+    // Error handling
+    if (response.status >= 400 && response.status < 500) {
+      const errorBody = responseBody as {
+        error?: { code?: string; message?: string; details?: unknown };
+      };
+      throw new AttestiaError(
+        errorBody.error?.code ?? "CLIENT_ERROR",
+        errorBody.error?.message ?? `HTTP ${response.status}`,
+        response.status,
+        errorBody.error?.details,
+      );
+    }
+
+    throw new AttestiaError(
+      "SERVER_ERROR",
+      `HTTP ${response.status}`,
+      response.status,
+    );
   }
 
   /**
