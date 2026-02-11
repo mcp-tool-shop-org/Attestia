@@ -9,6 +9,7 @@
  */
 
 import { createHash } from "node:crypto";
+import { canonicalize } from "json-canonicalize";
 import type { Registrar, RegistrationResult, State, Transition } from "@attestia/registrum";
 import type { AttestationRecord, ReconciliationReport } from "./types.js";
 
@@ -98,7 +99,7 @@ export class Attestor {
    * Uses SHA-256 over the deterministic JSON representation.
    */
   private hashReport(report: ReconciliationReport): string {
-    const json = JSON.stringify(report);
+    const json = canonicalize(report);
     return createHash("sha256").update(json).digest("hex");
   }
 }

@@ -10,6 +10,7 @@
  */
 
 import { createHash } from "crypto";
+import { canonicalize } from "json-canonicalize";
 import type { RegistrarSnapshotV1 } from "../persistence/snapshot.js";
 import type {
   AttestationPayload,
@@ -76,17 +77,18 @@ export function computeSnapshotHashForAttestation(
 /**
  * Canonicalize an object for hashing.
  *
- * Produces deterministic JSON with alphabetically sorted keys.
+ * Uses RFC 8785 (JSON Canonicalization Scheme) for deterministic output.
  *
  * @param obj - Object to canonicalize
- * @returns Canonical JSON string
+ * @returns Canonical JSON string (RFC 8785)
  */
 export function canonicalizeForHash(obj: unknown): string {
-  return JSON.stringify(obj, sortedReplacer);
+  return canonicalize(obj);
 }
 
 /**
  * JSON replacer that sorts object keys alphabetically.
+ * Used for human-readable serialization (pretty-print), not for hashing.
  */
 function sortedReplacer(_key: string, value: unknown): unknown {
   if (value !== null && typeof value === "object" && !Array.isArray(value)) {
