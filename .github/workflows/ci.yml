@@ -39,6 +39,10 @@ jobs:
       - name: Test with coverage
         run: pnpm test:coverage
 
+      - name: Run benchmarks
+        if: matrix.node-version == 22
+        run: pnpm bench
+
       - name: Upload coverage to Codecov
         if: matrix.node-version == 22
         uses: codecov/codecov-action@v5

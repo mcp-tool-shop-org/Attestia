@@ -13,6 +13,7 @@
     "test:coverage": "pnpm -r run test:coverage",
     "typecheck": "pnpm -r lint",
     "lint": "pnpm -r lint",
+    "bench": "pnpm -r run bench",
     "clean": "pnpm -r exec rm -rf dist"
   },
   "keywords": [
