@@ -1,8 +1,9 @@
 /**
  * Route barrel — re-exports all route modules.
- * Populated incrementally across commits.
  */
 
-// Commit 2 adds: health
-// Commit 3 adds: intents, events, verify, attestation
-// Commit 4 adds: metrics
+export { createHealthRoutes } from "./health.js";
+export { createIntentRoutes } from "./intents.js";
+export { createEventRoutes } from "./events.js";
+export { createVerifyRoutes } from "./verify.js";
+export { createAttestationRoutes } from "./attestation.js";

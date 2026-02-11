@@ -23,5 +23,13 @@ export interface AppEnv {
 
     /** Authentication context (set by auth middleware) */
     auth: AuthContext;
+
+    /** Validated request body (set by validateBody middleware) */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validatedBody: any;
+
+    /** Validated query params (set by validateQuery middleware) */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validatedQuery: any;
   };
 }

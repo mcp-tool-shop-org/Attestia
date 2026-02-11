@@ -10,7 +10,7 @@
 // =============================================================================
 
 export interface PaginationQuery {
-  readonly cursor?: string;
+  readonly cursor?: string | undefined;
   readonly limit: number;
 }
 

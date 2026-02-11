@@ -14,7 +14,15 @@ import { handleError } from "./middleware/error-handler.js";
 import { requestIdMiddleware } from "./middleware/request-id.js";
 import { loggerMiddleware } from "./middleware/logger.js";
 import type { RequestLogEntry } from "./middleware/logger.js";
+import {
+  idempotencyMiddleware,
+  InMemoryIdempotencyStore,
+} from "./middleware/idempotency.js";
 import { createHealthRoutes } from "./routes/health.js";
+import { createIntentRoutes } from "./routes/intents.js";
+import { createEventRoutes } from "./routes/events.js";
+import { createVerifyRoutes } from "./routes/verify.js";
+import { createAttestationRoutes } from "./routes/attestation.js";
 
 // =============================================================================
 // App Config
@@ -23,6 +31,9 @@ import { createHealthRoutes } from "./routes/health.js";
 export interface CreateAppOptions {
   readonly serviceConfig: AttestiaServiceConfig;
   readonly logFn?: (entry: RequestLogEntry) => void;
+  readonly idempotencyTtlMs?: number;
+  /** Default tenant ID used when no auth/tenant middleware is active */
+  readonly defaultTenantId?: string;
 }
 
 // =============================================================================
@@ -32,6 +43,7 @@ export interface CreateAppOptions {
 export interface AppInstance {
   readonly app: Hono<AppEnv>;
   readonly tenantRegistry: TenantRegistry;
+  readonly idempotencyStore: InMemoryIdempotencyStore;
 }
 
 /**
@@ -39,6 +51,10 @@ export interface AppInstance {
  */
 export function createApp(options: CreateAppOptions): AppInstance {
   const tenantRegistry = new TenantRegistry(options.serviceConfig);
+  const idempotencyStore = new InMemoryIdempotencyStore(
+    options.idempotencyTtlMs ?? 86400000,
+  );
+  const defaultTenantId = options.defaultTenantId ?? options.serviceConfig.ownerId;
 
   const app = new Hono<AppEnv>();
 
@@ -52,9 +68,29 @@ export function createApp(options: CreateAppOptions): AppInstance {
   // ─── Error Handler ──────────────────────────────────────────────
   app.onError(handleError);
 
-  // ─── Routes ─────────────────────────────────────────────────────
+  // ─── Health Routes (no auth required) ───────────────────────────
   const healthRoutes = createHealthRoutes(tenantRegistry);
   app.route("/", healthRoutes);
 
-  return { app, tenantRegistry };
+  // ─── API Routes ─────────────────────────────────────────────────
+  // Tenant resolution middleware for /api/* routes.
+  // In Commit 4, this is replaced by auth + tenant middleware.
+  // For now, use X-Tenant-Id header or default tenant.
+  app.use("/api/*", async (c, next) => {
+    const tenantId = c.req.header("X-Tenant-Id") ?? defaultTenantId;
+    const service = tenantRegistry.getOrCreate(tenantId);
+    c.set("service", service);
+    await next();
+  });
+
+  // Idempotency for POST /api/* requests
+  app.use("/api/*", idempotencyMiddleware(idempotencyStore));
+
+  // Mount v1 API routes
+  app.route("/api/v1/intents", createIntentRoutes());
+  app.route("/api/v1/events", createEventRoutes());
+  app.route("/api/v1/verify", createVerifyRoutes());
+  app.route("/api/v1", createAttestationRoutes());
+
+  return { app, tenantRegistry, idempotencyStore };
 }
