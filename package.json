@@ -21,5 +21,6 @@
     "deterministic"
   ],
   "author": "mcp-tool-shop-org",
-  "license": "MIT"
+  "license": "MIT",
+  "packageManager": "pnpm@10.28.2"
 }
