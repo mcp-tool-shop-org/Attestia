@@ -34,6 +34,9 @@ export {
   verifyBundleIntegrity,
 } from "./state-bundle.js";
 
+// Verifier node (external verification)
+export { runVerification, VerifierNode } from "./verifier-node.js";
+
 // Cross-chain invariants
 export {
   checkAssetConservation,
