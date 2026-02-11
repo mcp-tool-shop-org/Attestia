@@ -1,0 +1,34 @@
+{
+  "name": "@attestia/reconciler",
+  "version": "0.1.0",
+  "description": "Cross-system reconciliation — matches intents, ledger entries, and on-chain events with Registrum attestation",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@attestia/types": "workspace:*",
+    "@attestia/ledger": "workspace:*",
+    "@attestia/registrum": "workspace:*",
+    "@attestia/chain-observer": "workspace:*",
+    "@attestia/vault": "workspace:*",
+    "@attestia/treasury": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "vitest": "^1.2.0",
+    "typescript": "^5.4.0"
+  },
+  "keywords": ["reconciliation", "audit", "attestation", "cross-system", "attestia"],
+  "license": "MIT"
+}
