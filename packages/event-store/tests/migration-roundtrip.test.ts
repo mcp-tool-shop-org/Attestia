@@ -1,7 +1,7 @@
 /**
  * Tests for event catalog migration roundtrip.
  *
- * Verifies that all 31 ATTESTIA_EVENTS are registered in the catalog
+ * Verifies that all 34 ATTESTIA_EVENTS are registered in the catalog
  * and can be upcasted from their current version.
  */
 
@@ -13,8 +13,8 @@ describe("event catalog migration roundtrip", () => {
   const catalog = createAtlestiaCatalog();
   const allEventTypes = Object.values(ATTESTIA_EVENTS);
 
-  it("catalog contains all 31 ATTESTIA_EVENTS", () => {
-    expect(allEventTypes).toHaveLength(31);
+  it("catalog contains all 34 ATTESTIA_EVENTS", () => {
+    expect(allEventTypes).toHaveLength(34);
     for (const type of allEventTypes) {
       expect(catalog.has(type)).toBe(true);
     }

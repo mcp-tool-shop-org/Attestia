@@ -7,7 +7,7 @@
  * - Schema version migration (v1 → v2 → v3)
  * - Forward compatibility (unknown events preserved)
  * - Versioned event creation and schema extraction
- * - Attestia catalog factory (all 31 event types)
+ * - Attestia catalog factory (all 34 event types)
  */
 
 import { describe, it, expect } from "vitest";
@@ -364,10 +364,10 @@ describe("versioned event helpers", () => {
 // =============================================================================
 
 describe("createAtlestiaCatalog", () => {
-  it("creates a catalog with all 31 event types", () => {
+  it("creates a catalog with all 34 event types", () => {
     const catalog = createAtlestiaCatalog();
 
-    expect(catalog.size).toBe(31);
+    expect(catalog.size).toBe(34);
   });
 
   it("all ATTESTIA_EVENTS constants are registered", () => {
@@ -548,6 +548,68 @@ describe("createAtlestiaCatalog", () => {
         totalSigners: 3,
       }),
     ).toBe(true);
+  });
+
+  it("validates governance SLA and tenant event payloads", () => {
+    const catalog = createAtlestiaCatalog();
+
+    expect(
+      catalog.validate(ATTESTIA_EVENTS.GOVERNANCE_SLA_POLICY_SET, {
+        policyId: "sla-1",
+        policyName: "Production SLA",
+        policyVersion: 1,
+        targetCount: 5,
+        setBy: "admin",
+      }),
+    ).toBe(true);
+
+    expect(
+      catalog.validate(ATTESTIA_EVENTS.GOVERNANCE_TENANT_CREATED, {
+        tenantId: "tenant-1",
+        tenantName: "Acme Corp",
+        slaPolicyId: "sla-1",
+        createdBy: "admin",
+      }),
+    ).toBe(true);
+
+    expect(
+      catalog.validate(ATTESTIA_EVENTS.GOVERNANCE_TENANT_SUSPENDED, {
+        tenantId: "tenant-1",
+        reason: "SLA violation",
+        suspendedBy: "admin",
+      }),
+    ).toBe(true);
+  });
+
+  it("rejects invalid governance SLA and tenant event payloads", () => {
+    const catalog = createAtlestiaCatalog();
+
+    // Missing policyName
+    expect(
+      catalog.validate(ATTESTIA_EVENTS.GOVERNANCE_SLA_POLICY_SET, {
+        policyId: "sla-1",
+        policyVersion: 1,
+        targetCount: 5,
+        setBy: "admin",
+      }),
+    ).toBe(false);
+
+    // Missing slaPolicyId
+    expect(
+      catalog.validate(ATTESTIA_EVENTS.GOVERNANCE_TENANT_CREATED, {
+        tenantId: "tenant-1",
+        tenantName: "Acme Corp",
+        createdBy: "admin",
+      }),
+    ).toBe(false);
+
+    // Missing reason
+    expect(
+      catalog.validate(ATTESTIA_EVENTS.GOVERNANCE_TENANT_SUSPENDED, {
+        tenantId: "tenant-1",
+        suspendedBy: "admin",
+      }),
+    ).toBe(false);
   });
 
   it("validates multi-sig witness event payload", () => {

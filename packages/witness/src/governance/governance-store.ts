@@ -31,6 +31,12 @@ export class GovernanceStore {
   private version = 0;
   private lastUpdated = new Date().toISOString();
   private readonly events: GovernanceChangeEvent[] = [];
+  private activeSlaPolicy: {
+    id: string;
+    name: string;
+    version: number;
+    targetCount: number;
+  } | null = null;
 
   /**
    * Add a new signer to the governance policy.
@@ -125,6 +131,54 @@ export class GovernanceStore {
   }
 
   /**
+   * Set or update the active SLA policy.
+   *
+   * @param policyId Unique policy identifier
+   * @param policyName Human-readable policy name
+   * @param policyVersion Policy version number
+   * @param targetCount Number of SLA targets in the policy
+   * @returns The emitted governance change event
+   */
+  setSlaPolicy(
+    policyId: string,
+    policyName: string,
+    policyVersion: number,
+    targetCount: number,
+  ): GovernanceChangeEvent {
+    if (policyId.length === 0) {
+      throw new Error("SLA policy ID cannot be empty");
+    }
+    if (policyVersion < 1) {
+      throw new Error(`SLA policy version must be >= 1, got ${policyVersion}`);
+    }
+
+    const timestamp = new Date().toISOString();
+    const event: GovernanceChangeEvent = {
+      type: "sla_policy_set",
+      policyId,
+      policyName,
+      policyVersion,
+      targetCount,
+      timestamp,
+    };
+
+    this.applyEvent(event);
+    return event;
+  }
+
+  /**
+   * Get the currently active SLA policy, if any.
+   */
+  getCurrentSlaPolicy(): {
+    id: string;
+    name: string;
+    version: number;
+    targetCount: number;
+  } | null {
+    return this.activeSlaPolicy;
+  }
+
+  /**
    * Get the current governance policy snapshot.
    */
   getCurrentPolicy(): GovernancePolicy {
@@ -176,6 +230,7 @@ export class GovernanceStore {
     this.quorum = 1;
     this.version = 0;
     this.events.length = 0;
+    this.activeSlaPolicy = null;
 
     for (const event of events) {
       this.applyEvent(event);
@@ -221,6 +276,15 @@ export class GovernanceStore {
 
       case "policy_rotated":
         // Policy rotation is a no-op on state — it's an audit marker
+        break;
+
+      case "sla_policy_set":
+        this.activeSlaPolicy = {
+          id: event.policyId,
+          name: event.policyName,
+          version: event.policyVersion,
+          targetCount: event.targetCount,
+        };
         break;
     }
 

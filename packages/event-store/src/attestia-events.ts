@@ -210,6 +210,27 @@ export interface GovernanceQuorumChangedPayload {
   readonly totalSigners: number;
 }
 
+export interface GovernanceSlaPolicySetPayload {
+  readonly policyId: string;
+  readonly policyName: string;
+  readonly policyVersion: number;
+  readonly targetCount: number;
+  readonly setBy: string;
+}
+
+export interface GovernanceTenantCreatedPayload {
+  readonly tenantId: string;
+  readonly tenantName: string;
+  readonly slaPolicyId: string;
+  readonly createdBy: string;
+}
+
+export interface GovernanceTenantSuspendedPayload {
+  readonly tenantId: string;
+  readonly reason: string;
+  readonly suspendedBy: string;
+}
+
 // =============================================================================
 // Witness Events — Multi-Sig
 // =============================================================================
@@ -323,6 +344,9 @@ export const ATTESTIA_EVENTS = {
   GOVERNANCE_SIGNER_ADDED: "governance.signer.added",
   GOVERNANCE_SIGNER_REMOVED: "governance.signer.removed",
   GOVERNANCE_QUORUM_CHANGED: "governance.quorum.changed",
+  GOVERNANCE_SLA_POLICY_SET: "governance.sla.policy_set",
+  GOVERNANCE_TENANT_CREATED: "governance.tenant.created",
+  GOVERNANCE_TENANT_SUSPENDED: "governance.tenant.suspended",
 
   // Witness — Multi-Sig
   WITNESS_MULTISIG_SUBMITTED: "witness.multisig.submitted",
@@ -611,6 +635,42 @@ const GOVERNANCE_SCHEMAS: readonly EventSchema[] = [
       hasNumber(p, "newQuorum") &&
       hasString(p, "changedBy"),
   },
+  {
+    type: ATTESTIA_EVENTS.GOVERNANCE_SLA_POLICY_SET,
+    version: 1,
+    description: "An SLA policy was set or updated for the governance scope",
+    source: "registrum",
+    validate: (p): p is GovernanceSlaPolicySetPayload =>
+      isObject(p) &&
+      hasString(p, "policyId") &&
+      hasString(p, "policyName") &&
+      hasNumber(p, "policyVersion") &&
+      hasNumber(p, "targetCount") &&
+      hasString(p, "setBy"),
+  },
+  {
+    type: ATTESTIA_EVENTS.GOVERNANCE_TENANT_CREATED,
+    version: 1,
+    description: "A new tenant was created in the governance system",
+    source: "registrum",
+    validate: (p): p is GovernanceTenantCreatedPayload =>
+      isObject(p) &&
+      hasString(p, "tenantId") &&
+      hasString(p, "tenantName") &&
+      hasString(p, "slaPolicyId") &&
+      hasString(p, "createdBy"),
+  },
+  {
+    type: ATTESTIA_EVENTS.GOVERNANCE_TENANT_SUSPENDED,
+    version: 1,
+    description: "A tenant was suspended from the governance system",
+    source: "registrum",
+    validate: (p): p is GovernanceTenantSuspendedPayload =>
+      isObject(p) &&
+      hasString(p, "tenantId") &&
+      hasString(p, "reason") &&
+      hasString(p, "suspendedBy"),
+  },
 ];
 
 const WITNESS_SCHEMAS: readonly EventSchema[] = [
@@ -685,7 +745,7 @@ const VERIFICATION_SCHEMAS: readonly EventSchema[] = [
  * Create a pre-populated EventCatalog with all Attestia domain events.
  *
  * This is the standard catalog for production use.
- * All 31 event types are registered at version 1.
+ * All 34 event types are registered at version 1.
  */
 export function createAtlestiaCatalog(): EventCatalog {
   const catalog = new EventCatalog();

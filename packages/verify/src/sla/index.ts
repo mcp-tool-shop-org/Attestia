@@ -17,3 +17,19 @@ export type {
 
 // Engine
 export { evaluateSla, evaluateMultipleSla } from "./sla-engine.js";
+
+// Tenant Governance
+export {
+  createTenantGovernancePolicy,
+  suspendTenant,
+  reactivateTenant,
+  validateTenantGovernance,
+  assignSlaPolicy,
+} from "./tenant-governance.js";
+
+export type {
+  TenantStatus,
+  TenantGovernancePolicy,
+  TenantAction,
+  TenantGovernanceResult,
+} from "./tenant-governance.js";

@@ -112,3 +112,19 @@ export type {
   SlaEvaluation,
   SlaMetrics,
 } from "./sla/index.js";
+
+// Tenant Governance
+export {
+  createTenantGovernancePolicy,
+  suspendTenant,
+  reactivateTenant,
+  validateTenantGovernance,
+  assignSlaPolicy,
+} from "./sla/index.js";
+
+export type {
+  TenantStatus,
+  TenantGovernancePolicy,
+  TenantAction,
+  TenantGovernanceResult,
+} from "./sla/index.js";

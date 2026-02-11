@@ -20,6 +20,7 @@
     "json-canonicalize": "^2.0.0"
   },
   "devDependencies": {
+    "@attestia/witness": "workspace:*",
     "@types/node": "^22.0.0",
     "@vitest/coverage-v8": "^1.6.1",
     "typescript": "^5.3.0",

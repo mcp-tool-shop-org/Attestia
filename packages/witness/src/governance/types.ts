@@ -83,7 +83,8 @@ export type GovernanceChangeEvent =
   | SignerAddedEvent
   | SignerRemovedEvent
   | QuorumChangedEvent
-  | PolicyRotatedEvent;
+  | PolicyRotatedEvent
+  | SlaPolicySetEvent;
 
 export interface SignerAddedEvent {
   readonly type: "signer_added";
@@ -112,6 +113,15 @@ export interface PolicyRotatedEvent {
   readonly timestamp: string;
 }
 
+export interface SlaPolicySetEvent {
+  readonly type: "sla_policy_set";
+  readonly policyId: string;
+  readonly policyName: string;
+  readonly policyVersion: number;
+  readonly targetCount: number;
+  readonly timestamp: string;
+}
+
 // =============================================================================
 // Type Guards
 // =============================================================================
@@ -130,4 +140,8 @@ export function isQuorumChangedEvent(e: GovernanceChangeEvent): e is QuorumChang
 
 export function isPolicyRotatedEvent(e: GovernanceChangeEvent): e is PolicyRotatedEvent {
   return e.type === "policy_rotated";
+}
+
+export function isSlaPolicySetEvent(e: GovernanceChangeEvent): e is SlaPolicySetEvent {
+  return e.type === "sla_policy_set";
 }
