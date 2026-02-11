@@ -4,6 +4,94 @@ All notable changes to Attestia, organized by development phase.
 
 ---
 
+## Phase 12 — Institutionalization & Ecosystem Activation
+
+### 12.1 — External Verification Network
+- Exportable state bundles with SHA-256 bundle hash integrity verification
+- `VerifierNode` class for standalone replay verification from bundle data
+- Multi-verifier consensus with majority rule (>50% = PASS)
+- 3 new event types: `verification.external.requested`, `verification.external.completed`, `verification.consensus.reached`
+
+### 12.2 — Public Verification API
+- Public routes at `/public/v1/verify/*` — no authentication required
+- State bundle download, verifier report submission, consensus endpoint
+- IP-based token bucket rate limiting (10 req/min per IP)
+- CORS headers for browser-based verifiers
+- OpenAPI 3.1 schema at `/public/v1/openapi.json`
+
+### 12.3 — Cryptographic Proof Packaging
+- `@attestia/proof` — new package for Merkle trees and inclusion proofs
+- Binary SHA-256 Merkle tree with proof generation and verification
+- Self-contained `AttestationProofPackage` — verifiable without full event store
+- Proof API endpoints (authenticated + public)
+
+### 12.4 — Compliance & Regulatory Readiness
+- SOC 2 Type II control mappings (CC1–CC9 trust service criteria)
+- ISO 27001 Annex A control mappings (A.8, A.12, A.14, A.18)
+- Programmatic evidence generator with per-control pass/fail scoring
+- Compliance API: framework listing, report generation, public summary
+- RFC-008: Compliance Evidence Generation Protocol
+
+### 12.5 — SDK & Integration Layer
+- `@attestia/sdk` — new typed HTTP client SDK
+- `HttpClient` with exponential backoff retry on 5xx, timeout via AbortController, API key injection
+- `AttestiaClient` with namespace grouping: `intents`, `verify`, `proofs`
+- Integration tests bridging SDK fetch to Hono `app.request()`
+
+### 12.6 — Economic & Governance Hardening
+- SLA policy types with 5 threshold operators (lte, gte, lt, gt, eq)
+- `evaluateSla()` — advisory-only, fail-closed (missing metrics = FAIL)
+- Tenant governance: create, suspend, reactivate, validate
+- `GovernanceStore` extended with `sla_policy_set` events
+- 3 new governance event types (34 total in catalog)
+- Adversarial governance hardening tests: SLA manipulation, privilege escalation, replay integrity, rollback prevention, concurrent isolation, fail-closed boundaries
+
+### 12.7 — Formal Specifications
+- RFC-008: Compliance Evidence Generation Protocol
+- RFC-009: External Verification Protocol
+
+**Tests added in Phase 12:** ~302 new tests (1,853 total across 15 packages)
+
+---
+
+## Phase 11 — Multi-Chain Expansion
+
+### 11.1 — Solana Observer
+- Solana balance, token account, and transaction observation
+- SPL token support with proper decimal handling
+- Program log parsing for custom event extraction
+
+### 11.2 — L2 Observers (Arbitrum, Base, Optimism)
+- L2-specific EVM observer extensions
+- Reorg handling and sequencer finality
+- Cross-L2 reconciliation support
+
+### 11.3 — XRPL EVM Sidechain
+- XRPL EVM sidechain adapter for dual observation
+- Bridge attestation across native XRPL and sidechain
+
+### 11.4 — Multi-Sig Witness Governance
+- Event-sourced N-of-M quorum governance (`GovernanceStore`)
+- Canonical signing payloads (SHA-256 + RFC 8785)
+- Signer add/remove/rotate with weight-based quorum
+- Cross-chain invariant checks
+- RFC-006: Multi-Chain Observer Protocol
+- RFC-007: Multi-Signature Witness Protocol
+
+**Tests added in Phase 11:** ~375 new tests (1,551 total across 13 packages)
+
+---
+
+## Phase 10.5 — Category Standardization & Institutional Adoption
+
+- 5 formal RFCs (RFC-001 through RFC-005)
+- Reference architecture (5-layer stack model)
+- Integration guide with curl examples
+- RFC governance process (Draft → Review → Final → Superseded)
+- Institutional readiness checklist
+
+---
+
 ## Phase 9 — Production Pilot, Audit Readiness & Reference Deployment
 
 ### 9.1 — Pilot Use Case & Export API

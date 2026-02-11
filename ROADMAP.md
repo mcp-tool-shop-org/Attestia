@@ -6,25 +6,27 @@ Last updated: February 11, 2026
 
 ## Where We Are
 
-**12 packages, 1,176 tests, all green. CI enforced. Coverage gated. Benchmarks baselined.**
+**15 packages, 1,853 tests, all green. CI enforced. Coverage gated. Benchmarks baselined.**
 
 | Package | Status | Tests | Purpose |
 |---------|--------|-------|---------|
-| `@attestia/types` | ✅ Complete | 52 | Shared domain types (zero deps) |
+| `@attestia/types` | ✅ Complete | 62 | Shared domain types (zero deps) |
 | `@attestia/registrum` | ✅ Complete | 297 | Constitutional governance — 11 invariants, dual-witness |
 | `@attestia/ledger` | ✅ Complete | 144 | Append-only double-entry engine |
-| `@attestia/chain-observer` | ✅ Complete | 180 | Multi-chain read-only observation (EVM + XRPL) |
-| `@attestia/vault` | ✅ Complete | 55 | Personal vault — portfolios, budgets, intents |
+| `@attestia/chain-observer` | ✅ Complete | 242 | Multi-chain read-only observation (EVM + XRPL + Solana + L2s) |
+| `@attestia/vault` | ✅ Complete | 67 | Personal vault — portfolios, budgets, intents |
 | `@attestia/treasury` | ✅ Complete | 63 | Org treasury — payroll, distributions, funding gates |
-| `@attestia/reconciler` | ✅ Complete | 36 | 3D cross-system matching + Registrum attestation |
-| `@attestia/witness` | ✅ Complete | 127 | XRPL on-chain attestation, retry, degradation |
-| `@attestia/verify` | ✅ Complete | 24 | Deterministic replay verification + GlobalStateHash |
-| `@attestia/event-store` | ✅ Complete | 67 | Append-only event persistence, JSONL, hash chain, snapshots |
-| `@attestia/node` | ✅ Complete | 131 | Hono REST API — 17 endpoints, auth, multi-tenancy, metrics, export |
+| `@attestia/reconciler` | ✅ Complete | 56 | 3D cross-system matching + Registrum attestation |
+| `@attestia/witness` | ✅ Complete | 245 | XRPL on-chain attestation, multi-sig governance, retry |
+| `@attestia/verify` | ✅ Complete | 200 | Replay verification, state bundles, SLA, compliance evidence |
+| `@attestia/event-store` | ✅ Complete | 190 | Append-only event persistence, JSONL, hash chain, 34 event types |
+| `@attestia/node` | ✅ Complete | 184 | Hono REST API — 30+ endpoints, auth, public API, compliance |
+| `@attestia/proof` | ✅ Complete | 53 | Merkle trees, inclusion proofs, attestation proof packaging |
+| `@attestia/sdk` | ✅ Complete | 50 | Typed HTTP client SDK for external consumers |
 
-**What we have:** All core domain logic, event sourcing, CI pipeline, deployable HTTP API with auth + multi-tenancy + observability. Tamper-evident hash chain, witness retry, startup integrity check, auditor export APIs, performance benchmarks. Docker Compose for full-stack deployment.
+**What we have:** All core domain logic, event sourcing, CI pipeline, deployable HTTP API with auth + multi-tenancy + observability. Tamper-evident hash chain, witness retry, startup integrity check, auditor export APIs, performance benchmarks. Docker Compose for full-stack deployment. External verification network, public verification API, Merkle inclusion proofs, SOC 2 + ISO 27001 compliance evidence, typed SDK, SLA enforcement, multi-tenant governance hardening.
 
-**What we don't have:** Rehydration (fromEvents), end-to-end pipeline orchestration, SDK generation, or user-facing UIs.
+**What we don't have:** Rehydration (fromEvents), end-to-end pipeline orchestration, or user-facing UIs.
 
 ---
 
@@ -275,58 +277,97 @@ Typed client SDK for API consumers.
 
 ---
 
-## Phase 11 — Multi-Chain Expansion
+## Phase 11 — Multi-Chain Expansion ✅
 
 **Goal:** Move beyond EVM + XRPL to cover additional chains relevant to financial infrastructure.
 
 ### 11.1 — Solana Observer
-
-- [ ] Read balances, token accounts, and transaction history
-- [ ] SPL token support
-- [ ] Program log parsing for custom event extraction
+- [x] Read balances, token accounts, and transaction history
+- [x] SPL token support
+- [x] Program log parsing for custom event extraction
 
 ### 11.2 — L2 Observers (Arbitrum, Base, Optimism)
-
-- [ ] Extend EVM observer with L2-specific RPC quirks
-- [ ] Handle reorgs and sequencer finality differences
-- [ ] Cross-L2 reconciliation (same intent, different settlement layers)
+- [x] Extend EVM observer with L2-specific RPC quirks
+- [x] Handle reorgs and sequencer finality differences
+- [x] Cross-L2 reconciliation (same intent, different settlement layers)
 
 ### 11.3 — XRPL EVM Sidechain
-
-- [ ] If XRPL's EVM sidechain matures, observe both native XRPL + sidechain
-- [ ] Bridge attestation: prove that a cross-chain transfer landed on both sides
+- [x] XRPL EVM sidechain adapter for both native XRPL + sidechain observation
+- [x] Bridge attestation: prove that a cross-chain transfer landed on both sides
 
 ### 11.4 — Multi-Sig Witness Governance
-
-- [ ] Use XRPL's native multi-sig for witness accounts
-- [ ] N-of-M witness quorum for high-value attestations
-- [ ] Signer rotation with Registrum governance tracking
+- [x] Event-sourced governance with N-of-M quorum enforcement
+- [x] Canonical signing payloads (SHA-256 + RFC 8785)
+- [x] Signer rotation with governance tracking
+- [x] Cross-chain invariant checks
 
 ---
 
-## Phase 12 — Advisory Intelligence
+## Phase 12 — Institutionalization & Ecosystem Activation ✅
+
+**Goal:** Make Attestia's integrity externally verifiable, cryptographically provable, compliance-mappable, and consumable by third-party integrators.
+
+### 12.1 — External Verification Network
+- [x] Exportable state bundles with bundle hash integrity
+- [x] Verifier node — standalone replay verification
+- [x] Multi-verifier consensus with majority rule
+
+### 12.2 — Public Verification API
+- [x] Public routes at `/public/v1/verify/*` (no auth required)
+- [x] State bundle download, report submission, consensus endpoint
+- [x] IP-based rate limiting, CORS, OpenAPI 3.1 schema
+
+### 12.3 — Cryptographic Proof Packaging
+- [x] `@attestia/proof` — binary Merkle tree with SHA-256
+- [x] Attestation proof packaging (self-contained, portable)
+- [x] Proof generation + verification API endpoints
+
+### 12.4 — Compliance & Regulatory Readiness
+- [x] SOC 2 Type II control mappings
+- [x] ISO 27001 Annex A control mappings
+- [x] Evidence generator with programmatic scoring
+- [x] Compliance API endpoints + public summary
+
+### 12.5 — SDK & Integration Layer
+- [x] `@attestia/sdk` — typed HTTP client with retry, timeout, API key injection
+- [x] Full intent lifecycle + verification + proof methods
+- [x] Integration tests bridging SDK to Hono app
+
+### 12.6 — Economic & Governance Hardening
+- [x] SLA policy types + advisory enforcement engine (fail-closed)
+- [x] Tenant governance (create, suspend, reactivate, validate)
+- [x] GovernanceStore extended with SLA policy events
+- [x] Adversarial governance hardening tests (21 tests)
+
+### 12.7 — Formal Specifications
+- [x] `specs/RFC-008-COMPLIANCE-EVIDENCE.md` — Compliance evidence generation protocol
+- [x] `specs/RFC-009-EXTERNAL-VERIFICATION.md` — External verification protocol
+
+---
+
+## Phase 13 — Advisory Intelligence
 
 **Goal:** AI advises, humans decide. AI never approves, signs, or executes.
 
-### 12.1 — Anomaly Detection
+### 13.1 — Anomaly Detection
 
 - [ ] Statistical analysis on reconciliation history (drift detection, outlier flagging)
 - [ ] Alert when a transaction pattern deviates from historical norms
 - [ ] No auto-remediation — surface findings to human operators
 
-### 12.2 — Intent Suggestion
+### 13.2 — Intent Suggestion
 
 - [ ] Based on recurring patterns (e.g., monthly payroll), suggest pre-built intents
 - [ ] Humans review, modify, and explicitly approve suggestions
 - [ ] Suggestion audit trail in event store
 
-### 12.3 — Reconciliation Triage
+### 13.3 — Reconciliation Triage
 
 - [ ] When reconciliation produces mismatches, rank discrepancies by severity
 - [ ] Suggest probable causes (timing delay, fee delta, partial fill)
 - [ ] Surface relevant historical resolutions
 
-### 12.4 — Natural Language Queries
+### 13.4 — Natural Language Queries
 
 - [ ] "Show me all unreconciled intents from last month"
 - [ ] "What was the total payroll distribution for Q4?"
@@ -334,11 +375,11 @@ Typed client SDK for API consumers.
 
 ---
 
-## Phase 13 — User Interfaces
+## Phase 14 — User Interfaces
 
 **Goal:** Make Attestia accessible to non-developers. The internals are event-sourced and API-driven by this point — UIs are thin consumers.
 
-### 13.1 — Personal Vault UI
+### 14.1 — Personal Vault UI
 
 - [ ] Framework: Next.js or SvelteKit
 - [ ] Multi-chain portfolio dashboard (read-only observation)
@@ -346,7 +387,7 @@ Typed client SDK for API consumers.
 - [ ] Intent declaration and approval workflow
 - [ ] Reconciliation status per intent
 
-### 13.2 — Org Treasury Dashboard
+### 14.2 — Org Treasury Dashboard
 
 - [ ] Payroll run management and approval flow
 - [ ] Distribution plan builder
@@ -354,7 +395,7 @@ Typed client SDK for API consumers.
 - [ ] Double-entry ledger explorer
 - [ ] Trial balance and financial statements
 
-### 13.3 — Attestation Explorer
+### 14.3 — Attestation Explorer
 
 - [ ] Browse witness records chronologically
 - [ ] Link to XRPL transaction explorer for on-chain proof
@@ -363,25 +404,25 @@ Typed client SDK for API consumers.
 
 ---
 
-## Phase 14 — Distribution & Packaging
+## Phase 15 — Distribution & Packaging
 
 **Goal:** Make Attestia consumable by the ecosystem.
 
-### 14.1 — npm Publishing
+### 15.1 — npm Publishing
 
 - [ ] Publish all `@attestia/*` packages to npm
 - [ ] Semantic versioning with conventional commits
 - [ ] Changesets for coordinated multi-package releases
 - [ ] Provenance attestation on npm packages (package-lock provenance)
 
-### 14.2 — Docker
+### 15.2 — Docker
 
 - [x] Docker Compose for standalone `rippled` (integration testing)
 - [x] Docker Compose: attestia-node + rippled (full local stack)
 - [x] Multi-stage Dockerfile for `@attestia/node`
 - [ ] `attestia/observer` image — chain observer as a standalone service
 
-### 14.3 — Documentation Site
+### 15.3 — Documentation Site
 
 - [ ] API reference (auto-generated from TypeScript + OpenAPI)
 - [ ] Architecture guide (expanded from DESIGN.md)
@@ -400,9 +441,9 @@ Typed client SDK for API consumers.
 | **M4: API Surface** | node | Deployable REST API with 17 endpoints, auth, multi-tenancy | ✅ Done |
 | **M5: Audit-Ready** | hash chain, witness retry, export, benchmarks, docs | Auditor can replay to same GlobalStateHash; 1,176 tests | ✅ Done |
 | **M5.5: Category Standard** | 5 RFCs, reference architecture, integration guide, RFC process, readiness checklist | Formal specification + institutional adoption path | ✅ Done |
-| **M6: Integrated** | pipeline, e2e tests, XRPL testnet | Full intent→proof flow proven | Planned |
-| **M7: Accessible** | sdk, websocket | External consumers can use Attestia | Planned |
-| **M8: Multi-Chain** | solana, L2s, multi-sig witness | Beyond EVM + XRPL | Planned |
+| **M6: Multi-Chain** | solana, L2s, XRPL EVM sidechain, multi-sig witness | 4 chain families, N-of-M governance; 1,551 tests | ✅ Done |
+| **M7: Trust Standard** | proof, sdk, public API, compliance, SLA, governance hardening | Externally verifiable, compliance-mappable, SDK-consumable; 1,853 tests | ✅ Done |
+| **M8: Integrated** | pipeline, e2e tests, XRPL testnet | Full intent→proof flow proven | Planned |
 | **M9: Intelligent** | anomaly detection, suggestions, NL queries | AI-assisted (never AI-decided) | Planned |
 | **M10: User-Facing** | vault UI, treasury dashboard, explorer | Non-developers can use Attestia | Planned |
 | **M11: Distributed** | npm, docker, docs site | Ecosystem adoption | Planned |

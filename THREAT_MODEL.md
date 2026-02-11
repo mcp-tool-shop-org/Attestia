@@ -78,11 +78,77 @@ This analysis covers the Attestia runtime: `@attestia/node` REST API, backing do
 
 ---
 
+---
+
+## Phase 12 — External Verification & Governance Threats
+
+### Components (Extended)
+
+| ID | Component | Trust Boundary |
+|----|-----------|---------------|
+| C9 | Public verification API | External network (unauthenticated) |
+| C10 | Merkle proof system | Cryptographic boundary |
+| C11 | Compliance evidence generator | Cross-subsystem |
+| C12 | SLA enforcement engine | Per-tenant isolation |
+| C13 | Tenant governance | Multi-tenant boundary |
+| C14 | External verifier network | External trust boundary |
+
+### New STRIDE Threats
+
+#### S — Spoofing
+
+| Threat | Component | Control | File |
+|--------|-----------|---------|------|
+| Fake verifier submits false PASS report | C14 | Verifier identity tracking; minimum verifier count for consensus | `packages/verify/src/verification-consensus.ts` |
+
+#### T — Tampering
+
+| Threat | Component | Control | File |
+|--------|-----------|---------|------|
+| State bundle manipulation by operator | C9 | Bundle hash is deterministic SHA-256; verifiers cross-reference | `packages/verify/src/state-bundle.ts` |
+| Merkle proof forgery | C10 | SHA-256 collision resistance; proof verification against root | `packages/proof/src/merkle-tree.ts` |
+| SLA policy substitution (lenient for strict) | C12 | `assignSlaPolicy` returns new immutable tenant; original unchanged | `packages/verify/src/sla/tenant-governance.ts` |
+
+#### R — Repudiation
+
+| Threat | Component | Control | File |
+|--------|-----------|---------|------|
+| Operator denies state at point in time | C9 | Exportable state bundles with timestamp and bundle hash | `packages/verify/src/state-bundle.ts` |
+| Disputed compliance score | C11 | Deterministic evidence generation; same state → same score | `packages/verify/src/compliance/evidence-generator.ts` |
+
+#### I — Information Disclosure
+
+| Threat | Component | Control | File |
+|--------|-----------|---------|------|
+| Public API leaks internal details | C9 | Public summary strips evaluations and evidence details | `packages/node/src/routes/compliance.ts` |
+| Cross-tenant governance leakage | C13 | Independent governance policies per tenant; store isolation | `packages/verify/src/sla/tenant-governance.ts` |
+
+#### D — Denial of Service
+
+| Threat | Component | Control | File |
+|--------|-----------|---------|------|
+| Public API flood (no auth) | C9 | IP-based token bucket rate limiter (10 req/min) | `packages/node/src/middleware/public-rate-limit.ts` |
+| SLA gaming via NaN/Infinity metrics | C12 | Fail-closed: NaN/Infinity comparison → FAIL | `packages/verify/src/sla/sla-engine.ts` |
+
+#### E — Elevation of Privilege
+
+| Threat | Component | Control | File |
+|--------|-----------|---------|------|
+| Suspended tenant performs actions | C13 | `validateTenantGovernance` blocks all actions for suspended tenants | `packages/verify/src/sla/tenant-governance.ts` |
+| Double-suspend to override reason | C13 | Already-suspended tenant cannot be re-suspended; throws error | `packages/verify/src/sla/tenant-governance.ts` |
+| External verifier collusion | C14 | Minimum verifier count; dissenter tracking; on-chain cross-reference | `packages/verify/src/verification-consensus.ts` |
+
+---
+
 ## Residual Risks
 
 | Risk | Severity | Mitigation Path |
 |------|----------|-----------------|
 | JSONL file deleted entirely (not just tampered) | Medium | External backup; XRPL attestation provides independent proof |
 | JWT secret leaked | High | Rotate secret; re-issue API keys; short JWT expiry |
-| Witness XRPL account compromised | High | Multi-sig witness governance (Phase 10 roadmap) |
+| Witness XRPL account compromised | High | Multi-sig witness governance (implemented in Phase 11) |
 | In-memory audit log lost on restart | Medium | Persist audit log to event store (future enhancement) |
+| External verifier collusion (all verifiers compromised) | Medium | Require diverse verifier sources; on-chain anchoring |
+| Merkle proof forgery via SHA-256 collision | Very Low | Computationally infeasible with current hardware |
+| SLA gaming via carefully crafted metric values | Low | Fail-closed semantics; NaN/Infinity/missing metrics all FAIL |
+| Operator serves manipulated state bundle | Medium | Cross-reference with previously published on-chain hashes |

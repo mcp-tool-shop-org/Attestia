@@ -15,14 +15,14 @@ Technical architecture for developers and auditors.
               /    \       |    \          |
              /      \      |     \         |
             v        v     v      v        v
-        treasury    vault  reconciler    verify
+        treasury    vault  reconciler    verify ──── proof (json-canonicalize)
             \        |      /     |       /
              \       |     /      |      /
               v      v    v       v     v
                @attestia/node (Hono, pino, zod)
-                      |
-                      v
-                  @attestia/witness (xrpl)
+                      |         \
+                      v          v
+              witness (xrpl)    sdk (types only)
 ```
 
 ### External Dependencies
@@ -32,14 +32,16 @@ Technical architecture for developers and auditors.
 | `types` | — | Zero deps. Shared domain types. |
 | `registrum` | `json-canonicalize` | RFC 8785 for deterministic hashing |
 | `ledger` | `@attestia/types` | Double-entry engine |
-| `chain-observer` | `viem`, `xrpl` | EVM + XRPL chain SDKs |
-| `event-store` | `json-canonicalize` | Append-only persistence |
+| `chain-observer` | `viem`, `xrpl`, `@solana/web3.js` | EVM + XRPL + Solana chain SDKs |
+| `event-store` | `json-canonicalize` | Append-only persistence, 34 event types |
 | `vault` | — | Internal deps only |
 | `treasury` | — | Internal deps only |
 | `reconciler` | `json-canonicalize` | Cross-system matching |
-| `verify` | `json-canonicalize` | Replay verification |
-| `witness` | `xrpl` | On-chain attestation |
+| `verify` | `json-canonicalize` | Replay verification, compliance, SLA |
+| `witness` | `xrpl` | On-chain attestation, multi-sig governance |
 | `node` | `hono`, `pino`, `zod` | HTTP API framework |
+| `proof` | `json-canonicalize` | Merkle trees, inclusion proofs |
+| `sdk` | `@attestia/types` (type-only) | Typed HTTP client SDK |
 
 ---
 
@@ -202,6 +204,85 @@ services:
 
 ---
 
+## External Verification
+
+### Trust-Free Verification Flow
+
+```
+External Verifier                     Attestia Node
+      |                                     |
+      |-- GET /public/v1/verify/state-bundle ->|
+      |<-- ExportableStateBundle ------------|
+      |                                     |
+      |  [Replay from bundle locally]       |
+      |  [Compare hashes]                   |
+      |  [Produce VerifierReport]           |
+      |                                     |
+      |-- POST /public/v1/verify/submit-report ->|
+      |<-- Report ID ----------------------|
+      |                                     |
+      |-- GET /public/v1/verify/consensus ->|
+      |<-- ConsensusResult ----------------|
+```
+
+### Merkle Proof Verification
+
+```
+@attestia/proof
+
+Event Hashes → MerkleTree.build() → Root Hash
+                    |
+              getProof(leafIndex) → MerkleProof
+                    |
+              verifyProof(leaf, proof, root) → boolean
+                    |
+          AttestationProofPackage (self-contained, portable)
+```
+
+### Compliance Evidence
+
+```
+State Bundle → Evidence Generator → ComplianceReport
+                    |
+              SOC 2 Mapping → CC1-CC9 evaluations
+              ISO 27001 Mapping → Annex A evaluations
+                    |
+              Score = (passed / total) × 100
+```
+
+---
+
+## SLA & Governance Model
+
+### SLA Evaluation
+
+SLA evaluation is advisory-only (fail-closed semantics):
+
+- Missing metrics → FAIL (never assumed to pass)
+- NaN/Infinity → FAIL
+- Five threshold operators: `lte`, `gte`, `lt`, `gt`, `eq`
+- Pure functions — no I/O, no side effects
+
+### Tenant Governance
+
+Each tenant has an independent governance policy:
+
+- Active tenants can perform all actions
+- Suspended tenants are blocked from all actions (fail-closed)
+- Double-suspend and double-reactivate are rejected
+- `assignSlaPolicy` returns a new immutable tenant (no mutation)
+
+### Multi-Sig Witness Governance
+
+Event-sourced governance store tracks:
+
+- Signers (address, label, weight)
+- Quorum threshold
+- SLA policies
+- Policy version (monotonically increasing)
+
+---
+
 ## Key Design Principles
 
 1. **Append-only** — No UPDATE, no DELETE. State grows monotonically.
@@ -210,3 +291,5 @@ services:
 4. **Zero deps on critical path** — External libraries only at edges (chain SDKs, HTTP framework).
 5. **Humans approve; machines verify** — No AI or automation approves, signs, or executes.
 6. **Chains are witnesses, not authorities** — XRPL attests. Authority flows from structural rules.
+7. **Externally verifiable** — Third parties can independently verify state without trusting the operator.
+8. **Self-contained proofs** — Merkle inclusion proofs are portable and verifiable offline.

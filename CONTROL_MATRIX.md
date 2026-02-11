@@ -26,3 +26,13 @@ Maps each threat to its control, implementation file, and test coverage.
 | 18 | Error info disclosure | Structured error envelope | `packages/node/src/types/error.ts` | `packages/node/tests/middleware/error-handler.test.ts` |
 | 19 | Startup with corrupt store | Integrity check on initialize | `packages/node/src/services/attestia-service.ts` | `packages/node/tests/health-deep.test.ts` |
 | 20 | Schema drift | Event catalog with versioned migrations | `packages/event-store/src/attestia-events.ts` | `packages/event-store/tests/migration-roundtrip.test.ts` |
+| 21 | State bundle manipulation | Deterministic SHA-256 bundle hash | `packages/verify/src/state-bundle.ts` | `packages/verify/tests/state-bundle.test.ts` |
+| 22 | Merkle proof forgery | SHA-256 collision resistance + proof verification | `packages/proof/src/merkle-tree.ts` | `packages/proof/tests/merkle-tree.test.ts` |
+| 23 | External verifier collusion | Minimum verifier count + dissenter tracking | `packages/verify/src/verification-consensus.ts` | `packages/verify/tests/verification-consensus.test.ts` |
+| 24 | Public API flood | IP-based token bucket rate limiter | `packages/node/src/middleware/public-rate-limit.ts` | `packages/node/tests/middleware/public-rate-limit.test.ts` |
+| 25 | SLA gaming (NaN/Infinity) | Fail-closed: non-finite values → FAIL | `packages/verify/src/sla/sla-engine.ts` | `packages/verify/tests/sla/governance-hardening.test.ts` |
+| 26 | Suspended tenant escalation | All actions blocked for suspended tenants | `packages/verify/src/sla/tenant-governance.ts` | `packages/verify/tests/sla/governance-hardening.test.ts` |
+| 27 | SLA policy substitution | Immutable tenant objects (assignSlaPolicy returns copy) | `packages/verify/src/sla/tenant-governance.ts` | `packages/verify/tests/sla/governance-hardening.test.ts` |
+| 28 | Governance version rollback | Policy version monotonically increases | `packages/witness/src/governance/governance-store.ts` | `packages/verify/tests/sla/governance-hardening.test.ts` |
+| 29 | Cross-tenant governance leak | Independent governance per store instance | `packages/witness/src/governance/governance-store.ts` | `packages/verify/tests/sla/governance-hardening.test.ts` |
+| 30 | Compliance score manipulation | Deterministic evidence generation | `packages/verify/src/compliance/evidence-generator.ts` | `packages/verify/tests/compliance/evidence-generator.test.ts` |
