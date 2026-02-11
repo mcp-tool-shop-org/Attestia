@@ -59,3 +59,27 @@ export type {
   WitnessConfig,
 } from "./types.js";
 export { WitnessSubmitError } from "./types.js";
+
+// Multi-sig governance
+export {
+  GovernanceStore,
+  buildCanonicalSigningPayload,
+  orderSignatures,
+  aggregateSignatures,
+  isSignerAddedEvent,
+  isSignerRemovedEvent,
+  isQuorumChangedEvent,
+  isPolicyRotatedEvent,
+} from "./governance/index.js";
+export type {
+  SignerEntry,
+  GovernancePolicy,
+  GovernanceChangeEvent,
+  SignerAddedEvent,
+  SignerRemovedEvent,
+  QuorumChangedEvent,
+  PolicyRotatedEvent,
+  QuorumResult,
+  SignerSignature,
+  AggregatedSignature,
+} from "./governance/index.js";
