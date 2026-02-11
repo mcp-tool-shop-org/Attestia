@@ -1,0 +1,9 @@
+# Proposals Directory
+
+This directory contains governance proposals for Class B and Class C changes.
+
+Naming convention: `NNN-TITLE.md`
+- NNN: Sequential number (001, 002, ...)
+- TITLE: Descriptive identifier (e.g., PHASE_D_CUTOVER)
+
+See `docs/governance/templates/PROPOSAL_TEMPLATE.md` for format.

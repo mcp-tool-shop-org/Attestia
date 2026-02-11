@@ -1,0 +1,25 @@
+{
+  "name": "attestia",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Financial truth infrastructure for the decentralized world",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "clean": "pnpm -r exec rm -rf dist"
+  },
+  "keywords": [
+    "attestation",
+    "web3",
+    "financial-infrastructure",
+    "structural-governance",
+    "deterministic"
+  ],
+  "author": "mcp-tool-shop-org",
+  "license": "MIT"
+}

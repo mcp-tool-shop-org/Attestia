@@ -1,0 +1,9 @@
+# Decisions Directory
+
+This directory contains governance decision records.
+
+Naming convention: `NNN-TITLE.md`
+- NNN: Matches proposal number
+- TITLE: Matches proposal title
+
+See `docs/governance/templates/DECISION_RECORD_TEMPLATE.md` for format.

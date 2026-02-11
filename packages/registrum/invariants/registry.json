@@ -1,0 +1,139 @@
+{
+  "version": "1.0",
+  "registry_id": "registrum.core.invariants",
+  "status": "experimental",
+  "invariants": [
+    {
+      "id": "state.identity.explicit",
+      "group": "identity",
+      "scope": "state",
+      "description": "Every State must declare an explicit identity.",
+      "applies_to": ["state.id"],
+      "condition": {
+        "type": "predicate",
+        "expression": "exists(state.id) && state.id != \"\""
+      },
+      "failure_mode": "reject"
+    },
+    {
+      "id": "state.identity.immutable",
+      "group": "identity",
+      "scope": "transition",
+      "description": "State identity may not change across a transition.",
+      "applies_to": ["transition.from", "transition.to.id"],
+      "condition": {
+        "type": "predicate",
+        "expression": "transition.from == null || transition.to.id == transition.from"
+      },
+      "failure_mode": "reject"
+    },
+    {
+      "id": "state.identity.unique",
+      "group": "identity",
+      "scope": "registration",
+      "description": "No two registered States may share the same identity.",
+      "applies_to": ["state.id"],
+      "condition": {
+        "type": "predicate",
+        "expression": "transition.from != null || !registry.contains_state(transition.to.id)"
+      },
+      "failure_mode": "halt"
+    },
+    {
+      "id": "state.lineage.explicit",
+      "group": "lineage",
+      "scope": "transition",
+      "description": "Every transition must explicitly declare its parent unless root.",
+      "applies_to": ["transition.from", "state.structure.isRoot"],
+      "condition": {
+        "type": "predicate",
+        "expression": "transition.from != null || state.structure.isRoot == true"
+      },
+      "failure_mode": "reject"
+    },
+    {
+      "id": "state.lineage.parent_exists",
+      "group": "lineage",
+      "scope": "registration",
+      "description": "A transition's parent must exist and be registered.",
+      "applies_to": ["transition.from"],
+      "condition": {
+        "type": "predicate",
+        "expression": "transition.from == null || registry.contains_state(transition.from)"
+      },
+      "failure_mode": "reject"
+    },
+    {
+      "id": "state.lineage.single_parent",
+      "group": "lineage",
+      "scope": "transition",
+      "description": "Transitions may reference only one parent.",
+      "applies_to": ["transition.from"],
+      "condition": {
+        "type": "predicate",
+        "expression": "transition.from == null || is_string(transition.from)"
+      },
+      "failure_mode": "reject"
+    },
+    {
+      "id": "state.lineage.continuous",
+      "group": "lineage",
+      "scope": "registration",
+      "description": "Every accepted Transition must extend an unbroken lineage chain.",
+      "applies_to": ["transition.from"],
+      "condition": {
+        "type": "predicate",
+        "expression": "transition.from == null || registry.contains_state(transition.from)"
+      },
+      "failure_mode": "halt"
+    },
+    {
+      "id": "ordering.total",
+      "group": "ordering",
+      "scope": "registration",
+      "description": "All accepted states must have a total ordering.",
+      "applies_to": ["ordering.index"],
+      "condition": {
+        "type": "predicate",
+        "expression": "exists(ordering.index) && ordering.index >= 0"
+      },
+      "failure_mode": "halt"
+    },
+    {
+      "id": "ordering.monotonic",
+      "group": "ordering",
+      "scope": "registration",
+      "description": "Ordering must be strictly increasing.",
+      "applies_to": ["ordering.index"],
+      "condition": {
+        "type": "predicate",
+        "expression": "ordering.index > registry.max_order_index()"
+      },
+      "failure_mode": "reject"
+    },
+    {
+      "id": "ordering.deterministic",
+      "group": "ordering",
+      "scope": "registration",
+      "description": "Ordering must be deterministic given identical inputs.",
+      "applies_to": ["ordering.index"],
+      "condition": {
+        "type": "predicate",
+        "expression": "ordering.index == registry.compute_order_index(transition)"
+      },
+      "failure_mode": "halt"
+    },
+    {
+      "id": "ordering.non_semantic",
+      "group": "ordering",
+      "scope": "registration",
+      "description": "Ordering must not depend on State content or meaning.",
+      "applies_to": ["ordering.index"],
+      "condition": {
+        "type": "predicate",
+        "expression": "true"
+      },
+      "failure_mode": "halt"
+    }
+  ]
+}
