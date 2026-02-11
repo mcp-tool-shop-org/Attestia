@@ -9,7 +9,7 @@
  * 2. Attach attestation memo
  * 3. Auto-fill sequence/fee
  * 4. Sign with witness account secret
- * 5. Submit and wait for validation
+ * 5. Submit and wait for validation (with retry on transient failures)
  *
  * The resulting transaction hash and ledger index are returned
  * as proof that the attestation was written on-chain.
@@ -19,14 +19,23 @@ import { Client as XrplClient, Wallet } from "xrpl";
 import type { Payment } from "xrpl";
 import { encodeMemo } from "./memo-encoder.js";
 import type { AttestationPayload, WitnessConfig, WitnessRecord, XrplMemo } from "./types.js";
+import { WitnessSubmitError } from "./types.js";
+import {
+  withRetry,
+  DEFAULT_RETRY_CONFIG,
+  isRetryableXrplError,
+  type RetryConfig,
+} from "./retry.js";
 
 export class XrplSubmitter {
   private client: XrplClient | null = null;
   private wallet: Wallet | null = null;
   private readonly config: WitnessConfig;
+  private readonly retryConfig: RetryConfig;
 
   constructor(config: WitnessConfig) {
     this.config = config;
+    this.retryConfig = config.retry ?? DEFAULT_RETRY_CONFIG;
   }
 
   /**
@@ -59,19 +68,71 @@ export class XrplSubmitter {
   }
 
   /**
-   * Submit an attestation payload to XRPL.
+   * Submit an attestation payload to XRPL with retry.
    *
    * Creates a 1-drop self-send Payment with the attestation encoded as a memo.
    * Waits for the transaction to be validated on-ledger.
+   * Retries on transient failures with exponential backoff.
    *
    * @returns A WitnessRecord with the on-chain proof reference
-   * @throws Error if not connected or transaction fails
+   * @throws WitnessSubmitError if all retry attempts are exhausted
+   * @throws Error if not connected (permanent, no retry)
    */
   async submit(payload: AttestationPayload): Promise<WitnessRecord> {
     if (!this.client || !this.wallet) {
       throw new Error("XrplSubmitter: not connected. Call connect() first.");
     }
 
+    const client = this.client;
+    const wallet = this.wallet;
+
+    try {
+      return await withRetry(
+        async () => this._submitOnce(payload, client, wallet),
+        this.retryConfig,
+        isRetryableXrplError,
+      );
+    } catch (err: unknown) {
+      // Wrap RetryExhaustedError in WitnessSubmitError for domain-specific error type
+      if (err instanceof WitnessSubmitError) {
+        throw err;
+      }
+      // RetryExhaustedError or non-retryable error
+      const attempts = (err as { attempts?: number }).attempts ?? 1;
+      throw new WitnessSubmitError(
+        attempts,
+        err,
+        payload,
+      );
+    }
+  }
+
+  /**
+   * Build a transaction without submitting (for dry-run / inspection).
+   */
+  buildTransaction(payload: AttestationPayload): {
+    memo: XrplMemo;
+    account: string;
+    destination: string;
+    amount: string;
+  } {
+    const memo = encodeMemo(payload);
+    return {
+      memo,
+      account: this.config.account,
+      destination: this.config.account,
+      amount: "1",
+    };
+  }
+
+  /**
+   * Single submission attempt (no retry).
+   */
+  private async _submitOnce(
+    payload: AttestationPayload,
+    client: XrplClient,
+    wallet: Wallet,
+  ): Promise<WitnessRecord> {
     const memo: XrplMemo = encodeMemo(payload);
 
     const tx: Payment = {
@@ -92,13 +153,13 @@ export class XrplSubmitter {
     };
 
     // Auto-fill sequence, fee (if not set), last ledger sequence
-    const prepared = await this.client.autofill(tx);
+    const prepared = await client.autofill(tx);
 
     // Sign with witness wallet
-    const signed = this.wallet.sign(prepared);
+    const signed = wallet.sign(prepared);
 
     // Submit and wait for validation
-    const result = await this.client.submitAndWait(signed.tx_blob);
+    const result = await client.submitAndWait(signed.tx_blob);
 
     const meta = result.result.meta;
     const ledgerIndex = typeof meta === "object" && meta !== null && "ledger_index" in meta
@@ -113,24 +174,6 @@ export class XrplSubmitter {
       ledgerIndex,
       witnessedAt: new Date().toISOString(),
       witnessAccount: this.config.account,
-    };
-  }
-
-  /**
-   * Build a transaction without submitting (for dry-run / inspection).
-   */
-  buildTransaction(payload: AttestationPayload): {
-    memo: XrplMemo;
-    account: string;
-    destination: string;
-    amount: string;
-  } {
-    const memo = encodeMemo(payload);
-    return {
-      memo,
-      account: this.config.account,
-      destination: this.config.account,
-      amount: "1",
     };
   }
 }

@@ -145,4 +145,29 @@ export interface WitnessConfig {
 
   /** Optional: connection timeout in ms */
   readonly timeoutMs?: number;
+
+  /** Optional: retry configuration for submit failures */
+  readonly retry?: import("./retry.js").RetryConfig | undefined;
+}
+
+// =============================================================================
+// Witness Submit Error
+// =============================================================================
+
+/**
+ * Error thrown when all witness submission retry attempts are exhausted.
+ */
+export class WitnessSubmitError extends Error {
+  constructor(
+    /** Number of attempts made */
+    public readonly attempts: number,
+    /** The last error encountered */
+    public readonly lastError: unknown,
+    /** The payload that failed to submit */
+    public readonly payload: AttestationPayload,
+  ) {
+    const msg = lastError instanceof Error ? lastError.message : String(lastError);
+    super(`Witness submission failed after ${attempts} attempts: ${msg}`);
+    this.name = "WitnessSubmitError";
+  }
 }

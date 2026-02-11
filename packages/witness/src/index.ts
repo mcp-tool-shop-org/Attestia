@@ -39,6 +39,15 @@ export {
   MEMO_FORMAT,
 } from "./memo-encoder.js";
 
+// Retry
+export {
+  withRetry,
+  DEFAULT_RETRY_CONFIG,
+  isRetryableXrplError,
+  RetryExhaustedError,
+} from "./retry.js";
+export type { RetryConfig } from "./retry.js";
+
 // Types
 export type {
   AttestationPayload,
@@ -49,3 +58,4 @@ export type {
   VerificationResult,
   WitnessConfig,
 } from "./types.js";
+export { WitnessSubmitError } from "./types.js";
