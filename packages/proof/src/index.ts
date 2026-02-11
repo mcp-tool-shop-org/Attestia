@@ -18,3 +18,9 @@ export type {
 
 // Merkle tree
 export { MerkleTree } from "./merkle-tree.js";
+
+// Attestation proof packaging
+export {
+  packageAttestationProof,
+  verifyAttestationProof,
+} from "./attestation-proof.js";
