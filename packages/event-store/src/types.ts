@@ -238,6 +238,58 @@ export interface EventStore {
 }
 
 // =============================================================================
+// Hash Chain
+// =============================================================================
+
+/**
+ * A stored event with hash chain fields.
+ *
+ * Extends StoredEvent with cryptographic linking to the previous event.
+ * Events produced by stores with hash chaining enabled will have these fields.
+ * Legacy events (from older JSONL files) will not.
+ */
+export interface HashedStoredEvent<TPayload = Record<string, unknown>>
+  extends StoredEvent<TPayload> {
+  /** SHA-256 hash of this event's canonical content + previousHash */
+  readonly hash: string;
+
+  /** Hash of the preceding event, or "genesis" for the first event */
+  readonly previousHash: string;
+}
+
+/**
+ * Type guard: check if a StoredEvent has hash chain fields.
+ */
+export function isHashedEvent(
+  event: StoredEvent,
+): event is HashedStoredEvent {
+  const record = event as unknown as Record<string, unknown>;
+  return typeof record.hash === "string" && typeof record.previousHash === "string";
+}
+
+/**
+ * A single integrity error found during hash chain verification.
+ */
+export interface IntegrityError {
+  /** Global position of the problematic event */
+  readonly position: number;
+  /** Description of the integrity violation */
+  readonly reason: string;
+}
+
+/**
+ * Result of verifying event store hash chain integrity.
+ */
+export interface EventStoreIntegrityResult {
+  /** Whether the entire chain is valid */
+  readonly valid: boolean;
+  /** Global position of the last successfully verified event */
+  readonly lastVerifiedPosition: number;
+  /** List of integrity errors found */
+  readonly errors: readonly IntegrityError[];
+}
+
+// =============================================================================
 // Errors
 // =============================================================================
 

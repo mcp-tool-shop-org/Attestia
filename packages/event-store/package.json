@@ -13,7 +13,8 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "@attestia/types": "workspace:*"
+    "@attestia/types": "workspace:*",
+    "json-canonicalize": "^2.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

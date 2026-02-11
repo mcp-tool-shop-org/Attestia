@@ -8,16 +8,23 @@
  * - Partial writes (torn pages) are detected and skipped on load
  * - The file is the source of truth; in-memory state is derived
  *
+ * Hash chain:
+ * - Each event includes `hash` and `previousHash` fields
+ * - `hash = sha256(canonicalize(event) + previousHash)`
+ * - Tampering with any event breaks the chain from that point forward
+ * - Legacy events (from older files without hashes) are loaded but not chain-verified
+ *
  * Properties:
  * - Durable: events survive process restart
  * - Append-only: file is never truncated or rewritten
+ * - Tamper-evident: hash chain detects modifications
  * - O(1) append (single write + fsync)
  * - O(n) load on startup (sequential read of all lines)
  * - Synchronous subscription dispatch
  *
  * File format:
  * Each line is a JSON object with the StoredEvent shape:
- * {"event":{...},"streamId":"...","version":1,"globalPosition":1,"appendedAt":"..."}
+ * {"event":{...},"streamId":"...","version":1,"globalPosition":1,"appendedAt":"...","hash":"...","previousHash":"..."}
  */
 
 import {
@@ -36,12 +43,14 @@ import type {
   AppendResult,
   EventHandler,
   EventStore,
+  EventStoreIntegrityResult,
   ReadAllOptions,
   ReadOptions,
   StoredEvent,
   Subscription,
 } from "./types.js";
 import { EventStoreError } from "./types.js";
+import { computeEventHash, GENESIS_HASH, verifyHashChain } from "./hash-chain.js";
 
 /**
  * Options for creating a JsonlEventStore.
@@ -54,6 +63,7 @@ export interface JsonlEventStoreOptions {
 /**
  * Serialized form of a StoredEvent in the JSONL file.
  * Same shape as StoredEvent — validated on load.
+ * Hash fields are optional for backward compatibility with pre-chain files.
  */
 interface JsonlRecord {
   event: {
@@ -65,6 +75,8 @@ interface JsonlRecord {
   version: number;
   globalPosition: number;
   appendedAt: string;
+  hash?: string;
+  previousHash?: string;
 }
 
 /**
@@ -93,6 +105,9 @@ export class JsonlEventStore implements EventStore {
 
   /** Next global position */
   private _nextGlobalPosition = 1;
+
+  /** Hash of the last event in the chain (for linking new appends) */
+  private _lastHash: string = GENESIS_HASH;
 
   /**
    * Create a new JsonlEventStore.
@@ -161,7 +176,7 @@ export class JsonlEventStore implements EventStore {
       this._streams.set(streamId, stream);
     }
 
-    // Build stored events
+    // Build stored events with hash chain
     const fromVersion = currentVersion + 1;
     const storedEvents: StoredEvent[] = [];
     const appendedAt = new Date().toISOString();
@@ -172,7 +187,7 @@ export class JsonlEventStore implements EventStore {
       const version = fromVersion + i;
       const globalPosition = this._nextGlobalPosition++;
 
-      const stored: StoredEvent = {
+      const base: StoredEvent = {
         event: {
           type: event.type,
           metadata: event.metadata,
@@ -184,8 +199,14 @@ export class JsonlEventStore implements EventStore {
         appendedAt,
       };
 
-      storedEvents.push(stored);
-      lines += JSON.stringify(stored) + "\n";
+      const previousHash = this._lastHash;
+      const hash = computeEventHash(base, previousHash);
+
+      const hashed = Object.assign(base, { hash, previousHash }) as StoredEvent;
+      this._lastHash = hash;
+
+      storedEvents.push(hashed);
+      lines += JSON.stringify(hashed) + "\n";
     }
 
     // Write to file atomically (all lines in one write + fsync)
@@ -327,6 +348,15 @@ export class JsonlEventStore implements EventStore {
     return this._filePath;
   }
 
+  // ─── Integrity ──────────────────────────────────────────────────────
+
+  /**
+   * Verify the hash chain integrity of all events in the store.
+   */
+  verifyIntegrity(): EventStoreIntegrityResult {
+    return verifyHashChain(this._globalLog);
+  }
+
   // ─── Internal ───────────────────────────────────────────────────────
 
   private _validateStreamId(streamId: string): void {
@@ -343,6 +373,11 @@ export class JsonlEventStore implements EventStore {
    *
    * Tolerates partial/corrupt lines at the end of the file
    * (which can happen on unclean shutdown).
+   *
+   * Preserves hash/previousHash fields if present in the file
+   * (for chain verification). Legacy files without these fields
+   * are loaded normally — chain verification starts from the first
+   * hashed event.
    */
   private _loadFromFile(): void {
     if (!existsSync(this._filePath)) {
@@ -376,7 +411,8 @@ export class JsonlEventStore implements EventStore {
         continue;
       }
 
-      const stored: StoredEvent = {
+      // Build the stored event, preserving hash fields if present
+      const base: StoredEvent = {
         event: {
           type: record.event.type,
           metadata: record.event.metadata as unknown as StoredEvent["event"]["metadata"],
@@ -387,6 +423,16 @@ export class JsonlEventStore implements EventStore {
         globalPosition: record.globalPosition,
         appendedAt: record.appendedAt,
       };
+
+      // Preserve hash chain fields from the file
+      const stored = (record.hash !== undefined && record.previousHash !== undefined)
+        ? Object.assign(base, { hash: record.hash, previousHash: record.previousHash }) as StoredEvent
+        : base;
+
+      // Track the last hash for continuing the chain on new appends
+      if (record.hash !== undefined) {
+        this._lastHash = record.hash;
+      }
 
       // Add to stream index
       let stream = this._streams.get(stored.streamId);

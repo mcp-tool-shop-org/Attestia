@@ -21,12 +21,14 @@ import type {
   AppendResult,
   EventHandler,
   EventStore,
+  EventStoreIntegrityResult,
   ReadAllOptions,
   ReadOptions,
   StoredEvent,
   Subscription,
 } from "./types.js";
 import { EventStoreError } from "./types.js";
+import { computeEventHash, GENESIS_HASH, verifyHashChain } from "./hash-chain.js";
 
 /**
  * In-memory event store.
@@ -55,6 +57,9 @@ export class InMemoryEventStore implements EventStore {
 
   /** Next global position to assign */
   private _nextGlobalPosition = 1;
+
+  /** Hash of the last appended event (for chain linking) */
+  private _lastHash: string = GENESIS_HASH;
 
   // ─── Append ─────────────────────────────────────────────────────────
 
@@ -116,7 +121,7 @@ export class InMemoryEventStore implements EventStore {
       const version = fromVersion + i;
       const globalPosition = this._nextGlobalPosition++;
 
-      const stored: StoredEvent = {
+      const base: StoredEvent = {
         event: {
           type: event.type,
           metadata: event.metadata,
@@ -127,6 +132,12 @@ export class InMemoryEventStore implements EventStore {
         globalPosition,
         appendedAt,
       };
+
+      const previousHash = this._lastHash;
+      const hash = computeEventHash(base, previousHash);
+
+      const stored = Object.assign(base, { hash, previousHash }) as StoredEvent;
+      this._lastHash = hash;
 
       stream.push(stored);
       this._globalLog.push(stored);
@@ -253,6 +264,15 @@ export class InMemoryEventStore implements EventStore {
 
   globalPosition(): number {
     return this._nextGlobalPosition - 1;
+  }
+
+  // ─── Integrity ────────────────────────────────────────────────────────
+
+  /**
+   * Verify the hash chain integrity of all events in the store.
+   */
+  verifyIntegrity(): EventStoreIntegrityResult {
+    return verifyHashChain(this._globalLog);
   }
 
   // ─── Internal ───────────────────────────────────────────────────────

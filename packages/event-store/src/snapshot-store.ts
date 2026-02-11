@@ -14,6 +14,7 @@
  * - Snapshots can be deleted without data loss (just slower startup)
  * - Each snapshot tracks which event version it was taken at
  * - Multiple snapshots per stream are allowed (old ones can be pruned)
+ * - Each snapshot includes a stateHash for integrity verification
  */
 
 import {
@@ -25,10 +26,20 @@ import {
   unlinkSync,
 } from "node:fs";
 import { join } from "node:path";
+import { createHash } from "node:crypto";
+import { canonicalize } from "json-canonicalize";
 
 // =============================================================================
 // Types
 // =============================================================================
+
+/**
+ * Compute a SHA-256 hash of the canonical JSON representation of a state.
+ */
+export function computeSnapshotHash(state: unknown): string {
+  const canonical = canonicalize(state);
+  return createHash("sha256").update(canonical).digest("hex");
+}
 
 /**
  * A stored snapshot with metadata.
@@ -45,6 +56,9 @@ export interface StoredSnapshot<TState = unknown> {
 
   /** When this snapshot was taken */
   readonly createdAt: string;
+
+  /** SHA-256 hash of the canonical state (for integrity verification) */
+  readonly stateHash: string;
 }
 
 /**
@@ -59,6 +73,19 @@ export interface SaveSnapshotOptions {
 
   /** The aggregate state to snapshot */
   readonly state: unknown;
+}
+
+/**
+ * Verify that a snapshot's stateHash matches its state.
+ *
+ * @returns true if the hash is valid, false if tampered or missing
+ */
+export function verifySnapshotIntegrity(snapshot: StoredSnapshot): boolean {
+  if (snapshot.stateHash === undefined || snapshot.stateHash === "") {
+    return false;
+  }
+  const expected = computeSnapshotHash(snapshot.state);
+  return snapshot.stateHash === expected;
 }
 
 /**
@@ -133,6 +160,7 @@ export class InMemorySnapshotStore implements SnapshotStore {
       version: options.version,
       state: options.state,
       createdAt: new Date().toISOString(),
+      stateHash: computeSnapshotHash(options.state),
     };
 
     // Insert sorted by version
@@ -205,6 +233,7 @@ export class FileSnapshotStore implements SnapshotStore {
       version: options.version,
       state: options.state,
       createdAt: new Date().toISOString(),
+      stateHash: computeSnapshotHash(options.state),
     };
 
     const filePath = this._snapshotPath(options.streamId, options.version);

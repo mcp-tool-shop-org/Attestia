@@ -15,6 +15,7 @@
 // Core types
 export type {
   StoredEvent,
+  HashedStoredEvent,
   ExpectedVersion,
   AppendOptions,
   AppendResult,
@@ -25,8 +26,13 @@ export type {
   Subscription,
   EventStore,
   EventStoreErrorCode,
+  IntegrityError,
+  EventStoreIntegrityResult,
 } from "./types.js";
-export { EventStoreError } from "./types.js";
+export { EventStoreError, isHashedEvent } from "./types.js";
+
+// Hash chain
+export { computeEventHash, verifyHashChain, GENESIS_HASH } from "./hash-chain.js";
 
 // Implementations
 export { InMemoryEventStore } from "./in-memory-store.js";
@@ -73,4 +79,6 @@ export type {
 export {
   InMemorySnapshotStore,
   FileSnapshotStore,
+  computeSnapshotHash,
+  verifySnapshotIntegrity,
 } from "./snapshot-store.js";
