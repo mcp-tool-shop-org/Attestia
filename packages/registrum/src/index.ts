@@ -38,6 +38,9 @@ export { isState, isTransition, toInvariantInput } from "./registrar.js";
 // Implementation
 export { StructuralRegistrar } from "./structural-registrar.js";
 
+// Persistence types
+export type { RegistrarSnapshotV1 } from "./persistence/snapshot.js";
+
 // Invariants
 export {
   INITIAL_INVARIANTS,
