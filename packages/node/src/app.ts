@@ -35,6 +35,7 @@ import { createEventRoutes } from "./routes/events.js";
 import { createVerifyRoutes } from "./routes/verify.js";
 import { createAttestationRoutes } from "./routes/attestation.js";
 import { createMetricsRoute } from "./routes/metrics.js";
+import { AuditLog } from "./services/audit-log.js";
 
 // =============================================================================
 // App Config
@@ -63,6 +64,7 @@ export interface AppInstance {
   readonly tenantRegistry: TenantRegistry;
   readonly idempotencyStore: InMemoryIdempotencyStore;
   readonly metricsCollector: MetricsCollector;
+  readonly auditLog: AuditLog;
   readonly rateLimitStore?: TokenBucketStore | undefined;
 }
 
@@ -75,6 +77,7 @@ export function createApp(options: CreateAppOptions): AppInstance {
     options.idempotencyTtlMs ?? 86400000,
   );
   const metricsCollector = new MetricsCollector();
+  const auditLog = new AuditLog();
   const defaultTenantId = options.defaultTenantId ?? options.serviceConfig.ownerId;
   const enableMetrics = options.enableMetrics !== false;
 
@@ -131,10 +134,11 @@ export function createApp(options: CreateAppOptions): AppInstance {
   app.use("/api/*", idempotencyMiddleware(idempotencyStore));
 
   // Mount v1 API routes
-  app.route("/api/v1/intents", createIntentRoutes());
+  const routeDeps = { metrics: metricsCollector, auditLog };
+  app.route("/api/v1/intents", createIntentRoutes(routeDeps));
   app.route("/api/v1/events", createEventRoutes());
   app.route("/api/v1/verify", createVerifyRoutes());
-  app.route("/api/v1", createAttestationRoutes());
+  app.route("/api/v1", createAttestationRoutes(routeDeps));
 
-  return { app, tenantRegistry, idempotencyStore, metricsCollector, rateLimitStore };
+  return { app, tenantRegistry, idempotencyStore, metricsCollector, auditLog, rateLimitStore };
 }

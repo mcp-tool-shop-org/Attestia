@@ -36,6 +36,12 @@ export class MetricsCollector {
   private readonly _histograms = new Map<string, HistogramEntry>();
   private readonly _buckets: readonly number[];
 
+  /** Generic named counters: name → labels-key → { labels, count } */
+  private readonly _namedCounters = new Map<
+    string,
+    Map<string, { labels: Record<string, string>; count: number }>
+  >();
+
   constructor(buckets: readonly number[] = DEFAULT_BUCKETS) {
     this._buckets = buckets;
   }
@@ -82,6 +88,31 @@ export class MetricsCollector {
   }
 
   /**
+   * Increment a named counter with arbitrary labels.
+   *
+   * Used for business metrics like attestia_intents_total{action="declare"}.
+   */
+  incrementCounter(name: string, labels: Record<string, string> = {}): void {
+    let metric = this._namedCounters.get(name);
+    if (metric === undefined) {
+      metric = new Map();
+      this._namedCounters.set(name, metric);
+    }
+
+    const labelsKey = Object.entries(labels)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([k, v]) => `${k}=${v}`)
+      .join(",");
+
+    const entry = metric.get(labelsKey);
+    if (entry !== undefined) {
+      entry.count++;
+    } else {
+      metric.set(labelsKey, { labels: { ...labels }, count: 1 });
+    }
+  }
+
+  /**
    * Render metrics in Prometheus text exposition format.
    */
   render(): string {
@@ -116,12 +147,30 @@ export class MetricsCollector {
       );
     }
 
+    // Named counters (business metrics)
+    for (const [name, entries] of this._namedCounters) {
+      lines.push(`# HELP ${name} Business metric counter`);
+      lines.push(`# TYPE ${name} counter`);
+      for (const { labels, count } of entries.values()) {
+        const labelStr = Object.entries(labels)
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([k, v]) => `${k}="${v}"`)
+          .join(",");
+        if (labelStr.length > 0) {
+          lines.push(`${name}{${labelStr}} ${count}`);
+        } else {
+          lines.push(`${name} ${count}`);
+        }
+      }
+    }
+
     return lines.join("\n") + "\n";
   }
 
   clear(): void {
     this._counters.clear();
     this._histograms.clear();
+    this._namedCounters.clear();
   }
 }
 

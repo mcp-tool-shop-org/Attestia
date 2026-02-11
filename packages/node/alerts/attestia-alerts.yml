@@ -1,0 +1,59 @@
+# Prometheus AlertManager rules for Attestia.
+#
+# These alerts are designed for the reference deployment.
+# Adjust thresholds for production based on your SLA requirements.
+
+groups:
+  - name: attestia
+    rules:
+      # High HTTP error rate (>5% of requests returning 5xx)
+      - alert: AttestiaHighErrorRate
+        expr: |
+          sum(rate(http_requests_total{status=~"5.."}[5m]))
+          /
+          sum(rate(http_requests_total[5m]))
+          > 0.05
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Attestia HTTP error rate above 5%"
+          description: "{{ $value | humanizePercentage }} of requests are returning 5xx errors."
+
+      # Reconciliation mismatch rate
+      - alert: AttestiaReconciliationMismatch
+        expr: |
+          sum(rate(attestia_reconciliation_total{result="mismatched"}[15m]))
+          /
+          sum(rate(attestia_reconciliation_total[15m]))
+          > 0.1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Reconciliation mismatch rate above 10%"
+          description: "{{ $value | humanizePercentage }} of reconciliations are reporting mismatches."
+
+      # Witness submission failures
+      - alert: AttestiaWitnessFailure
+        expr: |
+          sum(rate(attestia_witness_total{status="failed"}[10m])) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Witness submissions are failing"
+          description: "One or more witness submissions have failed in the last 10 minutes."
+
+      # Readiness probe failing
+      - alert: AttestiaNotReady
+        expr: |
+          up{job="attestia"} == 1
+          and
+          probe_success{job="attestia-ready"} == 0
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Attestia readiness probe failing"
+          description: "The /ready endpoint has been returning non-200 for over 3 minutes."

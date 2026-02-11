@@ -25,9 +25,18 @@ import { setETag } from "../middleware/etag.js";
 import { createErrorEnvelope } from "../types/error.js";
 import { paginate } from "../types/pagination.js";
 import type { DeclareIntentDto, ListIntentsQuery } from "../types/dto.js";
+import type { MetricsCollector } from "../middleware/metrics.js";
+import type { AuditLog } from "../services/audit-log.js";
 
-export function createIntentRoutes(): Hono<AppEnv> {
+export interface IntentRouteDeps {
+  readonly metrics?: MetricsCollector | undefined;
+  readonly auditLog?: AuditLog | undefined;
+}
+
+export function createIntentRoutes(deps?: IntentRouteDeps): Hono<AppEnv> {
   const routes = new Hono<AppEnv>();
+  const metrics = deps?.metrics;
+  const auditLog = deps?.auditLog;
 
   // POST /api/v1/intents — Declare
   routes.post("/", validateBody(DeclareIntentSchema), (c) => {
@@ -41,6 +50,15 @@ export function createIntentRoutes(): Hono<AppEnv> {
       body.params,
       body.envelopeId,
     );
+
+    metrics?.incrementCounter("attestia_intents_total", { action: "declare" });
+    auditLog?.append({
+      tenantId: intent.declaredBy ?? "unknown",
+      action: "declare",
+      resourceType: "intent",
+      resourceId: body.id,
+      actor: "api",
+    });
 
     setETag(c, intent);
     return c.json({ data: intent }, 201);
@@ -101,6 +119,16 @@ export function createIntentRoutes(): Hono<AppEnv> {
     const body = c.get("validatedBody") as { reason?: string };
 
     const intent = service.approveIntent(id, body.reason);
+
+    metrics?.incrementCounter("attestia_intents_total", { action: "approve" });
+    auditLog?.append({
+      tenantId: intent.declaredBy ?? "unknown",
+      action: "approve",
+      resourceType: "intent",
+      resourceId: id,
+      actor: "api",
+    });
+
     setETag(c, intent);
     return c.json({ data: intent });
   });
@@ -112,6 +140,16 @@ export function createIntentRoutes(): Hono<AppEnv> {
     const body = c.get("validatedBody") as { reason: string };
 
     const intent = service.rejectIntent(id, body.reason);
+
+    metrics?.incrementCounter("attestia_intents_total", { action: "reject" });
+    auditLog?.append({
+      tenantId: intent.declaredBy ?? "unknown",
+      action: "reject",
+      resourceType: "intent",
+      resourceId: id,
+      actor: "api",
+    });
+
     setETag(c, intent);
     return c.json({ data: intent });
   });
@@ -126,6 +164,16 @@ export function createIntentRoutes(): Hono<AppEnv> {
     };
 
     const intent = service.executeIntent(id, body.chainId, body.txHash);
+
+    metrics?.incrementCounter("attestia_intents_total", { action: "execute" });
+    auditLog?.append({
+      tenantId: intent.declaredBy ?? "unknown",
+      action: "execute",
+      resourceType: "intent",
+      resourceId: id,
+      actor: "api",
+    });
+
     setETag(c, intent);
     return c.json({ data: intent });
   });
@@ -140,6 +188,16 @@ export function createIntentRoutes(): Hono<AppEnv> {
     };
 
     const intent = service.verifyIntent(id, body.matched, body.discrepancies);
+
+    metrics?.incrementCounter("attestia_intents_total", { action: "verify" });
+    auditLog?.append({
+      tenantId: intent.declaredBy ?? "unknown",
+      action: "verify",
+      resourceType: "intent",
+      resourceId: id,
+      actor: "api",
+    });
+
     setETag(c, intent);
     return c.json({ data: intent });
   });

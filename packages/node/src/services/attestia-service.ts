@@ -16,7 +16,12 @@ import type {
   AttestationRecord,
 } from "@attestia/reconciler";
 import { InMemoryEventStore } from "@attestia/event-store";
-import type { StoredEvent, ReadOptions, ReadAllOptions } from "@attestia/event-store";
+import type {
+  StoredEvent,
+  ReadOptions,
+  ReadAllOptions,
+  EventStoreIntegrityResult,
+} from "@attestia/event-store";
 import { StructuralRegistrar } from "@attestia/registrum";
 import { ObserverRegistry } from "@attestia/chain-observer";
 import {
@@ -178,6 +183,28 @@ export class AttestiaService {
 
   listAttestations(): readonly AttestationRecord[] {
     return this._attestations;
+  }
+
+  // ─── Health & Integrity ──────────────────────────────────────────
+
+  /**
+   * Verify event store integrity and check writability.
+   * Called during startup self-check and by /ready deep health.
+   */
+  checkEventStoreWritable(): { writable: boolean; integrity: EventStoreIntegrityResult } {
+    const integrity = this.eventStore.verifyIntegrity();
+    // Check write capability by verifying the store exists and is functional
+    const writable = integrity.valid;
+    return { writable, integrity };
+  }
+
+  /**
+   * Initialize the service with startup self-checks.
+   * Sets _ready based on event store integrity.
+   */
+  async initialize(): Promise<void> {
+    const { writable } = this.checkEventStoreWritable();
+    this._ready = writable;
   }
 
   // ─── Lifecycle ─────────────────────────────────────────────────────

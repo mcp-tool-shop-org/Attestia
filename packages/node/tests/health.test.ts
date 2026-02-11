@@ -69,11 +69,11 @@ describe("GET /ready", () => {
     const body = (await res.json()) as {
       status: string;
       tenants: number;
-      subsystems: Record<string, boolean>;
+      subsystems: Record<string, { status: string }>;
     };
     expect(body.status).toBe("ready");
     expect(body.tenants).toBe(1);
-    expect(body.subsystems["tenant-1"]).toBe(true);
+    expect(body.subsystems["tenant-1"]!.status).toBe("ok");
   });
 
   it("returns 503 when a tenant is not ready", async () => {

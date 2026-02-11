@@ -14,9 +14,18 @@ import { paginate } from "../types/pagination.js";
 import { createErrorEnvelope } from "../types/error.js";
 import type { ReconcileDto } from "../types/dto.js";
 import type { ReconciliationInput } from "@attestia/reconciler";
+import type { MetricsCollector } from "../middleware/metrics.js";
+import type { AuditLog } from "../services/audit-log.js";
 
-export function createAttestationRoutes(): Hono<AppEnv> {
+export interface AttestationRouteDeps {
+  readonly metrics?: MetricsCollector | undefined;
+  readonly auditLog?: AuditLog | undefined;
+}
+
+export function createAttestationRoutes(deps?: AttestationRouteDeps): Hono<AppEnv> {
   const routes = new Hono<AppEnv>();
+  const metrics = deps?.metrics;
+  const auditLog = deps?.auditLog;
 
   /** Build a ReconciliationInput from the validated DTO. */
   function toReconciliationInput(body: ReconcileDto): ReconciliationInput {
@@ -37,6 +46,9 @@ export function createAttestationRoutes(): Hono<AppEnv> {
 
     const report = service.reconcile(toReconciliationInput(body));
 
+    const result = report.summary.allReconciled ? "matched" : "mismatched";
+    metrics?.incrementCounter("attestia_reconciliation_total", { result });
+
     return c.json({ data: report }, 200);
   });
 
@@ -48,7 +60,19 @@ export function createAttestationRoutes(): Hono<AppEnv> {
     // First reconcile, then attest
     const report = service.reconcile(toReconciliationInput(body));
 
+    const result = report.summary.allReconciled ? "matched" : "mismatched";
+    metrics?.incrementCounter("attestia_reconciliation_total", { result });
+
     const attestation = await service.attest(report);
+    metrics?.incrementCounter("attestia_attestation_total", { status: "recorded" });
+    auditLog?.append({
+      tenantId: "system",
+      action: "attest",
+      resourceType: "attestation",
+      resourceId: attestation.reportHash,
+      actor: "api",
+    });
+
     return c.json({ data: attestation }, 201);
   });
 
@@ -67,14 +91,14 @@ export function createAttestationRoutes(): Hono<AppEnv> {
     const query = queryResult.data;
     const attestations = service.listAttestations();
 
-    const result = paginate(
+    const paginated = paginate(
       [...attestations],
       { cursor: query.cursor, limit: query.limit },
       (a) => a.attestedAt,
       "attestedAt",
     );
 
-    return c.json(result);
+    return c.json(paginated);
   });
 
   return routes;
