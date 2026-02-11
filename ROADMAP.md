@@ -212,6 +212,29 @@ Each package's state machines need to rebuild from events.
 
 ---
 
+## Phase 10.5 — Category Standardization & Institutional Adoption ✅
+
+**Goal:** Define Attestia as a formal financial control standard. Produce implementation-agnostic specifications, reference architecture, governance process for specs, and institutional readiness documentation. Documentation only — no code changes.
+
+### 10.5.1 — Formal Specifications (RFC-001 through RFC-005)
+- [x] `specs/DEFINITIONS.md` — Normative term definitions shared across all RFCs
+- [x] `specs/RFC-001-DETERMINISTIC-EVENT-MODEL.md` — Event structure, hash chain, append-only semantics
+- [x] `specs/RFC-002-PROOF-OF-RECONCILIATION.md` — 3D matching, report hashing, attestation format
+- [x] `specs/RFC-003-INTENT-CONTROL-STANDARD.md` — Intent lifecycle state machine, double-entry accounting
+- [x] `specs/RFC-004-GLOBAL-STATE-HASH.md` — Deterministic replay verification, subsystem hashing
+- [x] `specs/RFC-005-WITNESS-PROTOCOL.md` — XRPL memo encoding, retry semantics, degraded mode
+
+### 10.5.2 — Reference Architecture & Integration Guide
+- [x] `REFERENCE_ARCHITECTURE.md` — 5-layer stack model, deployment patterns, trust boundaries
+- [x] `INTEGRATION_GUIDE.md` — API integration with curl examples for full intent lifecycle
+
+### 10.5.3 — Governance & Institutional Readiness
+- [x] `packages/registrum/docs/governance/RFC_PROCESS.md` — RFC lifecycle: Draft → Review → Final → Superseded
+- [x] `INSTITUTIONAL_READINESS.md` — Adoption readiness checklist for organizations
+- [x] Governance proposal 003: Phase 10.5 as Class A (documentation only)
+
+---
+
 ## Phase 10 — End-to-End Pipeline & SDK
 
 **Goal:** Wire the full `Intent → Approve → Execute → Verify` pipeline and provide SDK for consumers.
@@ -376,6 +399,7 @@ Typed client SDK for API consumers.
 | **M3: Durable** | event-store (done), rehydration (pending) | Event persistence + snapshots + catalog | 🔄 In Progress |
 | **M4: API Surface** | node | Deployable REST API with 17 endpoints, auth, multi-tenancy | ✅ Done |
 | **M5: Audit-Ready** | hash chain, witness retry, export, benchmarks, docs | Auditor can replay to same GlobalStateHash; 1,176 tests | ✅ Done |
+| **M5.5: Category Standard** | 5 RFCs, reference architecture, integration guide, RFC process, readiness checklist | Formal specification + institutional adoption path | ✅ Done |
 | **M6: Integrated** | pipeline, e2e tests, XRPL testnet | Full intent→proof flow proven | Planned |
 | **M7: Accessible** | sdk, websocket | External consumers can use Attestia | Planned |
 | **M8: Multi-Chain** | solana, L2s, multi-sig witness | Beyond EVM + XRPL | Planned |
