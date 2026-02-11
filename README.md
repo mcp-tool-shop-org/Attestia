@@ -1,9 +1,15 @@
-# Attestia
+<p align="center">
+  <img src="assets/logo.png" alt="Attestia" width="400">
+</p>
 
-[![CI](https://github.com/mcp-tool-shop-org/Attestia/actions/workflows/ci.yml/badge.svg)](https://github.com/mcp-tool-shop-org/Attestia/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/mcp-tool-shop-org/Attestia/graph/badge.svg)](https://codecov.io/gh/mcp-tool-shop-org/Attestia)
+<h1 align="center">Attestia</h1>
 
-**Financial truth infrastructure for the decentralized world.**
+<p align="center">
+  <a href="https://github.com/mcp-tool-shop-org/Attestia/actions/workflows/ci.yml"><img src="https://github.com/mcp-tool-shop-org/Attestia/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://codecov.io/gh/mcp-tool-shop-org/Attestia"><img src="https://codecov.io/gh/mcp-tool-shop-org/Attestia/graph/badge.svg" alt="codecov"></a>
+</p>
+
+<p align="center"><strong>Financial truth infrastructure for the decentralized world.</strong></p>
 
 ---
 
