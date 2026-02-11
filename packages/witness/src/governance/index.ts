@@ -24,3 +24,22 @@ export {
   isQuorumChangedEvent,
   isPolicyRotatedEvent,
 } from "./types.js";
+
+// Multi-sig submitter and witness
+export { MultiSigSubmitter, normalizeTimestamp } from "./multisig-submitter.js";
+export type { SignerConfig, MultiSigConfig, MultiSignResult } from "./multisig-submitter.js";
+export { MultiSigWitness } from "./multisig-witness.js";
+export type { MultiSigWitnessConfig } from "./multisig-witness.js";
+
+// Registrum–governance bridge
+export {
+  validateAuthority,
+  replayGovernanceHistory,
+  replayToVersion,
+  validateHistoricalQuorum,
+} from "./registrum-bridge.js";
+export type {
+  RegistrumStateRef,
+  AuthorityValidation,
+  HistoricalQuorumValidation,
+} from "./registrum-bridge.js";

@@ -70,6 +70,13 @@ export {
   isSignerRemovedEvent,
   isQuorumChangedEvent,
   isPolicyRotatedEvent,
+  MultiSigSubmitter,
+  MultiSigWitness,
+  normalizeTimestamp,
+  validateAuthority,
+  replayGovernanceHistory,
+  replayToVersion,
+  validateHistoricalQuorum,
 } from "./governance/index.js";
 export type {
   SignerEntry,
@@ -82,4 +89,11 @@ export type {
   QuorumResult,
   SignerSignature,
   AggregatedSignature,
+  SignerConfig,
+  MultiSigConfig,
+  MultiSignResult,
+  MultiSigWitnessConfig,
+  RegistrumStateRef,
+  AuthorityValidation,
+  HistoricalQuorumValidation,
 } from "./governance/index.js";
