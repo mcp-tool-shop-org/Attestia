@@ -1,6 +1,6 @@
 # Attestia — Roadmap
 
-Last updated: February 2026
+Last updated: February 11, 2026
 
 ---
 
@@ -50,11 +50,20 @@ The only package with zero tests. Types are compile-time checked, but the type g
 
 No CI exists. Every commit should prove the system is green.
 
-- [ ] GitHub Actions workflow: `pnpm install → build → test` on push + PR
-- [ ] Matrix: Node 20 + Node 22
+- [x] GitHub Actions workflow: `pnpm install → build → test` on push + PR
+- [x] Matrix: Node 20 + Node 22
 - [ ] Coverage reporting (aim: ≥95% on registrum, ledger; ≥90% elsewhere)
 - [ ] Lint pass (biome or eslint — pick one, enforce consistently)
-- [ ] Type-check pass (`tsc --noEmit` across all packages)
+- [x] Type-check pass (`tsc --noEmit` across all packages)
+
+### 6.5 — Docker-Based XRPL Integration Testing
+
+Use `rippleci/rippled` in standalone mode for deterministic, offline XRPL integration tests. No testnet dependency, no faucet, sub-second ledger close via `ledger_accept`.
+
+- [x] Docker Compose with standalone `rippled` (WebSocket on port 6006, admin RPC on port 5005)
+- [x] Integration test suite: submit attestation → close ledger → fetch → verify round-trip
+- [x] Tests skip gracefully when Docker/rippled unavailable (CI-optional)
+- [ ] Add rippled service to GitHub Actions CI pipeline
 
 ### 6.4 — Property-Based Testing
 
@@ -133,12 +142,13 @@ Intent declared (Vault)
 - [ ] Test: witness dry-run (full flow without XRPL connection)
 - [ ] Test: replay (pipeline produces same witness record from same events)
 
-### 8.3 — XRPL Testnet Smoke Tests
+### 8.3 — XRPL On-Chain Verification
 
-- [ ] Fund a testnet witness account
-- [ ] Submit a real attestation memo to XRPL testnet
-- [ ] Read it back and verify hash integrity
-- [ ] Confirm the full round-trip: build → encode → submit → fetch → decode → verify
+Standalone `rippled` Docker container provides deterministic on-chain testing without network dependencies (see Phase 6.5). For production readiness:
+
+- [x] Full round-trip proven: build → encode → submit → ledger_accept → fetch → decode → verify
+- [ ] Testnet smoke test with funded witness account (validates against live network)
+- [ ] Mainnet dry-run verification (read-only — verify existing attestations)
 
 ---
 
@@ -273,9 +283,10 @@ Typed client SDK for API consumers.
 
 ### 13.2 — Docker
 
+- [x] Docker Compose for standalone `rippled` (integration testing)
 - [ ] `attestia/server` image — API + event store + witness
 - [ ] `attestia/observer` image — chain observer as a standalone service
-- [ ] Docker Compose for local development (API + observer + XRPL testnet)
+- [ ] Docker Compose for local development (API + observer + rippled)
 
 ### 13.3 — Documentation Site
 
@@ -291,7 +302,7 @@ Typed client SDK for API consumers.
 | Milestone | Packages | Key Deliverable | Status |
 |-----------|----------|-----------------|--------|
 | **M1: Domain Logic** | types, registrum, ledger, chain-observer, vault, treasury, reconciler, witness | All core business logic with 672 tests | ✅ Done |
-| **M2: Production-Grade** | CI, canonicalization, property tests, types tests | Hardened for real-world use | 🔜 Next |
+| **M2: Production-Grade** | CI, canonicalization, property tests, types tests, Docker XRPL | Hardened for real-world use | 🔄 In Progress |
 | **M3: Durable** | event-store, rehydration | State survives restarts | Planned |
 | **M4: Integrated** | pipeline, e2e tests, XRPL testnet | Full intent→proof flow proven | Planned |
 | **M5: Accessible** | api, sdk, websocket | External consumers can use Attestia | Planned |

@@ -1,0 +1,23 @@
+# Docker Compose — Standalone rippled for integration testing
+#
+# Runs a rippled node in standalone mode (no network peers).
+# Ledgers are advanced manually via `ledger_accept` RPC call.
+#
+# Usage:
+#   docker compose up -d
+#   pnpm --filter @attestia/witness run test:integration
+#   docker compose down
+
+services:
+  rippled:
+    image: rippleci/rippled:latest
+    command: standalone
+    ports:
+      - "6006:6006"   # WebSocket (public)
+      - "5005:5005"   # JSON-RPC admin
+    healthcheck:
+      test: ["CMD", "rippled", "--silent", "server_info"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s

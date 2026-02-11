@@ -94,7 +94,38 @@ No step is optional. No step is automated away.
 
 ## Status
 
-Early stage. Building in public.
+8 packages, 672+ tests, all green. Building in public.
+
+| Package | Purpose |
+|---------|---------|
+| `@attestia/types` | Shared domain types (zero deps) |
+| `@attestia/registrum` | Constitutional governance — 11 invariants, dual-witness |
+| `@attestia/ledger` | Append-only double-entry engine |
+| `@attestia/chain-observer` | Multi-chain read-only observation (EVM + XRPL) |
+| `@attestia/vault` | Personal vault — portfolios, budgets, intents |
+| `@attestia/treasury` | Org treasury — payroll, distributions, funding gates |
+| `@attestia/reconciler` | 3D cross-system matching + Registrum attestation |
+| `@attestia/witness` | XRPL on-chain attestation via payment memos |
+
+### Development
+
+```bash
+pnpm install       # Install all dependencies
+pnpm -r run build  # Build all packages
+pnpm -r run test   # Run all tests (672+)
+```
+
+### XRPL Integration Testing
+
+A standalone `rippled` node runs in Docker for deterministic on-chain integration tests — no testnet dependency, no faucet, sub-second ledger close.
+
+```bash
+docker compose up -d              # Start standalone rippled
+pnpm --filter @attestia/witness run test:integration  # Run on-chain round-trip tests
+docker compose down               # Stop rippled
+```
+
+See [ROADMAP.md](ROADMAP.md) for the full project roadmap.
 
 ---
 
