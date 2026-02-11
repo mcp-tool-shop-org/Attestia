@@ -34,3 +34,12 @@ jobs:
 
       - name: Test with coverage
         run: pnpm test:coverage
+
+      - name: Upload coverage to Codecov
+        if: matrix.node-version == 22
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: .
+          flags: unit
+          fail_ci_if_error: false
