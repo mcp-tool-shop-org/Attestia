@@ -4,6 +4,7 @@
  * Provides:
  * - EventStore interface for append-only event streams
  * - InMemoryEventStore for tests and development
+ * - JsonlEventStore for durable file-based persistence
  *
  * @packageDocumentation
  */
@@ -26,3 +27,5 @@ export { EventStoreError } from "./types.js";
 
 // Implementations
 export { InMemoryEventStore } from "./in-memory-store.js";
+export { JsonlEventStore } from "./jsonl-store.js";
+export type { JsonlEventStoreOptions } from "./jsonl-store.js";
