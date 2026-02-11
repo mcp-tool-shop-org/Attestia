@@ -97,25 +97,31 @@ No step is optional. No step is automated away.
 
 ## Status
 
-8 packages, 672+ tests, all green. Building in public.
+11 packages, 1,176 tests, 96.80% coverage, all green. Building in public.
 
-| Package | Purpose |
-|---------|---------|
-| `@attestia/types` | Shared domain types (zero deps) |
-| `@attestia/registrum` | Constitutional governance — 11 invariants, dual-witness |
-| `@attestia/ledger` | Append-only double-entry engine |
-| `@attestia/chain-observer` | Multi-chain read-only observation (EVM + XRPL) |
-| `@attestia/vault` | Personal vault — portfolios, budgets, intents |
-| `@attestia/treasury` | Org treasury — payroll, distributions, funding gates |
-| `@attestia/reconciler` | 3D cross-system matching + Registrum attestation |
-| `@attestia/witness` | XRPL on-chain attestation via payment memos |
+| Package | Tests | Purpose |
+|---------|-------|---------|
+| `@attestia/types` | 52 | Shared domain types (zero deps) |
+| `@attestia/registrum` | 297 | Constitutional governance — 11 invariants, dual-witness |
+| `@attestia/ledger` | 144 | Append-only double-entry engine |
+| `@attestia/chain-observer` | 180 | Multi-chain read-only observation (EVM + XRPL) |
+| `@attestia/vault` | 55 | Personal vault — portfolios, budgets, intents |
+| `@attestia/treasury` | 63 | Org treasury — payroll, distributions, funding gates |
+| `@attestia/reconciler` | 36 | 3D cross-system matching + Registrum attestation |
+| `@attestia/witness` | 127 | XRPL on-chain attestation, retry, degradation |
+| `@attestia/verify` | 24 | Deterministic replay verification + GlobalStateHash |
+| `@attestia/event-store` | 67 | Append-only event persistence, JSONL, hash chain, snapshots |
+| `@attestia/node` | 131 | Hono REST API — 17 endpoints, auth, multi-tenancy, metrics, export |
 
 ### Development
 
 ```bash
-pnpm install       # Install all dependencies
-pnpm -r run build  # Build all packages
-pnpm -r run test   # Run all tests (672+)
+pnpm install          # Install all dependencies
+pnpm build            # Build all packages
+pnpm test             # Run all tests (1,176)
+pnpm test:coverage    # Run with coverage reporting
+pnpm typecheck        # Type-check all packages
+pnpm bench            # Run benchmarks
 ```
 
 ### XRPL Integration Testing
@@ -128,7 +134,18 @@ pnpm --filter @attestia/witness run test:integration  # Run on-chain round-trip 
 docker compose down               # Stop rippled
 ```
 
-See [ROADMAP.md](ROADMAP.md) for the full project roadmap.
+### Documentation
+
+| Document | Purpose |
+|----------|---------|
+| [HANDBOOK.md](HANDBOOK.md) | Executive overview and full package reference |
+| [ROADMAP.md](ROADMAP.md) | Phase-by-phase project roadmap |
+| [DESIGN.md](DESIGN.md) | Architecture decisions |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Package graph, data flows, security model |
+| [VERIFICATION_GUIDE.md](VERIFICATION_GUIDE.md) | Auditor step-by-step replay guide |
+| [THREAT_MODEL.md](THREAT_MODEL.md) | STRIDE analysis per component |
+| [CONTROL_MATRIX.md](CONTROL_MATRIX.md) | Threat → control → file → test mappings |
+| [SECURITY.md](SECURITY.md) | Responsible disclosure policy |
 
 ---
 
