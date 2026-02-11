@@ -28,6 +28,12 @@ export {
   auditMultiChainReplay,
 } from "./multi-chain-replay.js";
 
+// State bundle (external verification)
+export {
+  createStateBundle,
+  verifyBundleIntegrity,
+} from "./state-bundle.js";
+
 // Cross-chain invariants
 export {
   checkAssetConservation,
@@ -45,6 +51,12 @@ export type {
   VerificationResult,
   ReplayInput,
   ReplayResult,
+  ExportableStateBundle,
+  BundleVerificationResult,
+  VerifierConfig,
+  SubsystemCheck,
+  VerifierReport,
+  ConsensusResult,
 } from "./types.js";
 
 export type {

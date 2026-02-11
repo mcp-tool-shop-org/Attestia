@@ -10,6 +10,10 @@
 import type { LedgerSnapshot } from "@attestia/ledger";
 import type { RegistrarSnapshotV1 } from "@attestia/registrum";
 
+// Re-export for convenience (used by state-bundle consumers)
+export type { LedgerSnapshot } from "@attestia/ledger";
+export type { RegistrarSnapshotV1 } from "@attestia/registrum";
+
 // =============================================================================
 // Global State Hash
 // =============================================================================
@@ -113,4 +117,156 @@ export interface ReplayResult {
 
   /** Discrepancies found during replay */
   readonly discrepancies: readonly VerificationDiscrepancy[];
+}
+
+// =============================================================================
+// Exportable State Bundle (Phase 12)
+// =============================================================================
+
+/**
+ * A self-contained, exportable bundle of system state.
+ *
+ * Contains everything an external verifier needs to independently
+ * verify the system's integrity without trusting the operator.
+ *
+ * The bundleHash is a SHA-256 digest of the canonical form of all
+ * internal hashes, providing tamper evidence for the bundle itself.
+ */
+export interface ExportableStateBundle {
+  /** Version identifier for bundle format */
+  readonly version: 1;
+
+  /** Ledger snapshot at time of export */
+  readonly ledgerSnapshot: LedgerSnapshot;
+
+  /** Registrum snapshot at time of export */
+  readonly registrumSnapshot: RegistrarSnapshotV1;
+
+  /** The GlobalStateHash computed from the snapshots */
+  readonly globalStateHash: GlobalStateHash;
+
+  /** SHA-256 hashes of all events in the event store (ordered) */
+  readonly eventHashes: readonly string[];
+
+  /** Optional per-chain observer hashes */
+  readonly chainHashes?: Record<string, string>;
+
+  /** ISO 8601 timestamp of when the bundle was exported */
+  readonly exportedAt: string;
+
+  /**
+   * SHA-256 of canonical(globalStateHash.hash, eventHashes, chainHashes).
+   * Tamper-evidence for the bundle itself.
+   */
+  readonly bundleHash: string;
+}
+
+/**
+ * Result of verifying a state bundle's internal consistency.
+ */
+export interface BundleVerificationResult {
+  /** Overall verdict */
+  readonly verdict: VerificationVerdict;
+
+  /** Whether the bundleHash is consistent with contents */
+  readonly bundleHashValid: boolean;
+
+  /** Whether the globalStateHash matches recomputed hash from snapshots */
+  readonly globalHashValid: boolean;
+
+  /** Any discrepancies found */
+  readonly discrepancies: readonly string[];
+
+  /** ISO 8601 timestamp of verification */
+  readonly verifiedAt: string;
+}
+
+// =============================================================================
+// External Verification (Phase 12)
+// =============================================================================
+
+/**
+ * Configuration for an external verifier.
+ */
+export interface VerifierConfig {
+  /** Unique identity of this verifier */
+  readonly verifierId: string;
+
+  /** Human-readable label for the verifier */
+  readonly label?: string;
+
+  /** If true, missing optional fields (e.g., chainHashes) cause FAIL */
+  readonly strictMode?: boolean;
+}
+
+/**
+ * A subsystem-level check within a verifier report.
+ */
+export interface SubsystemCheck {
+  /** Name of the subsystem */
+  readonly subsystem: string;
+
+  /** Expected hash */
+  readonly expected: string;
+
+  /** Actual (recomputed) hash */
+  readonly actual: string;
+
+  /** Whether they match */
+  readonly matches: boolean;
+}
+
+/**
+ * Report produced by an external verifier after verifying a state bundle.
+ */
+export interface VerifierReport {
+  /** Unique report ID */
+  readonly reportId: string;
+
+  /** Identity of the verifier */
+  readonly verifierId: string;
+
+  /** Overall verdict */
+  readonly verdict: VerificationVerdict;
+
+  /** Per-subsystem hash comparisons */
+  readonly subsystemChecks: readonly SubsystemCheck[];
+
+  /** Any discrepancies found */
+  readonly discrepancies: readonly string[];
+
+  /** Hash of the bundle that was verified */
+  readonly bundleHash: string;
+
+  /** ISO 8601 timestamp of verification */
+  readonly verifiedAt: string;
+}
+
+/**
+ * Result of aggregating multiple verifier reports into a consensus.
+ */
+export interface ConsensusResult {
+  /** Overall consensus verdict */
+  readonly verdict: VerificationVerdict;
+
+  /** Number of verifiers who reported */
+  readonly totalVerifiers: number;
+
+  /** Number who reported PASS */
+  readonly passCount: number;
+
+  /** Number who reported FAIL */
+  readonly failCount: number;
+
+  /** Agreement ratio (0-1) */
+  readonly agreementRatio: number;
+
+  /** Whether minimum verifier threshold was met */
+  readonly quorumReached: boolean;
+
+  /** Verifier IDs that dissented from the majority */
+  readonly dissenters: readonly string[];
+
+  /** ISO 8601 timestamp */
+  readonly consensusAt: string;
 }
