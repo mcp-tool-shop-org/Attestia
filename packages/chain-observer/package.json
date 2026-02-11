@@ -17,6 +17,10 @@
     "./xrpl": {
       "import": "./dist/xrpl/index.js",
       "types": "./dist/xrpl/index.d.ts"
+    },
+    "./solana": {
+      "import": "./dist/solana/index.js",
+      "types": "./dist/solana/index.d.ts"
     }
   },
   "files": [
@@ -35,12 +39,14 @@
     "multi-chain",
     "ethereum",
     "xrpl",
+    "solana",
     "read-only"
   ],
   "author": "mcp-tool-shop-org",
   "license": "MIT",
   "dependencies": {
     "@attestia/types": "workspace:*",
+    "@solana/web3.js": "^1.98.4",
     "viem": "^2.0.0",
     "xrpl": "^4.4.0"
   },
