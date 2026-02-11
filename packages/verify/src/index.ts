@@ -21,6 +21,22 @@ export {
 // Replay verification
 export { verifyByReplay, verifyHash } from "./replay.js";
 
+// Multi-chain replay audit
+export {
+  computeChainHashChain,
+  computeCombinedHash,
+  auditMultiChainReplay,
+} from "./multi-chain-replay.js";
+
+// Cross-chain invariants
+export {
+  checkAssetConservation,
+  checkNoDuplicateSettlement,
+  checkEventOrdering,
+  checkGovernanceConsistency,
+  auditCrossChainInvariants,
+} from "./cross-chain-invariants.js";
+
 // Types
 export type {
   GlobalStateHash,
@@ -30,3 +46,15 @@ export type {
   ReplayInput,
   ReplayResult,
 } from "./types.js";
+
+export type {
+  ChainEvent,
+  ChainReplayResult,
+  MultiChainAuditResult,
+} from "./multi-chain-replay.js";
+
+export type {
+  InvariantEvent,
+  InvariantCheckResult,
+  InvariantAuditResult,
+} from "./cross-chain-invariants.js";

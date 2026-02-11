@@ -4,7 +4,7 @@
  * Tests the top-level coordinator without a live XRPL connection.
  * Focuses on payload building, dry-run, and payload integrity.
  */
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { XrplWitness } from "../src/witness.js";
 import { buildReconciliationPayload, buildRegistrumPayload, verifyPayloadHash } from "../src/payload.js";
 import { fromHex, MEMO_TYPE } from "../src/memo-encoder.js";
@@ -132,14 +132,22 @@ describe("XrplWitness", () => {
     });
 
     it("payload hash is deterministic for same inputs", () => {
-      const witness = new XrplWitness(testConfig);
-      const report = makeCleanReport();
-      const attestation = makeAttestation("recon-int-1", true);
+      // Freeze time to ensure deterministic timestamps in payload builder
+      const now = new Date("2025-01-01T00:00:00.000Z");
+      vi.useFakeTimers({ now });
 
-      const r1 = witness.dryRun(report, attestation);
-      const r2 = witness.dryRun(report, attestation);
+      try {
+        const witness = new XrplWitness(testConfig);
+        const report = makeCleanReport();
+        const attestation = makeAttestation("recon-int-1", true);
 
-      expect(r1.payload.hash).toBe(r2.payload.hash);
+        const r1 = witness.dryRun(report, attestation);
+        const r2 = witness.dryRun(report, attestation);
+
+        expect(r1.payload.hash).toBe(r2.payload.hash);
+      } finally {
+        vi.useRealTimers();
+      }
     });
 
     it("different reports produce different hashes", () => {

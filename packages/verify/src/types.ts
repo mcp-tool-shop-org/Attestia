@@ -32,6 +32,8 @@ export interface GlobalStateHash {
   readonly subsystems: {
     readonly ledger: string;
     readonly registrum: string;
+    /** Optional per-chain observer hashes (added in Phase 11) */
+    readonly chains?: Record<string, string>;
   };
 }
 

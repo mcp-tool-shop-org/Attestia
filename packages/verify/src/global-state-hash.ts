@@ -59,11 +59,13 @@ export function hashRegistrumSnapshot(snapshot: RegistrarSnapshotV1): string {
  *
  * @param ledgerSnapshot - Current ledger state
  * @param registrumSnapshot - Current registrum state
+ * @param chainHashes - Optional per-chain observer hashes (backward compat: omitted = unchanged)
  * @returns GlobalStateHash with combined hash and subsystem hashes
  */
 export function computeGlobalStateHash(
   ledgerSnapshot: LedgerSnapshot,
   registrumSnapshot: RegistrarSnapshotV1,
+  chainHashes?: Record<string, string>,
 ): GlobalStateHash {
   // Step 1-2: Hash each subsystem independently
   const ledgerHash = hashLedgerSnapshot(ledgerSnapshot);
@@ -71,10 +73,17 @@ export function computeGlobalStateHash(
 
   // Step 3-4: Combine subsystem hashes into a single digest
   // Use canonical JSON of sorted subsystem hashes for determinism
-  const combined = canonicalize({
+  // When chainHashes are provided, they are included in the combined hash
+  const combinedData: Record<string, unknown> = {
     ledger: ledgerHash,
     registrum: registrumHash,
-  });
+  };
+
+  if (chainHashes && Object.keys(chainHashes).length > 0) {
+    combinedData.chains = chainHashes;
+  }
+
+  const combined = canonicalize(combinedData);
   const globalHash = sha256(combined);
 
   return {
@@ -83,6 +92,9 @@ export function computeGlobalStateHash(
     subsystems: {
       ledger: ledgerHash,
       registrum: registrumHash,
+      ...(chainHashes && Object.keys(chainHashes).length > 0
+        ? { chains: chainHashes }
+        : {}),
     },
   };
 }
