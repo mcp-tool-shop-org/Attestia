@@ -98,6 +98,9 @@ importers:
       '@attestia/ledger':
         specifier: workspace:*
         version: link:../ledger
+      '@attestia/proof':
+        specifier: workspace:*
+        version: link:../proof
       '@attestia/reconciler':
         specifier: workspace:*
         version: link:../reconciler

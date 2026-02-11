@@ -24,6 +24,7 @@
   "dependencies": {
     "@attestia/chain-observer": "workspace:*",
     "@attestia/event-store": "workspace:*",
+    "@attestia/proof": "workspace:*",
     "@attestia/ledger": "workspace:*",
     "@attestia/reconciler": "workspace:*",
     "@attestia/registrum": "workspace:*",
