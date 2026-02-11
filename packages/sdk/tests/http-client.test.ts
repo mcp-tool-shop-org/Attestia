@@ -9,6 +9,10 @@
  * - Retry on 5xx
  * - No retry on 4xx
  * - Error normalization
+ * - Response body parsing (empty, malformed)
+ * - getFullBody (requestRaw) error paths
+ * - Network error retry and exhaustion
+ * - Data envelope unwrapping fallback
  */
 
 import { describe, it, expect, vi } from "vitest";
@@ -395,5 +399,468 @@ describe("HttpClient response headers", () => {
     expect(result.headers["content-type"]).toBe("application/json");
     expect(result.headers["x-request-id"]).toBe("req-123");
     expect(result.headers["x-ratelimit-remaining"]).toBe("42");
+  });
+});
+
+// =============================================================================
+// Response Body Parsing
+// =============================================================================
+
+describe("HttpClient response body parsing", () => {
+  it("handles empty response body", async () => {
+    // Return a Response with no body content
+    const mockFetch = vi.fn(async () => {
+      return new Response("", { status: 200 });
+    }) as unknown as typeof fetch;
+
+    const client = new HttpClient({
+      baseUrl: "https://api.example.com",
+      fetchFn: mockFetch,
+      retries: 0,
+    });
+
+    const result = await client.get("/empty");
+    // parseResponseBody returns {} for empty text
+    expect(result.data).toEqual({});
+  });
+
+  it("handles non-JSON response body", async () => {
+    const mockFetch = vi.fn(async () => {
+      return new Response("not valid json {{{", { status: 200 });
+    }) as unknown as typeof fetch;
+
+    const client = new HttpClient({
+      baseUrl: "https://api.example.com",
+      fetchFn: mockFetch,
+      retries: 0,
+    });
+
+    const result = await client.get<{ raw: string }>("/text");
+    // parseResponseBody wraps unparseable text in { raw: text }
+    expect(result.data).toEqual({ raw: "not valid json {{{" });
+  });
+
+  it("unwraps data envelope when present", async () => {
+    const mockFetch = createMockFetch([
+      { status: 200, body: { data: { id: "wrapped" } } },
+    ]);
+
+    const client = new HttpClient({
+      baseUrl: "https://api.example.com",
+      fetchFn: mockFetch,
+      retries: 0,
+    });
+
+    const result = await client.get<{ id: string }>("/test");
+    expect(result.data).toEqual({ id: "wrapped" });
+  });
+
+  it("returns full body when no data envelope", async () => {
+    const mockFetch = createMockFetch([
+      { status: 200, body: { id: "no-envelope", name: "test" } },
+    ]);
+
+    const client = new HttpClient({
+      baseUrl: "https://api.example.com",
+      fetchFn: mockFetch,
+      retries: 0,
+    });
+
+    // When body has no .data key, the ?? fallback returns the full body
+    const result = await client.get<{ id: string; name: string }>("/test");
+    expect(result.data).toEqual({ id: "no-envelope", name: "test" });
+  });
+});
+
+// =============================================================================
+// getFullBody / requestRaw Path
+// =============================================================================
+
+describe("HttpClient getFullBody (requestRaw)", () => {
+  it("returns full body without unwrapping data envelope", async () => {
+    const mockFetch = createMockFetch([
+      {
+        status: 200,
+        body: { data: [{ id: 1 }], pagination: { total: 100, page: 1 } },
+      },
+    ]);
+
+    const client = new HttpClient({
+      baseUrl: "https://api.example.com",
+      fetchFn: mockFetch,
+      retries: 0,
+    });
+
+    const result = await client.getFullBody<{
+      data: Array<{ id: number }>;
+      pagination: { total: number; page: number };
+    }>("/list");
+
+    // requestRaw returns the body AS-IS (no .data unwrapping)
+    expect(result.data.data).toEqual([{ id: 1 }]);
+    expect(result.data.pagination).toEqual({ total: 100, page: 1 });
+  });
+
+  it("throws CLIENT_ERROR on 4xx in requestRaw", async () => {
+    const mockFetch = createMockFetch([
+      {
+        status: 422,
+        body: { error: { code: "INVALID", message: "Bad entity" } },
+      },
+    ]);
+
+    const client = new HttpClient({
+      baseUrl: "https://api.example.com",
+      fetchFn: mockFetch,
+      retries: 0,
+    });
+
+    try {
+      await client.getFullBody("/bad");
+      expect.fail("Should have thrown");
+    } catch (error) {
+      expect(error).toBeInstanceOf(AttestiaError);
+      const attError = error as AttestiaError;
+      expect(attError.code).toBe("INVALID");
+      expect(attError.message).toBe("Bad entity");
+      expect(attError.statusCode).toBe(422);
+    }
+  });
+
+  it("uses default CLIENT_ERROR code when 4xx body has no error.code", async () => {
+    const mockFetch = createMockFetch([
+      { status: 403, body: { message: "Forbidden" } },
+    ]);
+
+    const client = new HttpClient({
+      baseUrl: "https://api.example.com",
+      fetchFn: mockFetch,
+      retries: 0,
+    });
+
+    try {
+      await client.getFullBody("/forbidden");
+      expect.fail("Should have thrown");
+    } catch (error) {
+      expect(error).toBeInstanceOf(AttestiaError);
+      const attError = error as AttestiaError;
+      expect(attError.code).toBe("CLIENT_ERROR");
+      expect(attError.message).toBe("HTTP 403");
+      expect(attError.statusCode).toBe(403);
+    }
+  });
+
+  it("throws SERVER_ERROR on 5xx in requestRaw", async () => {
+    const mockFetch = createMockFetch([
+      { status: 502, body: {} },
+    ]);
+
+    const client = new HttpClient({
+      baseUrl: "https://api.example.com",
+      fetchFn: mockFetch,
+      retries: 0,
+    });
+
+    try {
+      await client.getFullBody("/down");
+      expect.fail("Should have thrown");
+    } catch (error) {
+      expect(error).toBeInstanceOf(AttestiaError);
+      const attError = error as AttestiaError;
+      expect(attError.code).toBe("SERVER_ERROR");
+      expect(attError.statusCode).toBe(502);
+    }
+  });
+
+  it("injects API key header in requestRaw path", async () => {
+    const mockFetch = createMockFetch([
+      { status: 200, body: { items: [] } },
+    ]);
+
+    const client = new HttpClient({
+      baseUrl: "https://api.example.com",
+      apiKey: "raw-key-456",
+      fetchFn: mockFetch,
+      retries: 0,
+    });
+
+    await client.getFullBody("/list");
+
+    const [, init] = (mockFetch as ReturnType<typeof vi.fn>).mock.calls[0]!;
+    expect(init.headers["X-Api-Key"]).toBe("raw-key-456");
+  });
+
+  it("omits API key header in requestRaw when not configured", async () => {
+    const mockFetch = createMockFetch([
+      { status: 200, body: {} },
+    ]);
+
+    const client = new HttpClient({
+      baseUrl: "https://api.example.com",
+      fetchFn: mockFetch,
+      retries: 0,
+    });
+
+    await client.getFullBody("/list");
+
+    const [, init] = (mockFetch as ReturnType<typeof vi.fn>).mock.calls[0]!;
+    expect(init.headers["X-Api-Key"]).toBeUndefined();
+  });
+});
+
+// =============================================================================
+// 4xx Default Error Codes (request path)
+// =============================================================================
+
+describe("HttpClient 4xx default error codes", () => {
+  it("uses CLIENT_ERROR fallback when error body has no code", async () => {
+    const mockFetch = createMockFetch([
+      { status: 401, body: { message: "Unauthorized" } },
+    ]);
+
+    const client = new HttpClient({
+      baseUrl: "https://api.example.com",
+      fetchFn: mockFetch,
+      retries: 0,
+    });
+
+    try {
+      await client.get("/secret");
+      expect.fail("Should have thrown");
+    } catch (error) {
+      expect(error).toBeInstanceOf(AttestiaError);
+      const attError = error as AttestiaError;
+      expect(attError.code).toBe("CLIENT_ERROR");
+      expect(attError.message).toBe("HTTP 401");
+      expect(attError.statusCode).toBe(401);
+    }
+  });
+});
+
+// =============================================================================
+// 5xx Last Attempt (no more retries)
+// =============================================================================
+
+describe("HttpClient 5xx last attempt error", () => {
+  it("throws with error body code/message on final 5xx attempt", async () => {
+    // retries: 0 means only 1 attempt total — the 5xx hits line 254, not 243
+    const mockFetch = createMockFetch([
+      { status: 500, body: { error: { code: "DB_DOWN", message: "Database unavailable" } } },
+    ]);
+
+    const client = new HttpClient({
+      baseUrl: "https://api.example.com",
+      fetchFn: mockFetch,
+      retries: 0,
+    });
+
+    try {
+      await client.get("/test");
+      expect.fail("Should have thrown");
+    } catch (error) {
+      expect(error).toBeInstanceOf(AttestiaError);
+      const attError = error as AttestiaError;
+      expect(attError.code).toBe("DB_DOWN");
+      expect(attError.message).toBe("Database unavailable");
+      expect(attError.statusCode).toBe(500);
+    }
+  });
+
+  it("uses default SERVER_ERROR on final 5xx with no error body", async () => {
+    const mockFetch = createMockFetch([
+      { status: 500, body: {} },
+    ]);
+
+    const client = new HttpClient({
+      baseUrl: "https://api.example.com",
+      fetchFn: mockFetch,
+      retries: 0,
+    });
+
+    try {
+      await client.get("/test");
+      expect.fail("Should have thrown");
+    } catch (error) {
+      expect(error).toBeInstanceOf(AttestiaError);
+      const attError = error as AttestiaError;
+      expect(attError.code).toBe("SERVER_ERROR");
+      expect(attError.message).toContain("HTTP 500");
+      expect(attError.message).toContain("1 attempts");
+      expect(attError.statusCode).toBe(500);
+    }
+  });
+});
+
+// =============================================================================
+// Network Error Retry and Exhaustion
+// =============================================================================
+
+describe("HttpClient network error handling", () => {
+  it("retries on network errors and succeeds", async () => {
+    const mockFetch = createMockFetch([
+      { status: 0, error: new Error("ECONNREFUSED") },
+      { status: 200, body: { data: { ok: true } } },
+    ]);
+
+    const client = new HttpClient({
+      baseUrl: "https://api.example.com",
+      fetchFn: mockFetch,
+      retries: 1,
+    });
+
+    const result = await client.get<{ ok: boolean }>("/test");
+    expect(result.data).toEqual({ ok: true });
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("throws NETWORK_ERROR after exhausting retries on network failures", async () => {
+    const mockFetch = createMockFetch([
+      { status: 0, error: new Error("ECONNREFUSED") },
+      { status: 0, error: new Error("ECONNREFUSED") },
+    ]);
+
+    const client = new HttpClient({
+      baseUrl: "https://api.example.com",
+      fetchFn: mockFetch,
+      retries: 1,
+    });
+
+    try {
+      await client.get("/test");
+      expect.fail("Should have thrown");
+    } catch (error) {
+      expect(error).toBeInstanceOf(AttestiaError);
+      const attError = error as AttestiaError;
+      expect(attError.code).toBe("NETWORK_ERROR");
+      expect(attError.message).toContain("ECONNREFUSED");
+      expect(attError.statusCode).toBe(0);
+    }
+  });
+
+  it("handles non-Error throw from fetch (string coercion)", async () => {
+    const mockFetch = vi.fn(async () => {
+      throw "raw string error"; // eslint-disable-line no-throw-literal
+    }) as unknown as typeof fetch;
+
+    const client = new HttpClient({
+      baseUrl: "https://api.example.com",
+      fetchFn: mockFetch,
+      retries: 0,
+    });
+
+    try {
+      await client.get("/test");
+      expect.fail("Should have thrown");
+    } catch (error) {
+      expect(error).toBeInstanceOf(AttestiaError);
+      const attError = error as AttestiaError;
+      expect(attError.code).toBe("NETWORK_ERROR");
+      expect(attError.statusCode).toBe(0);
+    }
+  });
+
+  it("re-throws AttestiaError without wrapping during retry", async () => {
+    // First call returns 4xx (throws AttestiaError), should NOT retry
+    const mockFetch = createMockFetch([
+      { status: 429, body: { error: { code: "RATE_LIMITED", message: "Too many requests" } } },
+    ]);
+
+    const client = new HttpClient({
+      baseUrl: "https://api.example.com",
+      fetchFn: mockFetch,
+      retries: 3,
+    });
+
+    try {
+      await client.get("/test");
+      expect.fail("Should have thrown");
+    } catch (error) {
+      expect(error).toBeInstanceOf(AttestiaError);
+      const attError = error as AttestiaError;
+      expect(attError.code).toBe("RATE_LIMITED");
+    }
+    // Only called once — 4xx is not retried
+    expect(mockFetch).toHaveBeenCalledOnce();
+  });
+});
+
+// =============================================================================
+// Timeout (Deterministic)
+// =============================================================================
+
+describe("HttpClient timeout (deterministic)", () => {
+  it("converts AbortError to TIMEOUT AttestiaError", async () => {
+    const abortError = new Error("The operation was aborted");
+    abortError.name = "AbortError";
+
+    // Directly throw AbortError — no timing dependency
+    const mockFetch = vi.fn(async () => {
+      throw abortError;
+    }) as unknown as typeof fetch;
+
+    const client = new HttpClient({
+      baseUrl: "https://api.example.com",
+      fetchFn: mockFetch,
+      timeout: 5000,
+      retries: 0,
+    });
+
+    try {
+      await client.get("/test");
+      expect.fail("Should have thrown");
+    } catch (error) {
+      expect(error).toBeInstanceOf(AttestiaError);
+      const attError = error as AttestiaError;
+      expect(attError.code).toBe("TIMEOUT");
+      expect(attError.message).toContain("timed out");
+      expect(attError.statusCode).toBe(0);
+    }
+  });
+
+  it("passes through non-AbortError from fetch", async () => {
+    const networkError = new TypeError("Failed to fetch");
+
+    const mockFetch = vi.fn(async () => {
+      throw networkError;
+    }) as unknown as typeof fetch;
+
+    const client = new HttpClient({
+      baseUrl: "https://api.example.com",
+      fetchFn: mockFetch,
+      timeout: 5000,
+      retries: 0,
+    });
+
+    try {
+      await client.get("/test");
+      expect.fail("Should have thrown");
+    } catch (error) {
+      expect(error).toBeInstanceOf(AttestiaError);
+      const attError = error as AttestiaError;
+      // Non-AbortError passes through fetchWithTimeout and gets caught
+      // by the catch block in request(), becoming NETWORK_ERROR
+      expect(attError.code).toBe("NETWORK_ERROR");
+    }
+  });
+});
+
+// =============================================================================
+// Config Defaults
+// =============================================================================
+
+describe("HttpClient config defaults", () => {
+  it("uses default timeout and retries when not specified", async () => {
+    const mockFetch = createMockFetch([
+      { status: 200, body: { data: { ok: true } } },
+    ]);
+
+    // Only baseUrl and fetchFn — timeout and retries use defaults
+    const client = new HttpClient({
+      baseUrl: "https://api.example.com",
+      fetchFn: mockFetch,
+    });
+
+    const result = await client.get<{ ok: boolean }>("/test");
+    expect(result.data).toEqual({ ok: true });
   });
 });
