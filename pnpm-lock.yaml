@@ -40,6 +40,46 @@ importers:
         specifier: ^1.2.0
         version: 1.6.1(@types/node@22.19.11)
 
+  packages/demo:
+    dependencies:
+      '@attestia/chain-observer':
+        specifier: workspace:*
+        version: link:../chain-observer
+      '@attestia/event-store':
+        specifier: workspace:*
+        version: link:../event-store
+      '@attestia/ledger':
+        specifier: workspace:*
+        version: link:../ledger
+      '@attestia/proof':
+        specifier: workspace:*
+        version: link:../proof
+      '@attestia/reconciler':
+        specifier: workspace:*
+        version: link:../reconciler
+      '@attestia/registrum':
+        specifier: workspace:*
+        version: link:../registrum
+      '@attestia/types':
+        specifier: workspace:*
+        version: link:../types
+      '@attestia/vault':
+        specifier: workspace:*
+        version: link:../vault
+      '@attestia/verify':
+        specifier: workspace:*
+        version: link:../verify
+      chalk:
+        specifier: ^5.4.1
+        version: 5.6.2
+    devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.19.11
+      typescript:
+        specifier: ^5.4.0
+        version: 5.9.3
+
   packages/event-store:
     dependencies:
       '@attestia/types':

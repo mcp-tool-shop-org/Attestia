@@ -1,0 +1,43 @@
+{
+  "name": "@attestia/demo",
+  "version": "0.1.0",
+  "description": "Interactive CLI demo — walk through the full Attestia pipeline",
+  "type": "module",
+  "private": true,
+  "main": "dist/index.js",
+  "bin": {
+    "attestia-demo": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "demo": "node dist/index.js",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@attestia/types": "workspace:*",
+    "@attestia/vault": "workspace:*",
+    "@attestia/ledger": "workspace:*",
+    "@attestia/event-store": "workspace:*",
+    "@attestia/registrum": "workspace:*",
+    "@attestia/reconciler": "workspace:*",
+    "@attestia/verify": "workspace:*",
+    "@attestia/proof": "workspace:*",
+    "@attestia/chain-observer": "workspace:*",
+    "chalk": "^5.4.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.4.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "attestia",
+    "demo",
+    "cli",
+    "walkthrough"
+  ],
+  "license": "MIT"
+}

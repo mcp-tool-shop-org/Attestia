@@ -14,7 +14,8 @@
     "typecheck": "pnpm -r lint",
     "lint": "pnpm -r lint",
     "bench": "pnpm -r run bench",
-    "clean": "pnpm -r exec rm -rf dist"
+    "clean": "pnpm -r exec rm -rf dist",
+    "demo": "pnpm --filter @attestia/demo run demo"
   },
   "keywords": [
     "attestation",
