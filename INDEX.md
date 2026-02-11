@@ -8,13 +8,12 @@
 
 | Metric | Value |
 |--------|-------|
-| Packages | 11 |
-| Source files (`.ts`) | 242 |
-| Test files | 80+ |
-| Total tests | 1,200+ (Phase 11 in progress) |
-| Coverage | 96.80% |
+| Packages | 13 |
+| Source files (`.ts`) | ~160 |
+| Test files | ~95 |
+| Total tests | 1,853 |
 | Root docs | 16 markdown files |
-| Specs (RFCs) | 6 files |
+| Specs (RFCs) | 10 files |
 | Registrum internal docs | 30+ files |
 | Research resources | 6 files |
 
@@ -26,22 +25,22 @@
 .
 ├── README.md                       Project overview, architecture, status
 ├── HANDBOOK.md                     Executive overview and full package reference
-├── ROADMAP.md                      Phase-by-phase roadmap (Phases 6–14)
+├── ROADMAP.md                      Phase-by-phase roadmap (Phases 6–15)
 ├── DESIGN.md                       Architecture decisions and tradeoffs
 ├── ARCHITECTURE.md                 Package graph, data flows, security model
 ├── CHANGELOG.md                    Version history
 ├── LICENSE                         MIT
 │
 ├── VERIFICATION_GUIDE.md           Auditor step-by-step replay guide
-├── THREAT_MODEL.md                 STRIDE analysis per component
-├── CONTROL_MATRIX.md               20 threat → control → file → test mappings
+├── THREAT_MODEL.md                 STRIDE analysis per component (30 threats)
+├── CONTROL_MATRIX.md               30 threat → control → file → test mappings
 ├── SECURITY.md                     Responsible disclosure policy
 ├── UPGRADE_GUIDE.md                Deploy without losing state
 │
 ├── REFERENCE_ARCHITECTURE.md       5-layer stack, deployment patterns, trust boundaries
-├── INTEGRATION_GUIDE.md            API integration with curl examples
+├── INTEGRATION_GUIDE.md            API integration with curl examples + SDK usage
 ├── INSTITUTIONAL_READINESS.md      Adoption readiness checklist for organizations
-├── PERFORMANCE_BASELINE.md         Recorded benchmarks (event store, hash chain, etc.)
+├── PERFORMANCE_BASELINE.md         Recorded benchmarks (event store, hash chain, proofs, SLA)
 ├── PILOT_SCOPE.md                  "Monthly payroll reconciliation" pilot definition
 │
 ├── package.json                    Monorepo root (pnpm workspaces)
@@ -54,8 +53,8 @@
 ├── assets/
 │   └── logo.png                    Attestia logo (used in README)
 │
-├── specs/                          Formal specifications (RFCs)
-├── packages/                       11 monorepo packages
+├── specs/                          Formal specifications (9 RFCs + definitions)
+├── packages/                       13 monorepo packages
 ├── resources/                      Research and reference materials
 └── .github/                        CI workflows, issue/PR templates
 ```
@@ -64,7 +63,7 @@
 
 ## specs/
 
-Formal, implementation-agnostic specifications (Phase 10.5).
+Formal, implementation-agnostic specifications.
 
 ```
 specs/
@@ -73,7 +72,11 @@ specs/
 ├── RFC-002-PROOF-OF-RECONCILIATION.md     3D matching, report hashing, attestation
 ├── RFC-003-INTENT-CONTROL-STANDARD.md     Intent lifecycle state machine, accounting
 ├── RFC-004-GLOBAL-STATE-HASH.md           Deterministic replay, subsystem hashing
-└── RFC-005-WITNESS-PROTOCOL.md            XRPL memo encoding, retry, degraded mode
+├── RFC-005-WITNESS-PROTOCOL.md            XRPL memo encoding, retry, degraded mode
+├── RFC-006-MULTI-CHAIN-OBSERVER.md        Multi-chain observation protocol (Phase 11)
+├── RFC-007-MULTI-SIG-WITNESS.md           N-of-M multi-sig governance (Phase 11)
+├── RFC-008-COMPLIANCE-EVIDENCE.md         Compliance evidence generation (Phase 12)
+└── RFC-009-EXTERNAL-VERIFICATION.md       External verification protocol (Phase 12)
 ```
 
 ---
@@ -117,7 +120,7 @@ resources/
 
 ## packages/
 
-11 monorepo packages. Dependency direction flows downward — no circular deps.
+13 monorepo packages. Dependency direction flows downward — no circular deps.
 
 ```
 types → registrum, ledger
@@ -132,9 +135,11 @@ types → registrum, ledger
          ↓
        event-store (cross-cutting)
          ↓
-       verify
+       verify ──── proof
          ↓
         node (composition root)
+         ↓
+        sdk (typed client)
 ```
 
 ---
@@ -155,9 +160,9 @@ packages/types/
 │   ├── event.ts                    Domain event base types
 │   ├── chain.ts                    Chain address, transaction types
 │   ├── guards.ts                   Type guards and narrowing functions
-│   └── solana.ts                   Solana-specific type extensions (Phase 11)
+│   └── solana.ts                   Solana-specific type extensions
 └── tests/
-    └── guards.test.ts              52 tests
+    └── guards.test.ts              62 tests
 ```
 
 ---
@@ -265,7 +270,7 @@ packages/ledger/
 
 ### @attestia/chain-observer
 
-Multi-chain read-only observation. EVM, XRPL, Solana (Phase 11), L2 adapters (Phase 11).
+Multi-chain read-only observation. EVM, XRPL, Solana, L2 adapters.
 
 ```
 packages/chain-observer/
@@ -282,16 +287,16 @@ packages/chain-observer/
 │   ├── evm/
 │   │   ├── index.ts
 │   │   ├── evm-observer.ts         EVM observer (viem)
-│   │   ├── l2-adapter.ts           L2 gas normalization, receipt fields (Phase 11)
-│   │   └── reorg-detector.ts       Reorg detection + cross-chain collision (Phase 11)
+│   │   ├── l2-adapter.ts           L2 gas normalization, receipt fields
+│   │   └── reorg-detector.ts       Reorg detection + cross-chain collision
 │   ├── xrpl/
 │   │   ├── index.ts
 │   │   └── xrpl-observer.ts        XRPL observer (xrpl.js)
 │   └── solana/
 │       ├── index.ts
-│       ├── solana-observer.ts       Solana observer (Phase 11)
-│       ├── log-parser.ts            Program log parsing (Phase 11)
-│       └── rpc-config.ts            RPC resilience config (Phase 11)
+│       ├── solana-observer.ts       Solana observer
+│       ├── log-parser.ts            Program log parsing
+│       └── rpc-config.ts            RPC resilience config
 └── tests/
     ├── chains.test.ts
     ├── finality.test.ts
@@ -309,7 +314,7 @@ packages/chain-observer/
         ├── log-parser.test.ts
         ├── rpc-resilience.test.ts
         └── replay-determinism.test.ts
-                                    205 tests (Phase 11 WIP — 2 failing)
+                                    242 tests
 ```
 
 ---
@@ -337,7 +342,7 @@ packages/vault/
     ├── portfolio-branches.test.ts
     ├── budget.test.ts
     └── intent-manager.test.ts
-                                    55 tests
+                                    67 tests
 ```
 
 ---
@@ -393,14 +398,14 @@ packages/reconciler/
     ├── intent-ledger-matcher.test.ts
     ├── ledger-chain-matcher.test.ts
     └── cross-chain-rules.test.ts
-                                    36 tests
+                                    56 tests
 ```
 
 ---
 
 ### @attestia/witness
 
-XRPL attestation witness. Writes reconciliation proofs on-chain as payment memos. Retry with jitter, degraded mode.
+XRPL attestation witness. On-chain proofs, multi-sig governance, retry with jitter, degraded mode.
 
 ```
 packages/witness/
@@ -416,7 +421,15 @@ packages/witness/
 │   ├── memo-encoder.ts             XRPL memo field encoding
 │   ├── submitter.ts                Transaction submission to XRPL
 │   ├── verifier.ts                 On-chain proof verification
-│   └── retry.ts                    Exponential backoff + jitter
+│   ├── retry.ts                    Exponential backoff + jitter
+│   └── governance/
+│       ├── index.ts
+│       ├── types.ts                GovernanceChangeEvent union types
+│       ├── signing.ts              Canonical signing payloads (SHA-256 + RFC 8785)
+│       ├── governance-store.ts     Event-sourced N-of-M governance store
+│       ├── multisig-submitter.ts   Multi-sig transaction submission
+│       ├── multisig-witness.ts     Multi-sig witness orchestrator
+│       └── registrum-bridge.ts     Governance ↔ Registrum bridge
 └── tests/
     ├── witness.test.ts
     ├── witness-mocked.test.ts
@@ -429,40 +442,24 @@ packages/witness/
     ├── canonicalization.test.ts
     ├── retry.test.ts
     ├── timeout.test.ts
+    ├── governance/
+    │   ├── types.test.ts
+    │   ├── signing.test.ts
+    │   ├── governance-store.test.ts
+    │   ├── multisig-submitter.test.ts
+    │   ├── multisig-witness.test.ts
+    │   ├── registrum-bridge.test.ts
+    │   └── security.test.ts
     └── integration/
         └── rippled-standalone.test.ts   Docker-based XRPL round-trip
-                                    127 tests
-```
-
----
-
-### @attestia/verify
-
-Deterministic replay verification + GlobalStateHash computation.
-
-```
-packages/verify/
-├── package.json
-├── tsconfig.json
-├── vitest.config.ts
-├── src/
-│   ├── index.ts
-│   ├── types.ts
-│   ├── replay.ts                   Event replay engine
-│   └── global-state-hash.ts        Subsystem → global hash computation
-└── tests/
-    ├── replay.test.ts
-    ├── global-state-hash.test.ts
-    └── bench/
-        └── replay.bench.ts         Replay performance benchmark
-                                    24 tests
+                                    245 tests
 ```
 
 ---
 
 ### @attestia/event-store
 
-Append-only event persistence. In-memory, JSONL, snapshots, hash chain, event catalog.
+Append-only event persistence. In-memory, JSONL, snapshots, hash chain, 34-event catalog.
 
 ```
 packages/event-store/
@@ -477,7 +474,7 @@ packages/event-store/
 │   ├── snapshot-store.ts           Snapshot persistence
 │   ├── hash-chain.ts               SHA-256 hash chain (RFC 8785)
 │   ├── catalog.ts                  Event type catalog + versioning
-│   └── attestia-events.ts          Domain event definitions
+│   └── attestia-events.ts          34 domain event definitions
 └── tests/
     ├── in-memory-store.test.ts
     ├── jsonl-store.test.ts
@@ -490,14 +487,90 @@ packages/event-store/
     ├── migration-roundtrip.test.ts
     └── bench/
         └── event-store.bench.ts    Storage performance benchmark
-                                    67 tests
+                                    190 tests
+```
+
+---
+
+### @attestia/verify
+
+Deterministic replay verification, state bundles, external verification, compliance evidence, SLA enforcement.
+
+```
+packages/verify/
+├── package.json
+├── tsconfig.json
+├── vitest.config.ts
+├── src/
+│   ├── index.ts
+│   ├── types.ts                    Core verification types
+│   ├── replay.ts                   Event replay engine
+│   ├── multi-chain-replay.ts       Multi-chain replay verification
+│   ├── cross-chain-invariants.ts   Cross-chain invariant checks
+│   ├── global-state-hash.ts        Subsystem → global hash computation
+│   ├── state-bundle.ts             Exportable state bundle creation + verification
+│   ├── verifier-node.ts            Standalone replay verification from bundles
+│   ├── verification-consensus.ts   Multi-verifier consensus (majority rule)
+│   ├── compliance/
+│   │   ├── index.ts
+│   │   ├── types.ts                ComplianceFramework, ControlMapping, ComplianceReport
+│   │   ├── soc2-mapping.ts         SOC 2 Type II control mappings (CC1–CC9)
+│   │   ├── iso27001-mapping.ts     ISO 27001 Annex A control mappings
+│   │   └── evidence-generator.ts   Programmatic evidence generation + scoring
+│   └── sla/
+│       ├── index.ts
+│       ├── types.ts                SlaPolicy, SlaTarget, SlaEvaluation
+│       ├── sla-engine.ts           Advisory SLA evaluation (fail-closed)
+│       └── tenant-governance.ts    Tenant create/suspend/reactivate/validate
+└── tests/
+    ├── replay.test.ts
+    ├── multi-chain-replay.test.ts
+    ├── cross-chain-invariants.test.ts
+    ├── global-state-hash.test.ts
+    ├── state-bundle.test.ts
+    ├── verifier-node.test.ts
+    ├── verification-consensus.test.ts
+    ├── compliance/
+    │   ├── soc2-mapping.test.ts
+    │   ├── iso27001-mapping.test.ts
+    │   └── evidence-generator.test.ts
+    ├── sla/
+    │   ├── sla-engine.test.ts
+    │   ├── tenant-governance.test.ts
+    │   └── governance-hardening.test.ts   Adversarial tests (21 tests)
+    └── bench/
+        ├── replay.bench.ts
+        └── multi-chain-replay.bench.ts
+                                    200 tests
+```
+
+---
+
+### @attestia/proof
+
+Merkle trees, inclusion proofs, attestation proof packaging. New in Phase 12.
+
+```
+packages/proof/
+├── package.json
+├── tsconfig.json
+├── vitest.config.ts
+├── src/
+│   ├── index.ts
+│   ├── types.ts                    MerkleProof, MerkleNode, AttestationProofPackage
+│   ├── merkle-tree.ts              Binary SHA-256 Merkle tree
+│   └── attestation-proof.ts        Self-contained attestation proof packaging
+└── tests/
+    ├── merkle-tree.test.ts         Tree build, proof gen/verify, tamper detection
+    └── attestation-proof.test.ts   Package create, self-verify, round-trip
+                                    53 tests
 ```
 
 ---
 
 ### @attestia/node
 
-HTTP REST API service. Hono framework, auth, multi-tenancy, observability, export APIs.
+HTTP REST API service. Hono framework, auth, multi-tenancy, public API, compliance, observability.
 
 ```
 packages/node/
@@ -519,7 +592,8 @@ packages/node/
 │   │   ├── index.ts
 │   │   ├── auth.ts                 API key + JWT authentication
 │   │   ├── tenant.ts               Multi-tenant isolation
-│   │   ├── rate-limit.ts           Token-bucket rate limiter
+│   │   ├── rate-limit.ts           Token-bucket rate limiter (authenticated)
+│   │   ├── public-rate-limit.ts    IP-based rate limiter (public endpoints)
 │   │   ├── idempotency.ts          Idempotency-Key support
 │   │   ├── etag.ts                 ETag generation (SHA-256)
 │   │   ├── metrics.ts              Prometheus counters + histograms
@@ -534,11 +608,15 @@ packages/node/
 │   │   ├── verify.ts               Replay + hash verification (2 endpoints)
 │   │   ├── attestation.ts          Reconcile + attest + list (3 endpoints)
 │   │   ├── export.ts               NDJSON events + state snapshot (2 endpoints)
+│   │   ├── proofs.ts               Merkle proof generation + verification (4 endpoints)
+│   │   ├── compliance.ts           Compliance frameworks + reports (3 endpoints)
+│   │   ├── public-verify.ts        Public verification API (5 endpoints, no auth)
+│   │   ├── public-openapi.ts       OpenAPI 3.1 schema (1 endpoint)
 │   │   ├── health.ts               /health + /ready
 │   │   └── metrics.ts              /metrics (Prometheus text)
 │   ├── services/
 │   │   ├── index.ts
-│   │   ├── attestia-service.ts     Composition root (wires all 10 packages)
+│   │   ├── attestia-service.ts     Composition root (wires all packages)
 │   │   ├── tenant-registry.ts      Per-tenant service isolation
 │   │   └── audit-log.ts            Append-only audit trail
 │   └── types/
@@ -570,7 +648,13 @@ packages/node/
     │   ├── idempotency.test.ts
     │   ├── logger.test.ts
     │   ├── rate-limit.test.ts
+    │   ├── public-rate-limit.test.ts
     │   └── tenant.test.ts
+    ├── routes/
+    │   ├── public-verify.test.ts
+    │   ├── public-openapi.test.ts
+    │   ├── proofs.test.ts
+    │   └── compliance.test.ts
     ├── edge-cases/
     │   ├── concurrent-mutations.test.ts
     │   ├── idempotency-conflict.test.ts
@@ -579,7 +663,30 @@ packages/node/
     │   └── payroll-lifecycle.test.ts    End-to-end pilot test
     └── bench/
         └── intent-lifecycle.bench.ts    Lifecycle performance benchmark
-                                    131 tests
+                                    184 tests
+```
+
+---
+
+### @attestia/sdk
+
+Typed HTTP client SDK for external consumers. New in Phase 12.
+
+```
+packages/sdk/
+├── package.json
+├── tsconfig.json
+├── vitest.config.ts
+├── src/
+│   ├── index.ts                    Package exports
+│   ├── types.ts                    AttestiaClientConfig, AttestiaResponse, AttestiaError
+│   ├── http-client.ts              Fetch wrapper: retry, timeout, API key injection
+│   └── client.ts                   AttestiaClient (intents, verify, proofs namespaces)
+└── tests/
+    ├── http-client.test.ts         Mock fetch: GET/POST, headers, retry, timeout
+    ├── client.test.ts              Mock HTTP: full intent lifecycle, verification, proofs
+    └── integration.test.ts         SDK → Hono app bridge: real API integration
+                                    50 tests
 ```
 
 ---
@@ -645,16 +752,16 @@ packages/registrum/docs/
 
 | Type | Count | Description |
 |------|-------|-------------|
-| `.ts` (src) | ~130 | Source files |
-| `.ts` (test) | ~85 | Test files |
-| `.ts` (bench) | 3 | Benchmark files |
-| `.ts` (config) | 11 | vitest.config.ts per package |
+| `.ts` (src) | ~160 | Source files |
+| `.ts` (test) | ~95 | Test files |
+| `.ts` (bench) | 4 | Benchmark files |
+| `.ts` (config) | 13 | vitest.config.ts per package |
 | `.md` (root) | 16 | Top-level documentation |
-| `.md` (specs) | 6 | RFC specifications |
+| `.md` (specs) | 10 | RFC specifications |
 | `.md` (registrum) | 30+ | Registrum internal docs |
 | `.md` (node) | 2 | API docs |
 | `.md` (resources) | 7 | Research materials |
-| `.json` | 13 | package.json (11) + tsconfig (1) + invariants (1) |
+| `.json` | 15 | package.json (13) + tsconfig (1) + invariants (1) |
 | `.yml` | 4 | CI, Docker Compose, issue templates, alerts |
 | `.png` | 1 | Logo |
 
@@ -666,11 +773,11 @@ packages/registrum/docs/
 |------------|---------|---------|
 | `viem` | chain-observer | Ethereum + L2 RPC |
 | `xrpl` | chain-observer, witness | XRPL WebSocket client |
-| `@solana/web3.js` | chain-observer | Solana RPC (Phase 11) |
+| `@solana/web3.js` | chain-observer | Solana RPC |
 | `hono` | node | HTTP framework |
 | `pino` | node | Structured logging |
 | `zod` | node | Schema validation |
-| `json-canonicalize` | registrum, event-store | RFC 8785 deterministic JSON |
+| `json-canonicalize` | registrum, event-store, reconciler, verify, proof | RFC 8785 deterministic JSON |
 | `vitest` | all | Test runner |
 | `fast-check` | registrum, ledger, event-store | Property-based testing |
 | `@vitest/coverage-v8` | all | Coverage instrumentation |
@@ -695,3 +802,6 @@ packages/registrum/docs/
 | Research materials | [resources/](resources/) |
 | Benchmarks | [PERFORMANCE_BASELINE.md](PERFORMANCE_BASELINE.md) |
 | Responsible disclosure | [SECURITY.md](SECURITY.md) |
+| SDK usage | [packages/sdk/](packages/sdk/) |
+| Public verification API | [specs/RFC-009-EXTERNAL-VERIFICATION.md](specs/RFC-009-EXTERNAL-VERIFICATION.md) |
+| Compliance evidence | [specs/RFC-008-COMPLIANCE-EVIDENCE.md](specs/RFC-008-COMPLIANCE-EVIDENCE.md) |
