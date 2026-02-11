@@ -20,9 +20,6 @@ This folder is a living knowledge base — add to it as the landscape evolves.
 ### standards/
 - **eips-and-standards.md** — Account abstraction (EIP-4337, EIP-7702), token standards (ERC-20/721/1155/4626), intent architectures, identity, XRPL standards
 
-### competitors/
-- **landscape.md** — Competitive analysis across personal finance, DAO treasuries, web3 payroll, governance, and identity — with Attestia's differentiation
-
 ### architecture/
 - **design-patterns.md** — 8 design patterns: intent→approve→execute→verify, observation layers, dual-gate approval, append-only events, structural governance, cross-system reconciliation, smart wallet integration, advisory AI boundary
 
