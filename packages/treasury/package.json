@@ -1,0 +1,30 @@
+{
+  "name": "@attestia/treasury",
+  "version": "0.1.0",
+  "description": "Org Treasury — deterministic payroll, DAO distributions, dual-gate funding, double-entry ledger integration",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@attestia/types": "workspace:*",
+    "@attestia/ledger": "workspace:*",
+    "@attestia/registrum": "workspace:*"
+  },
+  "devDependencies": {
+    "vitest": "^1.2.0",
+    "typescript": "^5.4.0"
+  },
+  "keywords": ["treasury", "payroll", "dao", "double-entry", "attestia"],
+  "license": "MIT"
+}

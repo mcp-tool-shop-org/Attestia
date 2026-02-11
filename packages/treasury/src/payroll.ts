@@ -1,0 +1,371 @@
+/**
+ * Payroll Engine — Deterministic payroll computation.
+ *
+ * Given a schedule (payees + components), produces a PayrollRun:
+ * - Sums all positive components as gross pay
+ * - Sums all deductions
+ * - Net pay = gross - deductions
+ * - All arithmetic is bigint via @attestia/ledger money-math
+ * - Results are deterministic: same schedule → same run
+ *
+ * Rules:
+ * - Runs are immutable once created
+ * - Only "draft" runs can be approved; only "approved" runs can be executed
+ * - Execution records the run in the double-entry ledger
+ */
+
+import {
+  addMoney,
+  subtractMoney,
+  zeroMoney,
+  Ledger,
+} from "@attestia/ledger";
+import type { Money, Currency, LedgerEntry } from "@attestia/types";
+import type {
+  Payee,
+  PayComponent,
+  PayrollScheduleEntry,
+  PayrollRun,
+  PayrollRunStatus,
+  PayrollEntry,
+  ResolvedPayComponent,
+  PayPeriod,
+} from "./types.js";
+
+// =============================================================================
+// Error
+// =============================================================================
+
+export class PayrollError extends Error {
+  public readonly code: PayrollErrorCode;
+  constructor(code: PayrollErrorCode, message: string) {
+    super(message);
+    this.name = "PayrollError";
+    this.code = code;
+  }
+}
+
+export type PayrollErrorCode =
+  | "PAYEE_EXISTS"
+  | "PAYEE_NOT_FOUND"
+  | "PAYEE_INACTIVE"
+  | "RUN_EXISTS"
+  | "RUN_NOT_FOUND"
+  | "INVALID_TRANSITION"
+  | "NO_COMPONENTS"
+  | "INVALID_AMOUNT";
+
+// =============================================================================
+// Payroll Engine
+// =============================================================================
+
+export class PayrollEngine {
+  private readonly payees: Map<string, Payee> = new Map();
+  private readonly schedules: Map<string, PayrollScheduleEntry> = new Map();
+  private readonly runs: Map<string, PayrollRun> = new Map();
+  private readonly currency: Currency;
+  private readonly decimals: number;
+
+  constructor(currency: Currency, decimals: number) {
+    this.currency = currency;
+    this.decimals = decimals;
+  }
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Payee management
+  // ───────────────────────────────────────────────────────────────────────
+
+  registerPayee(
+    id: string,
+    name: string,
+    address: string,
+    chainId?: string,
+  ): Payee {
+    if (this.payees.has(id)) {
+      throw new PayrollError("PAYEE_EXISTS", `Payee '${id}' already exists`);
+    }
+
+    const base = {
+      id,
+      name,
+      address,
+      status: "active" as const,
+      registeredAt: new Date().toISOString(),
+    };
+    const payee: Payee = chainId !== undefined
+      ? { ...base, chainId }
+      : base;
+
+    this.payees.set(id, payee);
+    return payee;
+  }
+
+  getPayee(id: string): Payee {
+    const payee = this.payees.get(id);
+    if (!payee) {
+      throw new PayrollError("PAYEE_NOT_FOUND", `Payee '${id}' not found`);
+    }
+    return payee;
+  }
+
+  updatePayeeStatus(
+    id: string,
+    status: Payee["status"],
+  ): Payee {
+    const payee = this.getPayee(id);
+    const updated: Payee = { ...payee, status };
+    this.payees.set(id, updated);
+    return updated;
+  }
+
+  listPayees(status?: Payee["status"]): readonly Payee[] {
+    const all = [...this.payees.values()];
+    return status ? all.filter((p) => p.status === status) : all;
+  }
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Schedule management
+  // ───────────────────────────────────────────────────────────────────────
+
+  setSchedule(
+    payeeId: string,
+    components: readonly PayComponent[],
+  ): PayrollScheduleEntry {
+    this.getPayee(payeeId); // Validate exists
+
+    if (components.length === 0) {
+      throw new PayrollError("NO_COMPONENTS", `Schedule for '${payeeId}' must have at least one component`);
+    }
+
+    // Validate all components have correct currency
+    for (const comp of components) {
+      if (comp.amount.currency !== this.currency) {
+        throw new PayrollError(
+          "INVALID_AMOUNT",
+          `Component '${comp.id}' has currency '${comp.amount.currency}', expected '${this.currency}'`,
+        );
+      }
+    }
+
+    const entry: PayrollScheduleEntry = { payeeId, components };
+    this.schedules.set(payeeId, entry);
+    return entry;
+  }
+
+  getSchedule(payeeId: string): PayrollScheduleEntry | undefined {
+    return this.schedules.get(payeeId);
+  }
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Payroll runs
+  // ───────────────────────────────────────────────────────────────────────
+
+  /**
+   * Create a new payroll run. Deterministically computes all entries
+   * from the current schedules for active payees.
+   */
+  createRun(id: string, period: PayPeriod): PayrollRun {
+    if (this.runs.has(id)) {
+      throw new PayrollError("RUN_EXISTS", `Payroll run '${id}' already exists`);
+    }
+
+    const entries: PayrollEntry[] = [];
+    let totalGross = this.zero();
+    let totalDeductions = this.zero();
+    let totalNet = this.zero();
+
+    // Process each active payee that has a schedule
+    for (const [payeeId, schedule] of this.schedules) {
+      const payee = this.payees.get(payeeId);
+      if (!payee || payee.status !== "active") continue;
+
+      const entry = this.computeEntry(payeeId, schedule.components);
+      entries.push(entry);
+
+      totalGross = addMoney(totalGross, entry.grossPay);
+      totalDeductions = addMoney(totalDeductions, entry.deductions);
+      totalNet = addMoney(totalNet, entry.netPay);
+    }
+
+    const run: PayrollRun = {
+      id,
+      period,
+      status: "draft",
+      entries,
+      totalGross,
+      totalDeductions,
+      totalNet,
+      createdAt: new Date().toISOString(),
+    };
+
+    this.runs.set(id, run);
+    return run;
+  }
+
+  getRun(id: string): PayrollRun {
+    const run = this.runs.get(id);
+    if (!run) {
+      throw new PayrollError("RUN_NOT_FOUND", `Payroll run '${id}' not found`);
+    }
+    return run;
+  }
+
+  listRuns(status?: PayrollRunStatus): readonly PayrollRun[] {
+    const all = [...this.runs.values()];
+    return status ? all.filter((r) => r.status === status) : all;
+  }
+
+  /**
+   * Approve a draft payroll run. Only drafts can be approved.
+   */
+  approveRun(id: string): PayrollRun {
+    const run = this.getRun(id);
+    if (run.status !== "draft") {
+      throw new PayrollError(
+        "INVALID_TRANSITION",
+        `Cannot approve run '${id}' in status '${run.status}' (must be 'draft')`,
+      );
+    }
+
+    const approved: PayrollRun = { ...run, status: "approved" };
+    this.runs.set(id, approved);
+    return approved;
+  }
+
+  /**
+   * Execute a payroll run, recording all entries in the ledger.
+   *
+   * Each payee's net pay is debited from the payroll expense account
+   * and credited to the payee's account.
+   */
+  executeRun(id: string, ledger: Ledger): PayrollRun {
+    const run = this.getRun(id);
+    if (run.status !== "approved") {
+      throw new PayrollError(
+        "INVALID_TRANSITION",
+        `Cannot execute run '${id}' in status '${run.status}' (must be 'approved')`,
+      );
+    }
+
+    // Ensure accounts exist
+    const expenseAccountId = `payroll:expense:${run.period.label}`;
+    if (!ledger.hasAccount(expenseAccountId)) {
+      ledger.registerAccount({
+        id: expenseAccountId,
+        type: "expense",
+        name: `Payroll Expense: ${run.period.label}`,
+      });
+    }
+
+    for (const entry of run.entries) {
+      const payeeAccountId = `payroll:payee:${entry.payeeId}`;
+      if (!ledger.hasAccount(payeeAccountId)) {
+        ledger.registerAccount({
+          id: payeeAccountId,
+          type: "liability",
+          name: `Payee: ${entry.payeeId}`,
+        });
+      }
+
+      const now = new Date().toISOString();
+      const corrId = `payroll:${run.id}:${entry.payeeId}`;
+
+      // Double-entry: debit expense, credit payee liability
+      const entries: LedgerEntry[] = [
+        {
+          id: `${corrId}:debit`,
+          accountId: expenseAccountId,
+          type: "debit",
+          money: entry.netPay,
+          timestamp: now,
+          correlationId: corrId,
+        },
+        {
+          id: `${corrId}:credit`,
+          accountId: payeeAccountId,
+          type: "credit",
+          money: entry.netPay,
+          timestamp: now,
+          correlationId: corrId,
+        },
+      ];
+      ledger.append(entries, {
+        description: `Payroll: ${run.period.label} - ${entry.payeeId}`,
+      });
+    }
+
+    const executed: PayrollRun = {
+      ...run,
+      status: "executed",
+      executedAt: new Date().toISOString(),
+    };
+    this.runs.set(id, executed);
+    return executed;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────
+  // Internal state access (for Treasury)
+  // ─────────────────────────────────────────────────────────────────────
+
+  exportPayees(): readonly Payee[] {
+    return [...this.payees.values()];
+  }
+
+  exportRuns(): readonly PayrollRun[] {
+    return [...this.runs.values()];
+  }
+
+  importPayees(payees: readonly Payee[]): void {
+    for (const p of payees) {
+      this.payees.set(p.id, p);
+    }
+  }
+
+  importRuns(runs: readonly PayrollRun[]): void {
+    for (const r of runs) {
+      this.runs.set(r.id, r);
+    }
+  }
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Private
+  // ───────────────────────────────────────────────────────────────────────
+
+  private computeEntry(
+    payeeId: string,
+    components: readonly PayComponent[],
+  ): PayrollEntry {
+    let grossPay = this.zero();
+    let deductions = this.zero();
+    const resolved: ResolvedPayComponent[] = [];
+
+    for (const comp of components) {
+      resolved.push({
+        componentId: comp.id,
+        name: comp.name,
+        type: comp.type,
+        amount: comp.amount,
+      });
+
+      if (comp.type === "deduction") {
+        deductions = addMoney(deductions, comp.amount);
+      } else {
+        grossPay = addMoney(grossPay, comp.amount);
+      }
+    }
+
+    const netPay = subtractMoney(grossPay, deductions);
+
+    return {
+      payeeId,
+      grossPay,
+      deductions,
+      netPay,
+      components: resolved,
+    };
+  }
+
+  private zero(): Money {
+    return zeroMoney(this.currency, this.decimals);
+  }
+}
