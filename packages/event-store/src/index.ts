@@ -7,6 +7,7 @@
  * - JsonlEventStore for durable file-based persistence
  * - EventCatalog for schema versioning and migration
  * - Attestia domain event definitions (20 event types)
+ * - SnapshotStore for checkpoint-based recovery
  *
  * @packageDocumentation
  */
@@ -62,3 +63,14 @@ export type {
   AttestationRecordedPayload,
   WitnessRecordSubmittedPayload,
 } from "./attestia-events.js";
+
+// Snapshot store
+export type {
+  StoredSnapshot,
+  SaveSnapshotOptions,
+  SnapshotStore,
+} from "./snapshot-store.js";
+export {
+  InMemorySnapshotStore,
+  FileSnapshotStore,
+} from "./snapshot-store.js";
