@@ -26,6 +26,7 @@ import {
   Connection,
   PublicKey,
   type Commitment,
+  type Finality,
   type ParsedTransactionWithMeta,
 } from "@solana/web3.js";
 import type { SolanaCommitment } from "@attestia/types";
@@ -206,14 +207,17 @@ export class SolanaObserver implements ChainObserver {
     const connection = this.requireConnection();
     const pubkey = new PublicKey(query.address);
 
-    // Use query-level finality override or default from RPC config
-    const commitment: Commitment =
-      (query.finality ?? this.rpcConfig.commitment) as Commitment;
+    // Use query-level finality override or default from RPC config.
+    // getSignaturesForAddress and getParsedTransactions require Finality
+    // ('confirmed' | 'finalized'), not Commitment (which also includes 'processed').
+    const rawCommitment = query.finality ?? this.rpcConfig.commitment;
+    const finality: Finality =
+      rawCommitment === "processed" ? "confirmed" : rawCommitment as Finality;
 
     // Get recent transaction signatures for this address
     const signatures = await connection.getSignaturesForAddress(pubkey, {
       limit: query.limit ?? 100,
-    }, commitment);
+    }, finality);
 
     if (signatures.length === 0) {
       return [];
@@ -222,7 +226,7 @@ export class SolanaObserver implements ChainObserver {
     // Fetch full parsed transactions
     const txHashes = signatures.map((s) => s.signature);
     const transactions = await connection.getParsedTransactions(txHashes, {
-      commitment,
+      commitment: finality,
       maxSupportedTransactionVersion: 0,
     });
 
@@ -339,7 +343,7 @@ export class SolanaObserver implements ChainObserver {
           amount,
           decimals,
           symbol: mint?.slice(0, 8) ?? "SPL",
-          token: mint,
+          ...(mint !== undefined ? { token: mint } : {}),
           timestamp,
           observedAt,
         });
