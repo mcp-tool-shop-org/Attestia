@@ -8,6 +8,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { EvmObserver } from "../../src/evm/evm-observer.js";
 import { CHAINS } from "../../src/chains.js";
+import {
+  ETHEREUM_PROFILE,
+  POLYGON_PROFILE,
+  ARBITRUM_PROFILE,
+} from "../../src/profiles.js";
 import type { ObserverConfig } from "../../src/observer.js";
 
 // =============================================================================
@@ -18,6 +23,7 @@ const mockGetBlockNumber = vi.fn().mockResolvedValue(12345n);
 const mockGetBalance = vi.fn().mockResolvedValue(1000000000000000000n);
 const mockReadContract = vi.fn();
 const mockGetLogs = vi.fn().mockResolvedValue([]);
+const mockGetBlock = vi.fn();
 
 vi.mock("viem", async () => {
   const actual = await vi.importActual("viem");
@@ -28,17 +34,20 @@ vi.mock("viem", async () => {
       getBalance: mockGetBalance,
       readContract: mockReadContract,
       getLogs: mockGetLogs,
+      getBlock: mockGetBlock,
     })),
   };
 });
 
 function createConfig(
-  chain = CHAINS.ETHEREUM_MAINNET
+  chain = CHAINS.ETHEREUM_MAINNET,
+  profile?: ObserverConfig["profile"],
 ): ObserverConfig {
   return {
     chain,
     rpcUrl: "https://mock-rpc.example.com",
     timeoutMs: 5000,
+    ...(profile && { profile }),
   };
 }
 
@@ -51,6 +60,7 @@ describe("EvmObserver", () => {
     vi.clearAllMocks();
     mockReadContract.mockReset();
     mockGetLogs.mockResolvedValue([]);
+    mockGetBlock.mockReset();
   });
 
   describe("constructor", () => {
@@ -159,7 +169,7 @@ describe("EvmObserver", () => {
       expect(result).toEqual([]);
     });
 
-    it("maps Transfer logs to TransferEvent", async () => {
+    it("maps Transfer logs to TransferEvent with token metadata", async () => {
       mockGetLogs.mockResolvedValueOnce([
         {
           transactionHash: "0xdeadbeef",
@@ -172,6 +182,11 @@ describe("EvmObserver", () => {
           },
         },
       ]);
+
+      // Mock token metadata queries (symbol + decimals)
+      mockReadContract
+        .mockResolvedValueOnce("USDC") // symbol
+        .mockResolvedValueOnce(6); // decimals
 
       const observer = new EvmObserver(createConfig());
       await observer.connect();
@@ -188,6 +203,154 @@ describe("EvmObserver", () => {
       expect(result[0]!.txHash).toBe("0xdeadbeef");
       expect(result[0]!.from).toBe("0xsender");
       expect(result[0]!.amount).toBe("500000");
+      expect(result[0]!.symbol).toBe("USDC");
+      expect(result[0]!.decimals).toBe(6);
+    });
+
+    it("falls back to ERC20 defaults when token metadata query fails", async () => {
+      mockGetLogs.mockResolvedValueOnce([
+        {
+          transactionHash: "0xdeadbeef",
+          blockNumber: 150n,
+          address: "0xbadtoken",
+          args: {
+            from: "0xsender",
+            to: "0x1234567890abcdef1234567890abcdef12345678",
+            value: 100n,
+          },
+        },
+      ]);
+
+      // Token metadata query fails
+      mockReadContract.mockRejectedValue(new Error("Contract error"));
+
+      const observer = new EvmObserver(createConfig());
+      await observer.connect();
+
+      const result = await observer.getTransfers({
+        address: "0x1234567890abcdef1234567890abcdef12345678",
+        direction: "incoming",
+        token: "0xbadtoken",
+        fromBlock: 100,
+        toBlock: 200,
+      });
+
+      expect(result.length).toBe(1);
+      expect(result[0]!.symbol).toBe("ERC20");
+      expect(result[0]!.decimals).toBe(18);
+    });
+  });
+
+  describe("dynamic native token metadata", () => {
+    it("returns POL symbol for Polygon", async () => {
+      const observer = new EvmObserver(createConfig(CHAINS.POLYGON));
+      await observer.connect();
+
+      const result = await observer.getBalance({
+        address: "0x1234567890abcdef1234567890abcdef12345678",
+      });
+
+      expect(result.symbol).toBe("POL");
+      expect(result.decimals).toBe(18);
+    });
+
+    it("returns ETH for Arbitrum", async () => {
+      const observer = new EvmObserver(createConfig(CHAINS.ARBITRUM_ONE));
+      await observer.connect();
+
+      const result = await observer.getBalance({
+        address: "0x1234567890abcdef1234567890abcdef12345678",
+      });
+
+      expect(result.symbol).toBe("ETH");
+      expect(result.decimals).toBe(18);
+    });
+
+    it("uses profile nativeToken when provided", async () => {
+      const customProfile = {
+        ...POLYGON_PROFILE,
+        nativeToken: { symbol: "MATIC", decimals: 18 },
+      };
+      const observer = new EvmObserver(
+        createConfig(CHAINS.POLYGON, customProfile),
+      );
+      await observer.connect();
+
+      const result = await observer.getBalance({
+        address: "0x1234567890abcdef1234567890abcdef12345678",
+      });
+
+      expect(result.symbol).toBe("MATIC");
+    });
+  });
+
+  describe("backward compatibility", () => {
+    it("works without profile (no profile = same behavior)", async () => {
+      const observer = new EvmObserver(createConfig());
+      await observer.connect();
+
+      const result = await observer.getBalance({
+        address: "0x1234567890abcdef1234567890abcdef12345678",
+      });
+
+      expect(result.symbol).toBe("ETH");
+      expect(result.decimals).toBe(18);
+    });
+
+    it("getStatus without profile does not return finalized/safe blocks", async () => {
+      const observer = new EvmObserver(createConfig());
+      await observer.connect();
+
+      const status = await observer.getStatus();
+
+      expect(status.connected).toBe(true);
+      expect(status.latestBlock).toBe(12345);
+      expect(status.finalizedBlock).toBeUndefined();
+      expect(status.safeBlock).toBeUndefined();
+      expect(mockGetBlock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("getStatus with profile", () => {
+    it("returns finalized and safe blocks when profile has finality config", async () => {
+      mockGetBlock
+        .mockResolvedValueOnce({ number: 12281n }) // finalized
+        .mockResolvedValueOnce({ number: 12333n }); // safe
+
+      const observer = new EvmObserver(
+        createConfig(CHAINS.ETHEREUM_MAINNET, ETHEREUM_PROFILE),
+      );
+      await observer.connect();
+
+      const status = await observer.getStatus();
+
+      expect(status.connected).toBe(true);
+      expect(status.latestBlock).toBe(12345);
+      expect(status.finalizedBlock).toBe(12281);
+      expect(status.safeBlock).toBe(12333);
+    });
+
+    it("omits safe block when profile has no safeBlockTag", async () => {
+      mockGetBlock.mockResolvedValueOnce({ number: 12281n }); // finalized only
+
+      const profileNoSafe = {
+        ...ARBITRUM_PROFILE,
+        finality: {
+          ...ARBITRUM_PROFILE.finality,
+          safeBlockTag: undefined,
+          finalizedBlockTag: "finalized",
+        },
+      };
+      const observer = new EvmObserver(
+        createConfig(CHAINS.ARBITRUM_ONE, profileNoSafe),
+      );
+      await observer.connect();
+
+      const status = await observer.getStatus();
+
+      expect(status.connected).toBe(true);
+      expect(status.finalizedBlock).toBe(12281);
+      expect(status.safeBlock).toBeUndefined();
     });
   });
 });

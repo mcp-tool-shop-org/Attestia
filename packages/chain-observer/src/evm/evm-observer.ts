@@ -43,6 +43,7 @@ import type {
   TransferEvent,
   ConnectionStatus,
 } from "../observer.js";
+import type { ChainProfile } from "../finality.js";
 
 // =============================================================================
 // Chain ID to viem Chain mapping
@@ -56,6 +57,27 @@ const VIEM_CHAINS: Record<string, Chain> = {
   "eip155:10": optimism,
   "eip155:137": polygon,
 };
+
+// =============================================================================
+// Native token metadata per chain
+// =============================================================================
+
+/**
+ * Native token metadata for known EVM chains.
+ * Used by getBalance() to return correct decimals/symbol per chain
+ * instead of hardcoding ETH values.
+ */
+const NATIVE_TOKEN_META: Record<string, { symbol: string; decimals: number }> = {
+  "eip155:1": { symbol: "ETH", decimals: 18 },
+  "eip155:11155111": { symbol: "ETH", decimals: 18 },
+  "eip155:8453": { symbol: "ETH", decimals: 18 },
+  "eip155:42161": { symbol: "ETH", decimals: 18 },
+  "eip155:10": { symbol: "ETH", decimals: 18 },
+  "eip155:137": { symbol: "POL", decimals: 18 },
+};
+
+/** Default native token metadata for unknown EVM chains. */
+const DEFAULT_NATIVE_TOKEN = { symbol: "ETH", decimals: 18 };
 
 // ERC-20 ABI fragments (read-only)
 const ERC20_BALANCE_OF = parseAbiItem(
@@ -79,6 +101,8 @@ export class EvmObserver implements ChainObserver {
   readonly chainId: string;
   private client: PublicClient<HttpTransport, Chain> | null = null;
   private readonly config: ObserverConfig;
+  private readonly profile: ChainProfile | undefined;
+  private readonly nativeToken: { symbol: string; decimals: number };
 
   constructor(config: ObserverConfig) {
     if (!config.chain.chainId.startsWith("eip155:")) {
@@ -88,6 +112,13 @@ export class EvmObserver implements ChainObserver {
     }
     this.chainId = config.chain.chainId;
     this.config = config;
+    this.profile = config.profile;
+
+    // Resolve native token metadata: profile > static map > default
+    this.nativeToken =
+      config.profile?.nativeToken ??
+      NATIVE_TOKEN_META[this.chainId] ??
+      DEFAULT_NATIVE_TOKEN;
   }
 
   async connect(): Promise<void> {
@@ -123,12 +154,39 @@ export class EvmObserver implements ChainObserver {
 
     try {
       const blockNumber = await this.client.getBlockNumber();
-      return {
+
+      const status: ConnectionStatus = {
         chainId: this.chainId,
         connected: true,
         latestBlock: Number(blockNumber),
         checkedAt: now,
       };
+
+      // When a profile with finality config is present, also fetch
+      // finalized and safe block numbers via EVM block tags.
+      if (this.profile?.finality) {
+        const { finalizedBlockTag, safeBlockTag } = this.profile.finality;
+        const blockPromises: [Promise<bigint> | undefined, Promise<bigint> | undefined] = [
+          finalizedBlockTag
+            ? this.client.getBlock({ blockTag: finalizedBlockTag as "finalized" }).then((b) => b.number ?? 0n)
+            : undefined,
+          safeBlockTag
+            ? this.client.getBlock({ blockTag: safeBlockTag as "safe" }).then((b) => b.number ?? 0n)
+            : undefined,
+        ];
+
+        const [finalizedBlock, safeBlock] = await Promise.all(
+          blockPromises.map((p) => p ?? Promise.resolve(undefined))
+        );
+
+        return {
+          ...status,
+          ...(finalizedBlock !== undefined && { finalizedBlock: Number(finalizedBlock) }),
+          ...(safeBlock !== undefined && { safeBlock: Number(safeBlock) }),
+        };
+      }
+
+      return status;
     } catch {
       return {
         chainId: this.chainId,
@@ -155,8 +213,8 @@ export class EvmObserver implements ChainObserver {
       chainId: this.chainId,
       address: query.address,
       balance: balance.toString(),
-      decimals: 18,
-      symbol: "ETH",
+      decimals: this.nativeToken.decimals,
+      symbol: this.nativeToken.symbol,
       atBlock: Number(blockNumber),
       observedAt: new Date().toISOString(),
     };
@@ -209,14 +267,14 @@ export class EvmObserver implements ChainObserver {
       ? BigInt(query.toBlock)
       : currentBlock;
 
-    const events: TransferEvent[] = [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const allLogs: any[] = [];
     const now = new Date().toISOString();
 
     if (query.token) {
       // ERC-20 Transfer events for a specific token
       const tokenAddress = query.token as `0x${string}`;
 
-      // Get incoming transfers
       if (query.direction !== "outgoing") {
         const incomingLogs = await client.getLogs({
           address: tokenAddress,
@@ -225,13 +283,9 @@ export class EvmObserver implements ChainObserver {
           fromBlock,
           toBlock,
         });
-
-        for (const log of incomingLogs) {
-          events.push(this.logToTransferEvent(log, now));
-        }
+        allLogs.push(...incomingLogs);
       }
 
-      // Get outgoing transfers
       if (query.direction !== "incoming") {
         const outgoingLogs = await client.getLogs({
           address: tokenAddress,
@@ -243,8 +297,8 @@ export class EvmObserver implements ChainObserver {
 
         for (const log of outgoingLogs) {
           // Avoid duplicates (self-transfers)
-          if (!events.some((e) => e.txHash === log.transactionHash)) {
-            events.push(this.logToTransferEvent(log, now));
+          if (!allLogs.some((e) => e.transactionHash === log.transactionHash)) {
+            allLogs.push(log);
           }
         }
       }
@@ -257,10 +311,7 @@ export class EvmObserver implements ChainObserver {
           fromBlock,
           toBlock,
         });
-
-        for (const log of incomingLogs) {
-          events.push(this.logToTransferEvent(log, now));
-        }
+        allLogs.push(...incomingLogs);
       }
 
       if (query.direction !== "incoming") {
@@ -272,12 +323,31 @@ export class EvmObserver implements ChainObserver {
         });
 
         for (const log of outgoingLogs) {
-          if (!events.some((e) => e.txHash === log.transactionHash)) {
-            events.push(this.logToTransferEvent(log, now));
+          if (!allLogs.some((e) => e.transactionHash === log.transactionHash)) {
+            allLogs.push(log);
           }
         }
       }
     }
+
+    // Resolve token metadata for all unique token addresses in the logs.
+    // Batch the unique addresses to minimize RPC calls.
+    const uniqueTokenAddresses = [...new Set(
+      allLogs.map((log) => (log.address as string).toLowerCase()),
+    )];
+    const metaEntries = await Promise.all(
+      uniqueTokenAddresses.map(async (addr) => {
+        const meta = await this.resolveTokenMeta(addr as `0x${string}`);
+        return [addr, meta] as const;
+      }),
+    );
+    const tokenMetaMap = new Map(metaEntries);
+
+    // Convert logs to TransferEvents with resolved metadata
+    const events: TransferEvent[] = allLogs.map((log) => {
+      const meta = tokenMetaMap.get((log.address as string).toLowerCase()) ?? { symbol: "ERC20", decimals: 18 };
+      return this.logToTransferEvent(log, now, meta);
+    });
 
     // Sort by block number (ascending)
     events.sort((a, b) => a.blockNumber - b.blockNumber);
@@ -294,6 +364,9 @@ export class EvmObserver implements ChainObserver {
   // Private helpers
   // ===========================================================================
 
+  /** Per-token metadata cache to avoid repeated on-chain queries. */
+  private readonly tokenMetaCache = new Map<string, { symbol: string; decimals: number }>();
+
   private requireClient(): PublicClient<HttpTransport, Chain> {
     if (!this.client) {
       throw new Error(
@@ -303,8 +376,48 @@ export class EvmObserver implements ChainObserver {
     return this.client;
   }
 
+  /**
+   * Resolve token metadata (symbol + decimals) for an ERC-20 contract.
+   * Results are cached per token address for the lifetime of this observer.
+   * Falls back to sensible defaults if on-chain queries fail.
+   */
+  private async resolveTokenMeta(
+    tokenAddress: `0x${string}`,
+  ): Promise<{ symbol: string; decimals: number }> {
+    const cached = this.tokenMetaCache.get(tokenAddress);
+    if (cached) return cached;
+
+    const client = this.requireClient();
+    try {
+      const [symbol, decimals] = await Promise.all([
+        client.readContract({
+          address: tokenAddress,
+          abi: [ERC20_SYMBOL],
+          functionName: "symbol",
+        }),
+        client.readContract({
+          address: tokenAddress,
+          abi: [ERC20_DECIMALS],
+          functionName: "decimals",
+        }),
+      ]);
+      const meta = { symbol: symbol as string, decimals: Number(decimals) };
+      this.tokenMetaCache.set(tokenAddress, meta);
+      return meta;
+    } catch {
+      // If metadata query fails, use defaults rather than failing the transfer scan.
+      const fallback = { symbol: "ERC20", decimals: 18 };
+      this.tokenMetaCache.set(tokenAddress, fallback);
+      return fallback;
+    }
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private logToTransferEvent(log: any, observedAt: string): TransferEvent {
+  private logToTransferEvent(
+    log: any,
+    observedAt: string,
+    tokenMeta: { symbol: string; decimals: number },
+  ): TransferEvent {
     return {
       chainId: this.chainId,
       txHash: log.transactionHash ?? "",
@@ -312,8 +425,8 @@ export class EvmObserver implements ChainObserver {
       from: log.args?.from ?? "",
       to: log.args?.to ?? "",
       amount: (log.args?.value ?? 0n).toString(),
-      decimals: 18, // ERC-20 default; ideally query per-token
-      symbol: "ERC20",
+      decimals: tokenMeta.decimals,
+      symbol: tokenMeta.symbol,
       token: log.address,
       timestamp: new Date().toISOString(), // Block timestamp requires extra query
       observedAt,
