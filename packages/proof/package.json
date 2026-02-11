@@ -1,0 +1,46 @@
+{
+  "name": "@attestia/proof",
+  "version": "0.1.0",
+  "description": "Merkle trees, inclusion proofs, and attestation proof packaging for Attestia",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": [
+    "attestia",
+    "merkle",
+    "proof",
+    "cryptographic",
+    "verification",
+    "inclusion-proof"
+  ],
+  "author": "mcp-tool-shop-org",
+  "license": "MIT",
+  "dependencies": {
+    "json-canonicalize": "^1.0.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@vitest/coverage-v8": "^1.6.1",
+    "typescript": "^5.3.0",
+    "vitest": "^1.2.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
