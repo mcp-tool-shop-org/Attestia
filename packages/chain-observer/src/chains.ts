@@ -55,6 +55,18 @@ export const CHAINS = {
     name: "XRP Ledger Testnet",
     family: "xrpl",
   },
+
+  // Solana chains
+  SOLANA_MAINNET: {
+    chainId: "solana:mainnet-beta",
+    name: "Solana Mainnet",
+    family: "solana",
+  },
+  SOLANA_DEVNET: {
+    chainId: "solana:devnet",
+    name: "Solana Devnet",
+    family: "solana",
+  },
 } as const satisfies Record<string, ChainRef>;
 
 // =============================================================================
@@ -85,4 +97,11 @@ export function isEvmChain(chainId: ChainId): boolean {
  */
 export function isXrplChain(chainId: ChainId): boolean {
   return chainId.startsWith("xrpl:");
+}
+
+/**
+ * Check if a chainId belongs to the Solana network.
+ */
+export function isSolanaChain(chainId: ChainId): boolean {
+  return chainId.startsWith("solana:");
 }

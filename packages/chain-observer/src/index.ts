@@ -36,7 +36,27 @@ export {
   getChainRef,
   isEvmChain,
   isXrplChain,
+  isSolanaChain,
 } from "./chains.js";
+
+// Finality configuration
+export type { FinalityConfig, ChainProfile } from "./finality.js";
+
+// Chain profiles
+export {
+  ETHEREUM_PROFILE,
+  ETHEREUM_SEPOLIA_PROFILE,
+  ARBITRUM_PROFILE,
+  OPTIMISM_PROFILE,
+  BASE_PROFILE,
+  POLYGON_PROFILE,
+  SOLANA_MAINNET_PROFILE,
+  SOLANA_DEVNET_PROFILE,
+  XRPL_MAINNET_PROFILE,
+  XRPL_TESTNET_PROFILE,
+  CHAIN_PROFILES,
+  getChainProfile,
+} from "./profiles.js";
 
 // Chain-specific observers
 export { EvmObserver } from "./evm/index.js";

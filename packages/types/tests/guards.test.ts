@@ -18,6 +18,7 @@ import {
   isBlockRef,
   isTokenRef,
   isOnChainEvent,
+  isSolanaOnChainEvent,
 } from "../src/guards.js";
 
 // =============================================================================
@@ -353,5 +354,86 @@ describe("isOnChainEvent", () => {
 
   it("rejects null", () => {
     expect(isOnChainEvent(null)).toBe(false);
+  });
+});
+
+// =============================================================================
+// Solana chain guards
+// =============================================================================
+
+describe("isSolanaOnChainEvent", () => {
+  const validSolanaEvent = {
+    id: "sol-evt-1",
+    chainId: "solana:mainnet-beta",
+    txHash: "5wHu1qwD7q3hYLpGGf3TqHLnXJNjV9F8j4mYQyKqxF2C",
+    block: {
+      chainId: "solana:mainnet-beta",
+      blockNumber: 250000000,
+      blockHash: "7nPkM4pBzjJVkbGRFfLnCZr5z2Z3q4W1M9kYdV8Z5kGo",
+      timestamp: "2024-06-15T12:00:00Z",
+    },
+    eventType: "transfer",
+    data: { from: "So11111111111111111111111111111111111111112", to: "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263" },
+    observedAt: "2024-06-15T12:00:01Z",
+    slot: 250000000,
+    programId: "11111111111111111111111111111111",
+    accountKeys: ["So11111111111111111111111111111111111111112", "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263"],
+    signature: "5wHu1qwD7q3hYLpGGf3TqHLnXJNjV9F8j4mYQyKqxF2C",
+  };
+
+  it("accepts valid SolanaOnChainEvent", () => {
+    expect(isSolanaOnChainEvent(validSolanaEvent)).toBe(true);
+  });
+
+  it("also satisfies base isOnChainEvent", () => {
+    expect(isOnChainEvent(validSolanaEvent)).toBe(true);
+  });
+
+  it("rejects standard OnChainEvent without Solana fields", () => {
+    const standardEvent = {
+      id: "evt-1",
+      chainId: "eip155:1",
+      txHash: "0xabc",
+      block: {
+        chainId: "eip155:1",
+        blockNumber: 100,
+        blockHash: "0xdef",
+        timestamp: "2024-01-01T00:00:00Z",
+      },
+      eventType: "transfer",
+      data: { from: "0x1", to: "0x2" },
+      observedAt: "2024-01-01T00:01:00Z",
+    };
+    expect(isSolanaOnChainEvent(standardEvent)).toBe(false);
+  });
+
+  it("rejects event with non-integer slot", () => {
+    expect(isSolanaOnChainEvent({ ...validSolanaEvent, slot: 1.5 })).toBe(false);
+  });
+
+  it("rejects event with missing programId", () => {
+    const { programId, ...rest } = validSolanaEvent;
+    expect(isSolanaOnChainEvent(rest)).toBe(false);
+  });
+
+  it("rejects event with non-string accountKeys", () => {
+    expect(isSolanaOnChainEvent({ ...validSolanaEvent, accountKeys: [1, 2] })).toBe(false);
+  });
+
+  it("rejects event with non-array accountKeys", () => {
+    expect(isSolanaOnChainEvent({ ...validSolanaEvent, accountKeys: "notarray" })).toBe(false);
+  });
+
+  it("rejects event with missing signature", () => {
+    const { signature, ...rest } = validSolanaEvent;
+    expect(isSolanaOnChainEvent(rest)).toBe(false);
+  });
+
+  it("rejects null", () => {
+    expect(isSolanaOnChainEvent(null)).toBe(false);
+  });
+
+  it("accepts event with empty accountKeys array", () => {
+    expect(isSolanaOnChainEvent({ ...validSolanaEvent, accountKeys: [] })).toBe(true);
   });
 });

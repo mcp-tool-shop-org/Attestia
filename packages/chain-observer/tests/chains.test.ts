@@ -8,6 +8,7 @@ import {
   getChainRef,
   isEvmChain,
   isXrplChain,
+  isSolanaChain,
 } from "../src/chains.js";
 
 describe("CHAINS", () => {
@@ -21,6 +22,17 @@ describe("CHAINS", () => {
     expect(CHAINS.XRPL_MAINNET.family).toBe("xrpl");
   });
 
+  it("contains Solana Mainnet", () => {
+    expect(CHAINS.SOLANA_MAINNET.chainId).toBe("solana:mainnet-beta");
+    expect(CHAINS.SOLANA_MAINNET.family).toBe("solana");
+    expect(CHAINS.SOLANA_MAINNET.name).toBe("Solana Mainnet");
+  });
+
+  it("contains Solana Devnet", () => {
+    expect(CHAINS.SOLANA_DEVNET.chainId).toBe("solana:devnet");
+    expect(CHAINS.SOLANA_DEVNET.family).toBe("solana");
+  });
+
   it("contains all expected chains", () => {
     const keys = Object.keys(CHAINS);
     expect(keys).toContain("ETHEREUM_MAINNET");
@@ -31,7 +43,9 @@ describe("CHAINS", () => {
     expect(keys).toContain("POLYGON");
     expect(keys).toContain("XRPL_MAINNET");
     expect(keys).toContain("XRPL_TESTNET");
-    expect(keys.length).toBe(8);
+    expect(keys).toContain("SOLANA_MAINNET");
+    expect(keys).toContain("SOLANA_DEVNET");
+    expect(keys.length).toBe(10);
   });
 
   it("all EVM chains use eip155: prefix", () => {
@@ -49,6 +63,16 @@ describe("CHAINS", () => {
       expect(chain.chainId).toMatch(/^xrpl:/);
     }
   });
+
+  it("all Solana chains use solana: prefix", () => {
+    const solanaChains = Object.values(CHAINS).filter(
+      (c) => c.family === "solana"
+    );
+    expect(solanaChains.length).toBeGreaterThan(0);
+    for (const chain of solanaChains) {
+      expect(chain.chainId).toMatch(/^solana:/);
+    }
+  });
 });
 
 describe("getChainRef", () => {
@@ -63,6 +87,13 @@ describe("getChainRef", () => {
     const ref = getChainRef("xrpl:main");
     expect(ref).toBeDefined();
     expect(ref!.name).toBe("XRP Ledger Mainnet");
+  });
+
+  it("returns ChainRef for Solana", () => {
+    const ref = getChainRef("solana:mainnet-beta");
+    expect(ref).toBeDefined();
+    expect(ref!.name).toBe("Solana Mainnet");
+    expect(ref!.family).toBe("solana");
   });
 
   it("returns undefined for unknown chain ID", () => {
@@ -93,5 +124,18 @@ describe("isXrplChain", () => {
   it("returns false for non-XRPL chain IDs", () => {
     expect(isXrplChain("eip155:1")).toBe(false);
     expect(isXrplChain("solana:main")).toBe(false);
+  });
+});
+
+describe("isSolanaChain", () => {
+  it("returns true for Solana chain IDs", () => {
+    expect(isSolanaChain("solana:mainnet-beta")).toBe(true);
+    expect(isSolanaChain("solana:devnet")).toBe(true);
+    expect(isSolanaChain("solana:testnet")).toBe(true);
+  });
+
+  it("returns false for non-Solana chain IDs", () => {
+    expect(isSolanaChain("eip155:1")).toBe(false);
+    expect(isSolanaChain("xrpl:main")).toBe(false);
   });
 });

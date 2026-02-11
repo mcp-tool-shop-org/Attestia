@@ -44,6 +44,16 @@ export type {
   OnChainEvent,
 } from "./chain.js";
 
+// Solana chain types
+export type {
+  SolanaAccountKey,
+  SolanaSignature,
+  SolanaCommitment,
+  SolanaSlotRef,
+  SolanaOnChainEvent,
+  SolanaTransferMeta,
+} from "./solana.js";
+
 // Event types
 export type {
   DomainEvent,
@@ -64,4 +74,5 @@ export {
   isBlockRef,
   isTokenRef,
   isOnChainEvent,
+  isSolanaOnChainEvent,
 } from "./guards.js";

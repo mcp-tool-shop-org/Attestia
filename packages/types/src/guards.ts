@@ -10,6 +10,7 @@ import type { Money, AccountRef, LedgerEntry, LedgerEntryType } from "./financia
 import type { Intent, IntentStatus } from "./intent.js";
 import type { DomainEvent, EventMetadata } from "./event.js";
 import type { ChainRef, BlockRef, TokenRef, OnChainEvent } from "./chain.js";
+import type { SolanaOnChainEvent } from "./solana.js";
 
 // =============================================================================
 // Financial guards
@@ -167,5 +168,28 @@ export function isOnChainEvent(value: unknown): value is OnChainEvent {
     v.data !== null &&
     typeof v.data === "object" &&
     typeof v.observedAt === "string"
+  );
+}
+
+// =============================================================================
+// Solana chain guards
+// =============================================================================
+
+/**
+ * Check if a value is a SolanaOnChainEvent.
+ *
+ * A SolanaOnChainEvent is an OnChainEvent with additional Solana-specific
+ * fields: slot, programId, accountKeys, signature.
+ */
+export function isSolanaOnChainEvent(value: unknown): value is SolanaOnChainEvent {
+  if (!isOnChainEvent(value)) return false;
+  const v = value as unknown as Record<string, unknown>;
+  return (
+    typeof v.slot === "number" &&
+    Number.isInteger(v.slot) &&
+    typeof v.programId === "string" &&
+    Array.isArray(v.accountKeys) &&
+    (v.accountKeys as unknown[]).every((k) => typeof k === "string") &&
+    typeof v.signature === "string"
   );
 }
