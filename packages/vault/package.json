@@ -1,0 +1,22 @@
+{
+  "name": "@attestia/vault",
+  "version": "0.1.0",
+  "description": "Personal Vault — multi-chain observation, envelope budgeting, intent-based allocation",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@attestia/types": "workspace:*",
+    "@attestia/ledger": "workspace:*",
+    "@attestia/chain-observer": "workspace:*",
+    "@attestia/registrum": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0",
+    "vitest": "^1.2.0"
+  }
+}

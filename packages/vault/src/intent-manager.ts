@@ -1,0 +1,392 @@
+/**
+ * Intent Manager — Personal vault intent lifecycle.
+ *
+ * Manages the Intent → Approve → Execute → Verify flow for all
+ * vault operations. Every financial action starts as an intent.
+ *
+ * Rules:
+ * - Intents are append-only (state transitions, never deletion)
+ * - Only valid transitions are allowed (declared→approved, etc.)
+ * - Humans approve; the system verifies
+ * - Each intent is linked to a budget envelope (when applicable)
+ * - Failed intents can reverse budget reservations
+ */
+
+import type {
+  IntentStatus,
+  ChainId,
+  TxHash,
+  Money,
+} from "@attestia/types";
+import { BudgetEngine } from "./budget.js";
+import type {
+  VaultIntent,
+  VaultIntentKind,
+  VaultIntentParams,
+  VaultIntentApproval,
+  VaultIntentExecution,
+  VaultIntentVerification,
+} from "./types.js";
+
+// =============================================================================
+// Error
+// =============================================================================
+
+export class IntentError extends Error {
+  public readonly code: IntentErrorCode;
+  constructor(code: IntentErrorCode, message: string) {
+    super(message);
+    this.name = "IntentError";
+    this.code = code;
+  }
+}
+
+export type IntentErrorCode =
+  | "INTENT_NOT_FOUND"
+  | "INVALID_TRANSITION"
+  | "ALREADY_EXISTS"
+  | "BUDGET_EXCEEDED"
+  | "VALIDATION_FAILED";
+
+// =============================================================================
+// Valid Transitions
+// =============================================================================
+
+const VALID_TRANSITIONS: Record<IntentStatus, readonly IntentStatus[]> = {
+  declared: ["approved", "rejected"],
+  approved: ["executing", "rejected"],
+  rejected: [],
+  executing: ["executed", "failed"],
+  executed: ["verified", "failed"],
+  verified: [],
+  failed: [],
+};
+
+// =============================================================================
+// Intent Manager
+// =============================================================================
+
+export class IntentManager {
+  private readonly intents: Map<string, VaultIntent> = new Map();
+  private readonly budget: BudgetEngine;
+
+  constructor(budget: BudgetEngine) {
+    this.budget = budget;
+  }
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Lifecycle
+  // ───────────────────────────────────────────────────────────────────────
+
+  /**
+   * Declare a new intent. This is the first step in any vault operation.
+   *
+   * If the intent references a budget envelope and has an amount,
+   * the budget engine checks for sufficient available funds.
+   */
+  declare(
+    id: string,
+    kind: VaultIntentKind,
+    description: string,
+    declaredBy: string,
+    params: VaultIntentParams,
+    envelopeId?: string,
+  ): VaultIntent {
+    if (this.intents.has(id)) {
+      throw new IntentError("ALREADY_EXISTS", `Intent '${id}' already exists`);
+    }
+
+    // Pre-check: if linked to an envelope and has an amount, verify budget
+    if (envelopeId && params.amount) {
+      const envelope = this.budget.getEnvelope(envelopeId);
+      const available: Money = {
+        amount: envelope.available,
+        currency: envelope.currency,
+        decimals: envelope.decimals,
+      };
+
+      const requestedAmount = BigInt(
+        Math.round(
+          parseFloat(params.amount.amount) * 10 ** params.amount.decimals,
+        ),
+      );
+      const availableAmount = BigInt(
+        Math.round(
+          parseFloat(available.amount) * 10 ** available.decimals,
+        ),
+      );
+
+      if (requestedAmount > availableAmount) {
+        throw new IntentError(
+          "BUDGET_EXCEEDED",
+          `Intent requires ${params.amount.amount} ${params.amount.currency} but envelope '${envelopeId}' only has ${envelope.available} available`,
+        );
+      }
+    }
+
+    const base = {
+      id,
+      status: "declared" as const,
+      kind,
+      description,
+      declaredBy,
+      declaredAt: new Date().toISOString(),
+      params,
+    };
+    const intent: VaultIntent = envelopeId !== undefined
+      ? { ...base, envelopeId }
+      : base;
+
+    this.intents.set(id, intent);
+    return intent;
+  }
+
+  /**
+   * Approve an intent. Requires human authorization.
+   */
+  approve(
+    intentId: string,
+    approvedBy: string,
+    reason?: string,
+  ): VaultIntent {
+    const intent = this.requireIntent(intentId);
+    this.assertTransition(intent, "approved");
+
+    const approvalBase = {
+      approvedBy,
+      approvedAt: new Date().toISOString(),
+      approved: true as const,
+    };
+    const approval: VaultIntentApproval = reason !== undefined
+      ? { ...approvalBase, reason }
+      : approvalBase;
+
+    const updated: VaultIntent = {
+      ...intent,
+      status: "approved",
+      approval,
+    };
+
+    this.intents.set(intentId, updated);
+    return updated;
+  }
+
+  /**
+   * Reject an intent.
+   */
+  reject(
+    intentId: string,
+    rejectedBy: string,
+    reason: string,
+  ): VaultIntent {
+    const intent = this.requireIntent(intentId);
+    this.assertTransition(intent, "rejected");
+
+    const approval: VaultIntentApproval = {
+      approvedBy: rejectedBy,
+      approvedAt: new Date().toISOString(),
+      approved: false,
+      reason,
+    };
+
+    const updated: VaultIntent = {
+      ...intent,
+      status: "rejected",
+      approval,
+    };
+
+    this.intents.set(intentId, updated);
+    return updated;
+  }
+
+  /**
+   * Mark an intent as executing (on-chain tx submitted).
+   */
+  markExecuting(intentId: string): VaultIntent {
+    const intent = this.requireIntent(intentId);
+    this.assertTransition(intent, "executing");
+
+    const updated: VaultIntent = {
+      ...intent,
+      status: "executing",
+    };
+
+    this.intents.set(intentId, updated);
+    return updated;
+  }
+
+  /**
+   * Record successful execution.
+   * This also debits the budget envelope (if applicable).
+   */
+  recordExecution(
+    intentId: string,
+    chainId: ChainId,
+    txHash: TxHash,
+  ): VaultIntent {
+    const intent = this.requireIntent(intentId);
+    this.assertTransition(intent, "executed");
+
+    const execution: VaultIntentExecution = {
+      executedAt: new Date().toISOString(),
+      chainId,
+      txHash,
+    };
+
+    // Debit the budget envelope
+    if (intent.envelopeId && intent.params.amount) {
+      this.budget.spend(intent.envelopeId, intent.params.amount);
+    }
+
+    const updated: VaultIntent = {
+      ...intent,
+      status: "executed",
+      execution,
+    };
+
+    this.intents.set(intentId, updated);
+    return updated;
+  }
+
+  /**
+   * Verify an executed intent against on-chain state.
+   */
+  verify(
+    intentId: string,
+    matched: boolean,
+    discrepancies?: readonly string[],
+  ): VaultIntent {
+    const intent = this.requireIntent(intentId);
+    this.assertTransition(intent, "verified");
+
+    const verificationBase = {
+      verifiedAt: new Date().toISOString(),
+      matched,
+    };
+    const verification: VaultIntentVerification = discrepancies !== undefined
+      ? { ...verificationBase, discrepancies }
+      : verificationBase;
+
+    const updated: VaultIntent = {
+      ...intent,
+      status: "verified",
+      verification,
+    };
+
+    this.intents.set(intentId, updated);
+    return updated;
+  }
+
+  /**
+   * Record intent failure.
+   * If the intent had budget reserved, the spend is reversed.
+   */
+  recordFailure(
+    intentId: string,
+    discrepancies: readonly string[],
+  ): VaultIntent {
+    const intent = this.requireIntent(intentId);
+    this.assertTransition(intent, "failed");
+
+    // Reverse budget spend if already executed and linked to envelope
+    if (
+      intent.status === "executed" &&
+      intent.envelopeId &&
+      intent.params.amount
+    ) {
+      this.budget.reverseSpend(intent.envelopeId, intent.params.amount);
+    }
+
+    const verification: VaultIntentVerification = {
+      verifiedAt: new Date().toISOString(),
+      matched: false,
+      discrepancies,
+    };
+
+    const updated: VaultIntent = {
+      ...intent,
+      status: "failed",
+      verification,
+    };
+
+    this.intents.set(intentId, updated);
+    return updated;
+  }
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Queries
+  // ───────────────────────────────────────────────────────────────────────
+
+  /**
+   * Get an intent by ID.
+   */
+  getIntent(id: string): VaultIntent | undefined {
+    return this.intents.get(id);
+  }
+
+  /**
+   * List all intents, optionally filtered by status.
+   */
+  listIntents(status?: IntentStatus): readonly VaultIntent[] {
+    const all = [...this.intents.values()];
+    return status ? all.filter((i) => i.status === status) : all;
+  }
+
+  /**
+   * List intents for a specific envelope.
+   */
+  listByEnvelope(envelopeId: string): readonly VaultIntent[] {
+    return [...this.intents.values()].filter(
+      (i) => i.envelopeId === envelopeId,
+    );
+  }
+
+  /**
+   * Total number of intents.
+   */
+  get count(): number {
+    return this.intents.size;
+  }
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Snapshot
+  // ───────────────────────────────────────────────────────────────────────
+
+  /**
+   * Export all intents for persistence.
+   */
+  exportIntents(): readonly VaultIntent[] {
+    return [...this.intents.values()];
+  }
+
+  /**
+   * Restore intents from a snapshot.
+   */
+  importIntents(intents: readonly VaultIntent[]): void {
+    for (const intent of intents) {
+      this.intents.set(intent.id, intent);
+    }
+  }
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Private
+  // ───────────────────────────────────────────────────────────────────────
+
+  private requireIntent(id: string): VaultIntent {
+    const intent = this.intents.get(id);
+    if (!intent) {
+      throw new IntentError("INTENT_NOT_FOUND", `Intent '${id}' not found`);
+    }
+    return intent;
+  }
+
+  private assertTransition(intent: VaultIntent, target: IntentStatus): void {
+    const allowed = VALID_TRANSITIONS[intent.status];
+    if (!allowed.includes(target)) {
+      throw new IntentError(
+        "INVALID_TRANSITION",
+        `Cannot transition intent '${intent.id}' from '${intent.status}' to '${target}'`,
+      );
+    }
+  }
+}
