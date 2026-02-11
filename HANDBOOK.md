@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0
 **Date:** February 11, 2026
-**Status:** Active development — Phase 9 in progress
+**Status:** Active development — Phase 9 complete, Phase 10 next
 
 ---
 
@@ -161,7 +161,7 @@ Ported from the Python-based Payroll Engine. Zero runtime dependencies — pure 
 ### @attestia/chain-observer
 **Purpose:** Multi-chain read-only observation layer.
 **Runtime deps:** viem, xrpl.js.
-**Tests:** 55.
+**Tests:** 180.
 
 Observes blockchain state without modifying it. Supports:
 
@@ -177,7 +177,7 @@ This is the only package where external chain SDKs are permitted.
 ### @attestia/vault
 **Purpose:** Personal financial management — observe, budget, allocate.
 **Runtime deps:** Internal packages only.
-**Tests:** 67.
+**Tests:** 55.
 
 The individual's view of their finances across chains. Features include:
 
@@ -230,7 +230,8 @@ Takes reconciliation reports and attestation payloads and writes them to the XRP
 
 - **Memo encoding** — structured attestation data in XRPL payment memos
 - **Round-trip verification** — submit, fetch, decode, verify
-- **Retry with exponential backoff** — handles transient XRPL failures
+- **Retry with exponential backoff and jitter** — handles transient XRPL failures
+- **Graceful degradation** — `WitnessSubmitResult` returns `submitted` or `degraded` (never throws)
 - **Docker-based integration testing** — standalone `rippled` node, sub-second ledger close
 
 The witness is the bridge between Attestia's internal truth and public, verifiable proof.
@@ -255,7 +256,7 @@ If replay produces a different result, something is wrong. Fail-closed.
 ### @attestia/event-store
 **Purpose:** Append-only event persistence with hash chaining.
 **Runtime deps:** None.
-**Tests:** 180.
+**Tests:** 67.
 
 The durable backbone. All domain events flow through the event store. Features include:
 
@@ -349,7 +350,7 @@ These hold at every phase and are not negotiable:
 
 ### Current State
 
-Phases 1 through 8 are complete. Phase 9 is in progress. All 11 packages are built, tested, and operational.
+Phases 1 through 9 are complete. All 11 packages are built, tested, and operational. The system is audit-ready: an auditor can independently replay events to the same GlobalStateHash.
 
 ### Milestones
 
@@ -359,20 +360,21 @@ Phases 1 through 8 are complete. Phase 9 is in progress. All 11 packages are bui
 | **M2: Production-Grade** | CI, Docker XRPL, replay verification | Done |
 | **M3: Durable** | Event store complete; rehydration pending | In Progress |
 | **M4: API Surface** | Deployable REST API with auth + multi-tenancy | Done |
-| **M5: Integrated** | Full intent-to-proof pipeline, E2E tests | Planned |
-| **M6: Accessible** | SDK generation, WebSocket/SSE real-time | Planned |
-| **M7: Multi-Chain** | Solana, L2 observers, multi-sig witness | Planned |
-| **M8: Intelligent** | Anomaly detection, intent suggestions, NL queries | Planned |
-| **M9: User-Facing** | Vault UI, Treasury dashboard, Attestation explorer | Planned |
-| **M10: Distributed** | npm publishing, Docker images, documentation site | Planned |
+| **M5: Audit-Ready** | Hash chain, witness retry, export, benchmarks, auditor docs; 1,176 tests | Done |
+| **M6: Integrated** | Full intent-to-proof pipeline, E2E tests | Planned |
+| **M7: Accessible** | SDK generation, WebSocket/SSE real-time | Planned |
+| **M8: Multi-Chain** | Solana, L2 observers, multi-sig witness | Planned |
+| **M9: Intelligent** | Anomaly detection, intent suggestions, NL queries | Planned |
+| **M10: User-Facing** | Vault UI, Treasury dashboard, Attestation explorer | Planned |
+| **M11: Distributed** | npm publishing, Docker images, documentation site | Planned |
 
-### What's Next (Phase 9)
+### What's Next (Phase 10)
 
-- Pipeline orchestration — wire the full Intent-to-Verify flow
-- End-to-end integration test suite
-- Typed client SDK (auto-generated from OpenAPI)
+- Pipeline orchestration — wire the full Intent-to-Verify flow with fail-closed semantics
+- End-to-end integration test suite (`packages/e2e/`)
+- Typed client SDK auto-generated from OpenAPI spec
 - WebSocket/SSE for real-time reconciliation updates
-- XRPL testnet and mainnet verification
+- XRPL testnet smoke test and mainnet dry-run verification
 
 ---
 
@@ -450,6 +452,14 @@ attestia/
 ├── DESIGN.md               # Architecture decisions
 ├── ROADMAP.md              # Full project roadmap
 ├── HANDBOOK.md             # This document
+├── ARCHITECTURE.md         # Package graph, data flows, security model
+├── THREAT_MODEL.md         # STRIDE analysis per component
+├── CONTROL_MATRIX.md       # Threat → control → file → test mappings
+├── VERIFICATION_GUIDE.md   # Auditor step-by-step replay guide
+├── UPGRADE_GUIDE.md        # Deploy without losing state
+├── SECURITY.md             # Responsible disclosure policy
+├── PILOT_SCOPE.md          # Monthly payroll pilot use case
+├── PERFORMANCE_BASELINE.md # Benchmark baselines
 ├── LICENSE                 # MIT
 └── package.json            # Root workspace config
 ```
