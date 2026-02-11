@@ -14,17 +14,26 @@
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "@attestia/types": "workspace:*",
     "@attestia/ledger": "workspace:*",
-    "@attestia/registrum": "workspace:*"
+    "@attestia/registrum": "workspace:*",
+    "@attestia/types": "workspace:*"
   },
   "devDependencies": {
-    "vitest": "^1.2.0",
-    "typescript": "^5.4.0"
+    "@vitest/coverage-v8": "^1.6.1",
+    "typescript": "^5.4.0",
+    "vitest": "^1.2.0"
   },
-  "keywords": ["treasury", "payroll", "dao", "double-entry", "attestia"],
+  "keywords": [
+    "treasury",
+    "payroll",
+    "dao",
+    "double-entry",
+    "attestia"
+  ],
   "license": "MIT"
 }
