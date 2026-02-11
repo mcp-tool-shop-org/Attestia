@@ -1,0 +1,54 @@
+{
+  "name": "@attestia/chain-observer",
+  "version": "0.1.0",
+  "description": "Multi-chain read-only observation layer for Attestia",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./evm": {
+      "import": "./dist/evm/index.js",
+      "types": "./dist/evm/index.d.ts"
+    },
+    "./xrpl": {
+      "import": "./dist/xrpl/index.js",
+      "types": "./dist/xrpl/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": [
+    "attestia",
+    "observer",
+    "multi-chain",
+    "ethereum",
+    "xrpl",
+    "read-only"
+  ],
+  "author": "mcp-tool-shop-org",
+  "license": "MIT",
+  "dependencies": {
+    "@attestia/types": "workspace:*",
+    "viem": "^2.0.0",
+    "xrpl": "^4.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.2.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
