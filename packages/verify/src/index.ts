@@ -84,6 +84,9 @@ export type {
 export {
   SOC2_FRAMEWORK,
   SOC2_MAPPINGS,
+  ISO27001_FRAMEWORK,
+  ISO27001_MAPPINGS,
+  generateComplianceEvidence,
 } from "./compliance/index.js";
 
 export type {

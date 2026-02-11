@@ -16,3 +16,9 @@ export type {
 
 // SOC 2
 export { SOC2_FRAMEWORK, SOC2_MAPPINGS } from "./soc2-mapping.js";
+
+// ISO 27001
+export { ISO27001_FRAMEWORK, ISO27001_MAPPINGS } from "./iso27001-mapping.js";
+
+// Evidence generator
+export { generateComplianceEvidence } from "./evidence-generator.js";
