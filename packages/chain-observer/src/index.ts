@@ -64,6 +64,10 @@ export { XrplObserver } from "./xrpl/index.js";
 export { SolanaObserver, DEFAULT_SOLANA_RPC_CONFIG } from "./solana/index.js";
 export type { SolanaRpcConfig } from "./solana/index.js";
 
+// XRPL EVM Sidechain adapter
+export { XrplEvmAdapter, normalizeBridgeEvent, isBridgeContract, bridgeEventKey } from "./xrpl-evm/index.js";
+export type { BridgeEvent, BridgeStatus } from "./xrpl-evm/index.js";
+
 // Re-export chain types from @attestia/types for convenience
 export type {
   ChainId,

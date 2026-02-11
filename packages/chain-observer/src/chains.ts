@@ -67,6 +67,13 @@ export const CHAINS = {
     name: "Solana Devnet",
     family: "solana",
   },
+
+  // XRPL EVM Sidechain
+  XRPL_EVM_DEVNET: {
+    chainId: "eip155:1440002",
+    name: "XRPL EVM Sidechain Devnet",
+    family: "evm",
+  },
 } as const satisfies Record<string, ChainRef>;
 
 // =============================================================================

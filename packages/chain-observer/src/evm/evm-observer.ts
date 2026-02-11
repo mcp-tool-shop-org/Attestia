@@ -49,6 +49,14 @@ import type { ChainProfile } from "../finality.js";
 // Chain ID to viem Chain mapping
 // =============================================================================
 
+/** XRPL EVM Sidechain Devnet — custom chain definition */
+const xrplEvmDevnet = {
+  id: 1440002,
+  name: "XRPL EVM Sidechain Devnet",
+  nativeCurrency: { name: "XRP", symbol: "XRP", decimals: 18 },
+  rpcUrls: { default: { http: [] } },
+} as const satisfies Chain;
+
 const VIEM_CHAINS: Record<string, Chain> = {
   "eip155:1": mainnet,
   "eip155:11155111": sepolia,
@@ -56,6 +64,7 @@ const VIEM_CHAINS: Record<string, Chain> = {
   "eip155:42161": arbitrum,
   "eip155:10": optimism,
   "eip155:137": polygon,
+  "eip155:1440002": xrplEvmDevnet,
 };
 
 // =============================================================================
@@ -74,6 +83,7 @@ const NATIVE_TOKEN_META: Record<string, { symbol: string; decimals: number }> = 
   "eip155:42161": { symbol: "ETH", decimals: 18 },
   "eip155:10": { symbol: "ETH", decimals: 18 },
   "eip155:137": { symbol: "POL", decimals: 18 },
+  "eip155:1440002": { symbol: "XRP", decimals: 18 },
 };
 
 /** Default native token metadata for unknown EVM chains. */

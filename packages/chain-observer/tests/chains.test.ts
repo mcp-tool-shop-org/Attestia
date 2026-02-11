@@ -45,7 +45,8 @@ describe("CHAINS", () => {
     expect(keys).toContain("XRPL_TESTNET");
     expect(keys).toContain("SOLANA_MAINNET");
     expect(keys).toContain("SOLANA_DEVNET");
-    expect(keys.length).toBe(10);
+    expect(keys).toContain("XRPL_EVM_DEVNET");
+    expect(keys.length).toBe(11);
   });
 
   it("all EVM chains use eip155: prefix", () => {
