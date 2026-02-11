@@ -30,9 +30,9 @@ export interface AuthConfig {
   /** Map of API key → record */
   readonly apiKeys: ReadonlyMap<string, ApiKeyRecord>;
   /** JWT HMAC secret (if JWT auth is enabled) */
-  readonly jwtSecret?: string;
+  readonly jwtSecret?: string | undefined;
   /** Expected JWT issuer */
-  readonly jwtIssuer?: string;
+  readonly jwtIssuer?: string | undefined;
 }
 
 /**

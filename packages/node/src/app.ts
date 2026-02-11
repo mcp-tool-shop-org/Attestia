@@ -47,11 +47,11 @@ export interface CreateAppOptions {
   /** Default tenant ID used when no auth/tenant middleware is active */
   readonly defaultTenantId?: string;
   /** Auth configuration. When provided, auth middleware is enabled. */
-  readonly auth?: AuthConfig;
+  readonly auth?: AuthConfig | undefined;
   /** Rate limit configuration. When provided with auth, rate limiting is enabled. */
-  readonly rateLimit?: { rpm: number; burst: number };
+  readonly rateLimit?: { rpm: number; burst: number } | undefined;
   /** Enable metrics collection. Default: true */
-  readonly enableMetrics?: boolean;
+  readonly enableMetrics?: boolean | undefined;
 }
 
 // =============================================================================

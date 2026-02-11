@@ -7,8 +7,10 @@
 
 import { serve } from "@hono/node-server";
 import pino from "pino";
-import { loadConfig } from "./config.js";
+import { loadConfig, parseApiKeys } from "./config.js";
 import { createApp } from "./app.js";
+import type { AuthConfig } from "./middleware/auth.js";
+import type { ApiKeyRecord } from "./types/auth.js";
 
 // =============================================================================
 // Re-exports (package public API)
@@ -36,6 +38,27 @@ async function main(): Promise<void> {
       : {}),
   });
 
+  // Build auth config from env vars
+  let authConfig: AuthConfig | undefined;
+  const parsedKeys = parseApiKeys(config.API_KEYS);
+  if (parsedKeys.length > 0 || config.JWT_SECRET !== undefined) {
+    const keyMap = new Map<string, ApiKeyRecord>();
+    for (const k of parsedKeys) {
+      keyMap.set(k.key, k);
+    }
+    authConfig = {
+      apiKeys: keyMap,
+      jwtSecret: config.JWT_SECRET,
+      jwtIssuer: config.JWT_ISSUER,
+    };
+    logger.info(
+      { apiKeyCount: parsedKeys.length, jwtEnabled: config.JWT_SECRET !== undefined },
+      "Auth configured",
+    );
+  } else {
+    logger.warn("No API keys or JWT secret configured — running in unsecured mode");
+  }
+
   const { app, tenantRegistry } = createApp({
     serviceConfig: {
       ownerId: "default",
@@ -45,6 +68,9 @@ async function main(): Promise<void> {
     logFn: (entry) => {
       logger.info(entry, `${entry.method} ${entry.path} ${entry.status}`);
     },
+    idempotencyTtlMs: config.IDEMPOTENCY_TTL_MS,
+    auth: authConfig,
+    rateLimit: { rpm: config.RATE_LIMIT_RPM, burst: config.RATE_LIMIT_BURST },
   });
 
   const server = serve({

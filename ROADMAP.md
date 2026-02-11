@@ -6,7 +6,7 @@ Last updated: February 11, 2026
 
 ## Where We Are
 
-**11 packages, 947 tests, all green. CI enforced. Coverage gated.**
+**12 packages, 1013 tests, all green. CI enforced. Coverage gated.**
 
 | Package | Status | Tests | Purpose |
 |---------|--------|-------|---------|
@@ -20,10 +20,11 @@ Last updated: February 11, 2026
 | `@attestia/witness` | ✅ Complete | 81 | XRPL on-chain attestation via payment memos |
 | `@attestia/verify` | ✅ Complete | 24 | Deterministic replay verification + GlobalStateHash |
 | `@attestia/event-store` | ✅ Complete | 136 | Append-only event persistence, JSONL, catalog, snapshots |
+| `@attestia/node` | ✅ Complete | 66 | Hono REST API — 17 endpoints, auth, multi-tenancy, metrics |
 
-**What we have:** All core domain logic, event sourcing infrastructure, CI pipeline with coverage enforcement, property-based testing, RFC 8785 canonicalization.
+**What we have:** All core domain logic, event sourcing, CI pipeline, deployable HTTP API with auth + multi-tenancy + observability. Docker Compose for full-stack deployment.
 
-**What we don't have:** Rehydration (fromEvents), networking, end-to-end integration, API surfaces, or any user-facing layer.
+**What we don't have:** Rehydration (fromEvents), end-to-end pipeline orchestration, SDK generation, or user-facing UIs.
 
 ---
 
@@ -110,77 +111,94 @@ Each package's state machines need to rebuild from events.
 
 ---
 
-## Phase 8 — End-to-End Pipeline
+## Phase 8 — Service Layer, API Surface & Operator Tooling ✅
 
-**Goal:** Wire the full `Intent → Approve → Execute → Verify` flow. This is the core promise of Attestia and the first true integration test.
+**Goal:** Expose a deployable Attestia node with stable v1 REST API, auth, multi-tenancy, and observability.
 
-### 8.1 — `@attestia/pipeline`
+### 8.1 — API Contract & Types
+- [x] Zod-validated DTOs for all endpoints
+- [x] Error envelope format: `{ error: { code, message, details? } }`
+- [x] Cursor-based pagination: `{ data, pagination: { cursor, hasMore } }`
+- [x] URL-path versioning strategy (`/api/v1/`)
 
-A new package that orchestrates the end-to-end flow.
+### 8.2 — `@attestia/node` Service Layer
+- [x] `AttestiaService` composition root wiring all 10 domain packages
+- [x] `TenantRegistry` for isolated multi-tenant service instances
+- [x] Hono app factory with full middleware stack
 
-```
-Intent declared (Vault)
-  → Registrum validates structurally
-  → Human approves (explicit sign-off)
-  → Treasury executes (ledger posting)
-  → Chain observer confirms on-chain
-  → Reconciler matches intent ↔ ledger ↔ chain
-  → Witness writes proof to XRPL
-```
+### 8.3 — Core API Endpoints (17 endpoints)
+- [x] Intent lifecycle: declare, list, get, approve, reject, execute, verify
+- [x] Event queries: all events, per-stream events
+- [x] Verification: replay-based and hash-based
+- [x] Reconciliation: reconcile + attest + list attestations
+- [x] Health: `/health` + `/ready`
+- [x] Metrics: `/metrics` (Prometheus text)
 
-- [ ] Define `Pipeline` interface with step lifecycle hooks
-- [ ] Implement `PipelineRunner` that executes steps sequentially with fail-closed semantics
-- [ ] Each step produces events consumed by the next step
-- [ ] No step is skippable — the pipeline halts on any failure
-- [ ] Dry-run mode (simulates the full flow without on-chain submission)
+### 8.4 — Auth, Tenancy, Rate Limiting
+- [x] API-key auth via `X-Api-Key` header
+- [x] JWT bearer auth via `Authorization: Bearer` (HMAC-SHA256)
+- [x] Role-based permission guards (admin > operator > viewer)
+- [x] Token-bucket rate limiter per identity (429 + Retry-After)
+- [x] Auth-derived tenant isolation
 
-### 8.2 — Integration Test Suite
+### 8.5 — Idempotency & Concurrency
+- [x] `Idempotency-Key` header with TTL-based in-memory cache
+- [x] ETag generation for intent state (SHA-256)
 
-- [ ] Create `packages/e2e/` or a top-level `e2e/` directory
-- [ ] Test: clean reconciliation flow (intent matches ledger matches chain)
-- [ ] Test: mismatch detection (intent amount ≠ on-chain amount)
-- [ ] Test: missing chain event (intent + ledger entry but no on-chain tx)
-- [ ] Test: registrum rejection (structural invariant violation halts pipeline)
-- [ ] Test: witness dry-run (full flow without XRPL connection)
-- [ ] Test: replay (pipeline produces same witness record from same events)
+### 8.6 — Observability
+- [x] Hand-rolled Prometheus metrics (counters + histograms)
+- [x] Structured request logging via pino
+- [x] X-Request-Id propagation
 
-### 8.3 — XRPL On-Chain Verification
+### 8.7 — Docker & Deployment
+- [x] Multi-stage Dockerfile (node:22-slim)
+- [x] Docker Compose: attestia-node + rippled
+- [x] Env-based configuration via Zod schema
+- [x] Graceful shutdown (SIGTERM, SIGINT)
 
-Standalone `rippled` Docker container provides deterministic on-chain testing without network dependencies (see Phase 6.5). For production readiness:
-
-- [x] Full round-trip proven: build → encode → submit → ledger_accept → fetch → decode → verify
-- [ ] Testnet smoke test with funded witness account (validates against live network)
-- [ ] Mainnet dry-run verification (read-only — verify existing attestations)
+### 8.8 — Documentation
+- [x] curl examples for full lifecycle
+- [x] API versioning strategy document
 
 ---
 
-## Phase 9 — API Layer
+## Phase 9 — End-to-End Pipeline & SDK
 
-**Goal:** Expose Attestia's capabilities to external consumers. The domain logic is complete; now it needs a surface area.
+**Goal:** Wire the full `Intent → Approve → Execute → Verify` flow and provide SDK for consumers.
 
-### 9.1 — `@attestia/api`
+### 9.1 — `@attestia/pipeline`
 
-REST/GraphQL API for programmatic access.
+- [ ] Define `Pipeline` interface with step lifecycle hooks
+- [ ] Implement `PipelineRunner` with fail-closed semantics
+- [ ] Dry-run mode (simulates without on-chain submission)
 
-- [ ] Framework choice: Hono (lightweight, edge-compatible) or Fastify (ecosystem)
-- [ ] Endpoints: intent lifecycle, treasury operations, reconciliation reports, witness records
-- [ ] OpenAPI spec generation from TypeScript types
-- [ ] Authentication: API keys for service-to-service, JWT for user context
-- [ ] Rate limiting and audit logging
+### 9.2 — Integration Test Suite
 
-### 9.2 — `@attestia/sdk`
+- [ ] Create `packages/e2e/` directory
+- [ ] Test: clean reconciliation flow
+- [ ] Test: mismatch detection
+- [ ] Test: registrum rejection halts pipeline
+- [ ] Test: replay produces same results
+
+### 9.3 — `@attestia/sdk`
 
 Typed client SDK for API consumers.
 
 - [ ] Auto-generated from OpenAPI spec
 - [ ] First-class TypeScript types (shared with `@attestia/types`)
-- [ ] Retry logic, connection pooling, error normalization
+- [ ] Retry logic, error normalization
 
-### 9.3 — WebSocket / SSE for Real-Time
+### 9.4 — WebSocket / SSE for Real-Time
 
 - [ ] Live reconciliation status updates
 - [ ] Chain observer event streaming
 - [ ] Witness confirmation notifications
+
+### 9.5 — XRPL On-Chain Verification
+
+- [x] Full round-trip proven: build → encode → submit → ledger_accept → fetch → decode → verify
+- [ ] Testnet smoke test with funded witness account
+- [ ] Mainnet dry-run verification (read-only)
 
 ---
 
@@ -286,9 +304,9 @@ Typed client SDK for API consumers.
 ### 13.2 — Docker
 
 - [x] Docker Compose for standalone `rippled` (integration testing)
-- [ ] `attestia/server` image — API + event store + witness
+- [x] Docker Compose: attestia-node + rippled (full local stack)
+- [x] Multi-stage Dockerfile for `@attestia/node`
 - [ ] `attestia/observer` image — chain observer as a standalone service
-- [ ] Docker Compose for local development (API + observer + rippled)
 
 ### 13.3 — Documentation Site
 
@@ -306,8 +324,9 @@ Typed client SDK for API consumers.
 | **M1: Domain Logic** | types, registrum, ledger, chain-observer, vault, treasury, reconciler, witness | All core business logic with 947 tests | ✅ Done |
 | **M2: Production-Grade** | CI, canonicalization, property tests, types tests, verify, Docker XRPL | Hardened + replay verification | ✅ Done |
 | **M3: Durable** | event-store (done), rehydration (pending) | Event persistence + snapshots + catalog | 🔄 In Progress |
-| **M4: Integrated** | pipeline, e2e tests, XRPL testnet | Full intent→proof flow proven | Planned |
-| **M5: Accessible** | api, sdk, websocket | External consumers can use Attestia | Planned |
+| **M4: API Surface** | node | Deployable REST API with 17 endpoints, auth, multi-tenancy, 66 tests | ✅ Done |
+| **M5: Integrated** | pipeline, e2e tests, XRPL testnet | Full intent→proof flow proven | Planned |
+| **M6: Accessible** | sdk, websocket | External consumers can use Attestia | Planned |
 | **M6: Multi-Chain** | solana, L2s, multi-sig witness | Beyond EVM + XRPL | Planned |
 | **M7: Intelligent** | anomaly detection, suggestions, NL queries | AI-assisted (never AI-decided) | Planned |
 | **M8: User-Facing** | vault UI, treasury dashboard, explorer | Non-developers can use Attestia | Planned |

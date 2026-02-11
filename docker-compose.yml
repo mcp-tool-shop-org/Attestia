@@ -1,14 +1,41 @@
-# Docker Compose — Standalone rippled for integration testing
+# Docker Compose — Attestia stack
 #
-# Runs a rippled node in standalone mode (no network peers).
-# Ledgers are advanced manually via `ledger_accept` RPC call.
+# Services:
+#   attestia-node  — REST API server (Phase 8)
+#   rippled        — Standalone XRPL node for integration testing
 #
 # Usage:
 #   docker compose up -d
-#   pnpm --filter @attestia/witness run test:integration
+#   curl http://localhost:3000/health
 #   docker compose down
 
 services:
+  attestia-node:
+    build:
+      context: .
+      dockerfile: packages/node/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: "3000"
+      HOST: "0.0.0.0"
+      LOG_LEVEL: "info"
+      NODE_ENV: "production"
+      DEFAULT_CURRENCY: "USDC"
+      DEFAULT_DECIMALS: "6"
+      RATE_LIMIT_RPM: "100"
+      RATE_LIMIT_BURST: "20"
+      # Unsecured mode (no API_KEYS or JWT_SECRET) for local dev.
+      # Set API_KEYS and/or JWT_SECRET to enable auth:
+      # API_KEYS: "my-key:admin:default"
+      # JWT_SECRET: "change-me-in-production"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/health').then(r => process.exit(r.ok ? 0 : 1))"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
   rippled:
     image: rippleci/rippled:latest
     command: standalone
