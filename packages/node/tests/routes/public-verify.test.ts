@@ -8,11 +8,15 @@
  * - No auth required
  * - Rate limiting enforced
  * - Custom getBundleFn integration
+ * - Report submission + validation
+ * - Report listing + pagination
+ * - Consensus computation
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
 import { createApp } from "../../src/app.js";
 import type { AppInstance } from "../../src/app.js";
+import type { PublicVerifyDeps } from "../../src/routes/public-verify.js";
 
 // =============================================================================
 // Helpers
@@ -21,19 +25,24 @@ import type { AppInstance } from "../../src/app.js";
 function makeRequest(
   path: string,
   method: string = "GET",
+  body?: unknown,
   headers?: Record<string, string>,
 ): Request {
-  return new Request(`http://localhost${path}`, {
+  const init: RequestInit = {
     method,
     headers: {
       "Content-Type": "application/json",
       ...headers,
     },
-  });
+  };
+  if (body !== undefined) {
+    init.body = JSON.stringify(body);
+  }
+  return new Request(`http://localhost${path}`, init);
 }
 
 function createTestAppWithPublicVerify(
-  publicVerify?: { rateLimitConfig?: { rpm: number; burst: number }; getBundleFn?: () => unknown },
+  publicVerify?: PublicVerifyDeps,
 ): AppInstance {
   return createApp({
     serviceConfig: {
@@ -43,6 +52,20 @@ function createTestAppWithPublicVerify(
     },
     publicVerify,
   });
+}
+
+function makeValidReport(verifierId: string, verdict: "PASS" | "FAIL" = "PASS") {
+  return {
+    reportId: `report-${verifierId}-${Date.now()}`,
+    verifierId,
+    verdict,
+    subsystemChecks: [
+      { subsystem: "ledger", expected: "a".repeat(64), actual: "a".repeat(64), matches: true },
+    ],
+    discrepancies: verdict === "FAIL" ? ["some mismatch"] : [],
+    bundleHash: "b".repeat(64),
+    verifiedAt: "2025-06-15T00:00:00Z",
+  };
 }
 
 // =============================================================================
@@ -68,7 +91,7 @@ describe("GET /public/v1/verify/health", () => {
 
   it("includes CORS headers", async () => {
     const res = await instance.app.request(
-      makeRequest("/public/v1/verify/health", "GET", {
+      makeRequest("/public/v1/verify/health", "GET", undefined, {
         Origin: "https://external-verifier.example.com",
       }),
     );
@@ -79,7 +102,7 @@ describe("GET /public/v1/verify/health", () => {
 
   it("responds to OPTIONS preflight", async () => {
     const res = await instance.app.request(
-      makeRequest("/public/v1/verify/health", "OPTIONS", {
+      makeRequest("/public/v1/verify/health", "OPTIONS", undefined, {
         Origin: "https://external-verifier.example.com",
         "Access-Control-Request-Method": "GET",
       }),
@@ -188,5 +211,230 @@ describe("public routes do not interfere with API routes", () => {
     // Health route still works
     const healthRes = await instance.app.request(makeRequest("/health"));
     expect(healthRes.status).toBe(200);
+  });
+});
+
+// =============================================================================
+// Report Submission
+// =============================================================================
+
+describe("POST /public/v1/verify/submit-report", () => {
+  let instance: AppInstance;
+
+  beforeEach(() => {
+    instance = createTestAppWithPublicVerify();
+  });
+
+  it("accepts a valid report and returns 201", async () => {
+    const report = makeValidReport("alice");
+    const res = await instance.app.request(
+      makeRequest("/public/v1/verify/submit-report", "POST", report),
+    );
+
+    expect(res.status).toBe(201);
+    const body = (await res.json()) as { data: { reportId: string; accepted: boolean; totalReports: number } };
+    expect(body.data.accepted).toBe(true);
+    expect(body.data.reportId).toBe(report.reportId);
+    expect(body.data.totalReports).toBe(1);
+  });
+
+  it("rejects duplicate report ID with 409", async () => {
+    const report = makeValidReport("alice");
+    await instance.app.request(
+      makeRequest("/public/v1/verify/submit-report", "POST", report),
+    );
+
+    const res = await instance.app.request(
+      makeRequest("/public/v1/verify/submit-report", "POST", report),
+    );
+
+    expect(res.status).toBe(409);
+    const body = (await res.json()) as { error: { code: string } };
+    expect(body.error.code).toBe("CONFLICT");
+  });
+
+  it("rejects invalid report with 400", async () => {
+    const res = await instance.app.request(
+      makeRequest("/public/v1/verify/submit-report", "POST", {
+        // Missing required fields
+        verifierId: "alice",
+      }),
+    );
+
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { error: { code: string } };
+    expect(body.error.code).toBe("VALIDATION_ERROR");
+  });
+
+  it("rejects report with empty body", async () => {
+    const res = await instance.app.request(
+      makeRequest("/public/v1/verify/submit-report", "POST", {}),
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  it("accepts multiple reports from different verifiers", async () => {
+    const r1 = makeValidReport("alice", "PASS");
+    const r2 = makeValidReport("bob", "FAIL");
+
+    await instance.app.request(
+      makeRequest("/public/v1/verify/submit-report", "POST", r1),
+    );
+    const res = await instance.app.request(
+      makeRequest("/public/v1/verify/submit-report", "POST", r2),
+    );
+
+    expect(res.status).toBe(201);
+    const body = (await res.json()) as { data: { totalReports: number } };
+    expect(body.data.totalReports).toBe(2);
+  });
+});
+
+// =============================================================================
+// Report Listing
+// =============================================================================
+
+describe("GET /public/v1/verify/reports", () => {
+  it("returns empty list when no reports submitted", async () => {
+    const instance = createTestAppWithPublicVerify();
+    const res = await instance.app.request(makeRequest("/public/v1/verify/reports"));
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { data: unknown[]; pagination: { total: number } };
+    expect(body.data).toEqual([]);
+    expect(body.pagination.total).toBe(0);
+  });
+
+  it("returns submitted reports", async () => {
+    const instance = createTestAppWithPublicVerify();
+
+    // Submit 2 reports
+    await instance.app.request(
+      makeRequest("/public/v1/verify/submit-report", "POST", makeValidReport("alice", "PASS")),
+    );
+    await instance.app.request(
+      makeRequest("/public/v1/verify/submit-report", "POST", makeValidReport("bob", "FAIL")),
+    );
+
+    const res = await instance.app.request(makeRequest("/public/v1/verify/reports"));
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      data: Array<{ verifierId: string }>;
+      pagination: { total: number; hasMore: boolean };
+    };
+    expect(body.data.length).toBe(2);
+    expect(body.pagination.total).toBe(2);
+    expect(body.pagination.hasMore).toBe(false);
+  });
+
+  it("respects limit parameter", async () => {
+    const instance = createTestAppWithPublicVerify();
+
+    // Submit 3 reports
+    for (let i = 0; i < 3; i++) {
+      await instance.app.request(
+        makeRequest("/public/v1/verify/submit-report", "POST", makeValidReport(`v${i}`)),
+      );
+    }
+
+    const res = await instance.app.request(makeRequest("/public/v1/verify/reports?limit=2"));
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      data: unknown[];
+      pagination: { total: number; hasMore: boolean; limit: number };
+    };
+    expect(body.data.length).toBe(2);
+    expect(body.pagination.limit).toBe(2);
+    expect(body.pagination.hasMore).toBe(true);
+  });
+});
+
+// =============================================================================
+// Consensus
+// =============================================================================
+
+describe("GET /public/v1/verify/consensus", () => {
+  it("returns FAIL with 0 verifiers when no reports", async () => {
+    const instance = createTestAppWithPublicVerify();
+    const res = await instance.app.request(makeRequest("/public/v1/verify/consensus"));
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      data: { verdict: string; totalVerifiers: number; quorumReached: boolean };
+    };
+    expect(body.data.verdict).toBe("FAIL");
+    expect(body.data.totalVerifiers).toBe(0);
+    expect(body.data.quorumReached).toBe(false);
+  });
+
+  it("returns PASS consensus when all verifiers pass", async () => {
+    const instance = createTestAppWithPublicVerify();
+
+    await instance.app.request(
+      makeRequest("/public/v1/verify/submit-report", "POST", makeValidReport("v1", "PASS")),
+    );
+    await instance.app.request(
+      makeRequest("/public/v1/verify/submit-report", "POST", makeValidReport("v2", "PASS")),
+    );
+
+    const res = await instance.app.request(makeRequest("/public/v1/verify/consensus"));
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      data: {
+        verdict: string;
+        totalVerifiers: number;
+        passCount: number;
+        failCount: number;
+        agreementRatio: number;
+      };
+    };
+    expect(body.data.verdict).toBe("PASS");
+    expect(body.data.totalVerifiers).toBe(2);
+    expect(body.data.passCount).toBe(2);
+    expect(body.data.failCount).toBe(0);
+    expect(body.data.agreementRatio).toBe(1);
+  });
+
+  it("returns FAIL consensus when majority fails", async () => {
+    const instance = createTestAppWithPublicVerify();
+
+    await instance.app.request(
+      makeRequest("/public/v1/verify/submit-report", "POST", makeValidReport("v1", "PASS")),
+    );
+    await instance.app.request(
+      makeRequest("/public/v1/verify/submit-report", "POST", makeValidReport("v2", "FAIL")),
+    );
+    await instance.app.request(
+      makeRequest("/public/v1/verify/submit-report", "POST", makeValidReport("v3", "FAIL")),
+    );
+
+    const res = await instance.app.request(makeRequest("/public/v1/verify/consensus"));
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      data: { verdict: string; passCount: number; failCount: number; dissenters: string[] };
+    };
+    expect(body.data.verdict).toBe("FAIL");
+    expect(body.data.failCount).toBe(2);
+    expect(body.data.dissenters).toEqual(["v1"]);
+  });
+
+  it("respects minimum verifier threshold", async () => {
+    const instance = createTestAppWithPublicVerify({ minimumVerifiers: 3 });
+
+    // Only 1 verifier — quorum not reached
+    await instance.app.request(
+      makeRequest("/public/v1/verify/submit-report", "POST", makeValidReport("v1", "PASS")),
+    );
+
+    const res = await instance.app.request(makeRequest("/public/v1/verify/consensus"));
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { data: { quorumReached: boolean } };
+    expect(body.data.quorumReached).toBe(false);
   });
 });
