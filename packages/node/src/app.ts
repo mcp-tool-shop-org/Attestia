@@ -38,6 +38,7 @@ import { createMetricsRoute } from "./routes/metrics.js";
 import { createExportRoutes } from "./routes/export.js";
 import { createPublicVerifyRoutes } from "./routes/public-verify.js";
 import type { PublicVerifyDeps } from "./routes/public-verify.js";
+import { createPublicOpenApiRoutes } from "./routes/public-openapi.js";
 import { AuditLog } from "./services/audit-log.js";
 
 // =============================================================================
@@ -118,6 +119,7 @@ export function createApp(options: CreateAppOptions): AppInstance {
 
   // ─── Public Routes (no auth required) ──────────────────────────
   app.route("/public/v1/verify", createPublicVerifyRoutes(options.publicVerify));
+  app.route("/public/v1", createPublicOpenApiRoutes());
 
   // ─── API Routes ─────────────────────────────────────────────────
   if (options.auth !== undefined) {
