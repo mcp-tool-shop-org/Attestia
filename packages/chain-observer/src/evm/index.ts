@@ -10,3 +10,5 @@ export {
   isL2Chain,
 } from "./l2-adapter.js";
 export type { NormalizedGas, L2ReceiptFields } from "./l2-adapter.js";
+export { ReorgDetector, canonicalTxKey } from "./reorg-detector.js";
+export type { BlockRecord, L2ReorgDetectedPayload } from "./reorg-detector.js";
