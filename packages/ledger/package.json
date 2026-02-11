@@ -1,0 +1,47 @@
+{
+  "name": "@attestia/ledger",
+  "version": "0.1.0",
+  "description": "Append-only double-entry ledger engine for Attestia",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": [
+    "attestia",
+    "ledger",
+    "double-entry",
+    "append-only",
+    "accounting",
+    "deterministic"
+  ],
+  "author": "mcp-tool-shop-org",
+  "license": "MIT",
+  "dependencies": {
+    "@attestia/types": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.2.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
