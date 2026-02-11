@@ -1,0 +1,32 @@
+{
+  "name": "@attestia/witness",
+  "version": "0.1.0",
+  "description": "XRPL attestation witness — writes reconciliation proofs on-chain as payment memos",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@attestia/types": "workspace:*",
+    "@attestia/registrum": "workspace:*",
+    "@attestia/reconciler": "workspace:*",
+    "xrpl": "^4.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "vitest": "^1.2.0",
+    "typescript": "^5.4.0"
+  },
+  "keywords": ["xrpl", "witness", "attestation", "blockchain", "attestia"],
+  "license": "MIT"
+}
