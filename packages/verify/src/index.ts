@@ -79,3 +79,18 @@ export type {
   InvariantCheckResult,
   InvariantAuditResult,
 } from "./cross-chain-invariants.js";
+
+// Compliance
+export {
+  SOC2_FRAMEWORK,
+  SOC2_MAPPINGS,
+} from "./compliance/index.js";
+
+export type {
+  ComplianceFramework,
+  EvidenceType,
+  ControlStatus,
+  ControlMapping,
+  EvaluatedControl,
+  ComplianceReport,
+} from "./compliance/index.js";
