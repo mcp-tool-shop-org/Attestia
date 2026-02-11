@@ -26,6 +26,18 @@ export { IntentChainMatcher } from "./intent-chain-matcher.js";
 // Attestor
 export { Attestor } from "./attestor.js";
 
+// Cross-chain rules
+export {
+  isSettlementPair,
+  getSettlementChain,
+  preventDoubleCounting,
+  linkCrossChainEvents,
+} from "./cross-chain-rules.js";
+export type {
+  CrossChainEvent,
+  CrossChainLink,
+} from "./cross-chain-rules.js";
+
 // Types
 export type {
   // Match results

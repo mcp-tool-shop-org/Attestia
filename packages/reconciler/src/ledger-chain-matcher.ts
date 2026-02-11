@@ -10,6 +10,8 @@
  */
 
 import { parseAmount, formatAmount } from "@attestia/ledger";
+import { preventDoubleCounting } from "./cross-chain-rules.js";
+import type { CrossChainEvent } from "./cross-chain-rules.js";
 import type {
   LedgerChainMatch,
   ReconcilableLedgerEntry,
@@ -146,5 +148,56 @@ export class LedgerChainMatcher {
     }
 
     return results;
+  }
+
+  /**
+   * Match ledger entries against multi-chain events with cross-chain
+   * deduplication applied first.
+   *
+   * This extends `match()` by first removing settlement artifacts
+   * (L1 duplicates of L2 events) via `preventDoubleCounting()`,
+   * then running the standard matching logic.
+   *
+   * @param ledgerEntries Ledger entries to match
+   * @param chainEvents On-chain events from multiple chains
+   * @returns Match results with settlement artifacts excluded
+   */
+  matchMultiChain(
+    ledgerEntries: readonly ReconcilableLedgerEntry[],
+    chainEvents: readonly ReconcilableChainEvent[],
+  ): {
+    readonly matches: readonly LedgerChainMatch[];
+    readonly removedSettlementArtifacts: readonly ReconcilableChainEvent[];
+  } {
+    // Convert to CrossChainEvent for deduplication
+    const crossChainEvents: CrossChainEvent[] = chainEvents.map((e) => ({
+      chainId: e.chainId,
+      txHash: e.txHash,
+      blockNumber: 0, // Not used for deduplication
+      amount: e.amount,
+      symbol: e.symbol,
+      from: e.from,
+      to: e.to,
+      timestamp: e.timestamp,
+    }));
+
+    const { kept, removed } = preventDoubleCounting(crossChainEvents);
+
+    // Map kept events back to ReconcilableChainEvent by txHash lookup
+    const keptTxHashes = new Set(kept.map((e) => `${e.chainId}:${e.txHash}`));
+    const dedupedEvents = chainEvents.filter(
+      (e) => keptTxHashes.has(`${e.chainId}:${e.txHash}`),
+    );
+
+    // Map removed events back
+    const removedTxHashes = new Set(removed.map((e) => `${e.chainId}:${e.txHash}`));
+    const removedEvents = chainEvents.filter(
+      (e) => removedTxHashes.has(`${e.chainId}:${e.txHash}`),
+    );
+
+    return {
+      matches: this.match(ledgerEntries, dedupedEvents),
+      removedSettlementArtifacts: removedEvents,
+    };
   }
 }
