@@ -97,3 +97,18 @@ export type {
   EvaluatedControl,
   ComplianceReport,
 } from "./compliance/index.js";
+
+// SLA
+export { evaluateSla, evaluateMultipleSla } from "./sla/index.js";
+
+export type {
+  SlaMetric,
+  ThresholdOperator,
+  SlaWindow,
+  SlaTarget,
+  SlaPolicy,
+  SlaTargetResult,
+  SlaVerdict,
+  SlaEvaluation,
+  SlaMetrics,
+} from "./sla/index.js";
