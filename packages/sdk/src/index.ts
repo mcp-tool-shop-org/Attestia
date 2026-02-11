@@ -18,3 +18,27 @@ export { AttestiaError } from "./types.js";
 
 // HTTP Client
 export { HttpClient } from "./http-client.js";
+
+// Client
+export { AttestiaClient } from "./client.js";
+
+// Client namespace classes (for type usage)
+export { IntentsNamespace, VerifyNamespace, ProofsNamespace } from "./client.js";
+
+// Domain types from client
+export type {
+  IntentStatus,
+  IntentKind,
+  Intent,
+  Money,
+  IntentParams,
+  DeclareIntentParams,
+  ListIntentsParams,
+  GlobalStateHash,
+  ReplayInput,
+  ReplayResult,
+  MerkleProofStep,
+  AttestationProofPackage,
+  ProofVerificationResult,
+  MerkleRootInfo,
+} from "./client.js";
