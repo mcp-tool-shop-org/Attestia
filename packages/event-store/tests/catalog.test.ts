@@ -364,10 +364,10 @@ describe("versioned event helpers", () => {
 // =============================================================================
 
 describe("createAtlestiaCatalog", () => {
-  it("creates a catalog with all 20 event types", () => {
+  it("creates a catalog with all 28 event types", () => {
     const catalog = createAtlestiaCatalog();
 
-    expect(catalog.size).toBe(20);
+    expect(catalog.size).toBe(28);
   });
 
   it("all ATTESTIA_EVENTS constants are registered", () => {
@@ -470,6 +470,143 @@ describe("createAtlestiaCatalog", () => {
 
     // Witness events
     expect(catalog.validate(ATTESTIA_EVENTS.WITNESS_RECORD_SUBMITTED, { txHash: "0x123", witnessAddress: "rXXX", payloadHash: "abc" })).toBe(true);
+  });
+
+  it("validates Solana observer event payloads", () => {
+    const catalog = createAtlestiaCatalog();
+
+    expect(
+      catalog.validate(ATTESTIA_EVENTS.SOLANA_EVENT_DETECTED, {
+        chainId: "solana:mainnet-beta",
+        txHash: "5VERv8NMvr...",
+        slot: 250_000_000,
+        programId: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+        eventType: "Transfer",
+      }),
+    ).toBe(true);
+
+    expect(
+      catalog.validate(ATTESTIA_EVENTS.SOLANA_BALANCE_OBSERVED, {
+        chainId: "solana:mainnet-beta",
+        address: "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM",
+        balance: "1000000000",
+        currency: "SOL",
+        slot: 250_000_000,
+        commitment: "confirmed",
+      }),
+    ).toBe(true);
+  });
+
+  it("validates L2 observer event payloads", () => {
+    const catalog = createAtlestiaCatalog();
+
+    expect(
+      catalog.validate(ATTESTIA_EVENTS.L2_REORG_DETECTED, {
+        chainId: "eip155:42161",
+        blockNumber: 100_000,
+        expectedHash: "0xabc",
+        actualHash: "0xdef",
+        detectedAt: "2025-01-01T00:00:00Z",
+      }),
+    ).toBe(true);
+
+    expect(
+      catalog.validate(ATTESTIA_EVENTS.L2_FINALITY_CONFIRMED, {
+        chainId: "eip155:42161",
+        blockNumber: 100_000,
+        blockHash: "0xabc",
+        settlementChainId: "eip155:1",
+        confirmedAt: "2025-01-01T00:00:00Z",
+      }),
+    ).toBe(true);
+  });
+
+  it("validates governance event payloads", () => {
+    const catalog = createAtlestiaCatalog();
+
+    expect(
+      catalog.validate(ATTESTIA_EVENTS.GOVERNANCE_SIGNER_ADDED, {
+        signerAddress: "rSigner1",
+        addedBy: "admin",
+        newSignerCount: 3,
+      }),
+    ).toBe(true);
+
+    expect(
+      catalog.validate(ATTESTIA_EVENTS.GOVERNANCE_SIGNER_REMOVED, {
+        signerAddress: "rSigner2",
+        removedBy: "admin",
+        newSignerCount: 2,
+      }),
+    ).toBe(true);
+
+    expect(
+      catalog.validate(ATTESTIA_EVENTS.GOVERNANCE_QUORUM_CHANGED, {
+        previousQuorum: 1,
+        newQuorum: 2,
+        changedBy: "admin",
+        totalSigners: 3,
+      }),
+    ).toBe(true);
+  });
+
+  it("validates multi-sig witness event payload", () => {
+    const catalog = createAtlestiaCatalog();
+
+    expect(
+      catalog.validate(ATTESTIA_EVENTS.WITNESS_MULTISIG_SUBMITTED, {
+        txHash: "0xmultisig123",
+        signerCount: 3,
+        quorumRequired: 2,
+        payloadHash: "abc123",
+      }),
+    ).toBe(true);
+  });
+
+  it("rejects invalid Solana event payloads", () => {
+    const catalog = createAtlestiaCatalog();
+
+    // Missing slot
+    expect(
+      catalog.validate(ATTESTIA_EVENTS.SOLANA_EVENT_DETECTED, {
+        chainId: "solana:mainnet-beta",
+        txHash: "5VERv8NMvr...",
+        programId: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+        eventType: "Transfer",
+      }),
+    ).toBe(false);
+
+    // Missing commitment
+    expect(
+      catalog.validate(ATTESTIA_EVENTS.SOLANA_BALANCE_OBSERVED, {
+        chainId: "solana:mainnet-beta",
+        address: "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM",
+        balance: "1000000000",
+        currency: "SOL",
+        slot: 250_000_000,
+      }),
+    ).toBe(false);
+  });
+
+  it("rejects invalid governance payloads", () => {
+    const catalog = createAtlestiaCatalog();
+
+    // Missing newSignerCount (number)
+    expect(
+      catalog.validate(ATTESTIA_EVENTS.GOVERNANCE_SIGNER_ADDED, {
+        signerAddress: "rSigner1",
+        addedBy: "admin",
+      }),
+    ).toBe(false);
+
+    // Missing changedBy
+    expect(
+      catalog.validate(ATTESTIA_EVENTS.GOVERNANCE_QUORUM_CHANGED, {
+        previousQuorum: 1,
+        newQuorum: 2,
+        totalSigners: 3,
+      }),
+    ).toBe(false);
   });
 
   it("event types follow naming convention", () => {

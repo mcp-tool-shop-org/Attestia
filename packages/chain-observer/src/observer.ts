@@ -12,6 +12,7 @@
  */
 
 import type { ChainId, ChainRef } from "@attestia/types";
+import type { ChainProfile } from "./finality.js";
 
 // =============================================================================
 // Configuration
@@ -29,6 +30,13 @@ export interface ObserverConfig {
 
   /** Optional request timeout in milliseconds */
   readonly timeoutMs?: number;
+
+  /**
+   * Optional chain profile with finality configuration.
+   * When provided, observers can use chain-specific finality parameters
+   * (e.g., confirmation depth, safe/finalized block tags, commitment levels).
+   */
+  readonly profile?: ChainProfile;
 }
 
 // =============================================================================
@@ -43,6 +51,18 @@ export interface ConnectionStatus {
   readonly connected: boolean;
   readonly latestBlock?: number;
   readonly checkedAt: string;
+
+  /**
+   * The most recent finalized block/slot (EVM "finalized" tag, Solana "finalized" commitment).
+   * Only populated when the observer has a ChainProfile with finality config.
+   */
+  readonly finalizedBlock?: number;
+
+  /**
+   * The most recent safe block (EVM "safe" tag).
+   * Only populated when the observer has a ChainProfile with finality config.
+   */
+  readonly safeBlock?: number;
 }
 
 // =============================================================================
@@ -58,6 +78,13 @@ export interface BalanceQuery {
 
   /** Optional block/ledger number for historical queries */
   readonly atBlock?: number;
+
+  /**
+   * Finality level for the query (Solana commitment level).
+   * When specified, the observer should query at this finality level.
+   * Only applicable to chains that support multiple finality levels (e.g., Solana).
+   */
+  readonly finality?: "processed" | "confirmed" | "finalized";
 }
 
 /**
@@ -139,6 +166,13 @@ export interface TransferQuery {
 
   /** Maximum results to return */
   readonly limit?: number;
+
+  /**
+   * Finality level for the query (Solana commitment level).
+   * When specified, the observer should only return transfers at this finality level.
+   * Only applicable to chains that support multiple finality levels (e.g., Solana).
+   */
+  readonly finality?: "processed" | "confirmed" | "finalized";
 }
 
 /**

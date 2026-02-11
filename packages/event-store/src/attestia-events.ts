@@ -147,6 +147,81 @@ export interface BalanceObservedPayload {
 }
 
 // =============================================================================
+// Observer Events — Solana
+// =============================================================================
+
+export interface SolanaEventDetectedPayload {
+  readonly chainId: string;
+  readonly txHash: string;
+  readonly slot: number;
+  readonly programId: string;
+  readonly eventType: string;
+}
+
+export interface SolanaBalanceObservedPayload {
+  readonly chainId: string;
+  readonly address: string;
+  readonly balance: string;
+  readonly currency: string;
+  readonly slot: number;
+  readonly commitment: string;
+}
+
+// =============================================================================
+// Observer Events — L2
+// =============================================================================
+
+export interface L2ReorgDetectedPayload {
+  readonly chainId: string;
+  readonly blockNumber: number;
+  readonly expectedHash: string;
+  readonly actualHash: string;
+  readonly detectedAt: string;
+}
+
+export interface L2FinalityConfirmedPayload {
+  readonly chainId: string;
+  readonly blockNumber: number;
+  readonly blockHash: string;
+  readonly settlementChainId: string;
+  readonly confirmedAt: string;
+}
+
+// =============================================================================
+// Governance Events
+// =============================================================================
+
+export interface GovernanceSignerAddedPayload {
+  readonly signerAddress: string;
+  readonly addedBy: string;
+  readonly newSignerCount: number;
+}
+
+export interface GovernanceSignerRemovedPayload {
+  readonly signerAddress: string;
+  readonly removedBy: string;
+  readonly newSignerCount: number;
+}
+
+export interface GovernanceQuorumChangedPayload {
+  readonly previousQuorum: number;
+  readonly newQuorum: number;
+  readonly changedBy: string;
+  readonly totalSigners: number;
+}
+
+// =============================================================================
+// Witness Events — Multi-Sig
+// =============================================================================
+
+export interface WitnessMultisigSubmittedPayload {
+  readonly txHash: string;
+  readonly signerCount: number;
+  readonly quorumRequired: number;
+  readonly payloadHash: string;
+}
+
+// =============================================================================
 // Reconciler Events
 // =============================================================================
 
@@ -208,6 +283,22 @@ export const ATTESTIA_EVENTS = {
   // Observer
   CHAIN_EVENT_DETECTED: "observer.event.detected",
   BALANCE_OBSERVED: "observer.balance.observed",
+
+  // Observer — Solana
+  SOLANA_EVENT_DETECTED: "observer.solana.event_detected",
+  SOLANA_BALANCE_OBSERVED: "observer.solana.balance_observed",
+
+  // Observer — L2
+  L2_REORG_DETECTED: "observer.l2.reorg_detected",
+  L2_FINALITY_CONFIRMED: "observer.l2.finality_confirmed",
+
+  // Governance
+  GOVERNANCE_SIGNER_ADDED: "governance.signer.added",
+  GOVERNANCE_SIGNER_REMOVED: "governance.signer.removed",
+  GOVERNANCE_QUORUM_CHANGED: "governance.quorum.changed",
+
+  // Witness — Multi-Sig
+  WITNESS_MULTISIG_SUBMITTED: "witness.multisig.submitted",
 
   // Reconciler
   RECONCILIATION_COMPLETED: "reconciler.reconciliation.completed",
@@ -385,6 +476,54 @@ const OBSERVER_SCHEMAS: readonly EventSchema[] = [
     validate: (p): p is BalanceObservedPayload =>
       isObject(p) && hasString(p, "chainId") && hasString(p, "address"),
   },
+  {
+    type: ATTESTIA_EVENTS.SOLANA_EVENT_DETECTED,
+    version: 1,
+    description: "A Solana on-chain event was detected by the observer",
+    source: "observer",
+    validate: (p): p is SolanaEventDetectedPayload =>
+      isObject(p) &&
+      hasString(p, "chainId") &&
+      hasString(p, "txHash") &&
+      hasNumber(p, "slot") &&
+      hasString(p, "programId"),
+  },
+  {
+    type: ATTESTIA_EVENTS.SOLANA_BALANCE_OBSERVED,
+    version: 1,
+    description: "A Solana on-chain balance was observed with commitment level",
+    source: "observer",
+    validate: (p): p is SolanaBalanceObservedPayload =>
+      isObject(p) &&
+      hasString(p, "chainId") &&
+      hasString(p, "address") &&
+      hasNumber(p, "slot") &&
+      hasString(p, "commitment"),
+  },
+  {
+    type: ATTESTIA_EVENTS.L2_REORG_DETECTED,
+    version: 1,
+    description: "A chain reorganization was detected on an L2",
+    source: "observer",
+    validate: (p): p is L2ReorgDetectedPayload =>
+      isObject(p) &&
+      hasString(p, "chainId") &&
+      hasNumber(p, "blockNumber") &&
+      hasString(p, "expectedHash") &&
+      hasString(p, "actualHash"),
+  },
+  {
+    type: ATTESTIA_EVENTS.L2_FINALITY_CONFIRMED,
+    version: 1,
+    description: "An L2 block was confirmed final on the settlement chain",
+    source: "observer",
+    validate: (p): p is L2FinalityConfirmedPayload =>
+      isObject(p) &&
+      hasString(p, "chainId") &&
+      hasNumber(p, "blockNumber") &&
+      hasString(p, "blockHash") &&
+      hasString(p, "settlementChainId"),
+  },
 ];
 
 const RECONCILER_SCHEMAS: readonly EventSchema[] = [
@@ -406,6 +545,42 @@ const RECONCILER_SCHEMAS: readonly EventSchema[] = [
   },
 ];
 
+const GOVERNANCE_SCHEMAS: readonly EventSchema[] = [
+  {
+    type: ATTESTIA_EVENTS.GOVERNANCE_SIGNER_ADDED,
+    version: 1,
+    description: "A signer was added to the multi-sig governance policy",
+    source: "registrum",
+    validate: (p): p is GovernanceSignerAddedPayload =>
+      isObject(p) &&
+      hasString(p, "signerAddress") &&
+      hasString(p, "addedBy") &&
+      hasNumber(p, "newSignerCount"),
+  },
+  {
+    type: ATTESTIA_EVENTS.GOVERNANCE_SIGNER_REMOVED,
+    version: 1,
+    description: "A signer was removed from the multi-sig governance policy",
+    source: "registrum",
+    validate: (p): p is GovernanceSignerRemovedPayload =>
+      isObject(p) &&
+      hasString(p, "signerAddress") &&
+      hasString(p, "removedBy") &&
+      hasNumber(p, "newSignerCount"),
+  },
+  {
+    type: ATTESTIA_EVENTS.GOVERNANCE_QUORUM_CHANGED,
+    version: 1,
+    description: "The multi-sig quorum threshold was changed",
+    source: "registrum",
+    validate: (p): p is GovernanceQuorumChangedPayload =>
+      isObject(p) &&
+      hasNumber(p, "previousQuorum") &&
+      hasNumber(p, "newQuorum") &&
+      hasString(p, "changedBy"),
+  },
+];
+
 const WITNESS_SCHEMAS: readonly EventSchema[] = [
   {
     type: ATTESTIA_EVENTS.WITNESS_RECORD_SUBMITTED,
@@ -414,6 +589,18 @@ const WITNESS_SCHEMAS: readonly EventSchema[] = [
     source: "registrum",
     validate: (p): p is WitnessRecordSubmittedPayload =>
       isObject(p) && hasString(p, "txHash") && hasString(p, "payloadHash"),
+  },
+  {
+    type: ATTESTIA_EVENTS.WITNESS_MULTISIG_SUBMITTED,
+    version: 1,
+    description: "A multi-sig witness record was submitted to the XRPL",
+    source: "registrum",
+    validate: (p): p is WitnessMultisigSubmittedPayload =>
+      isObject(p) &&
+      hasString(p, "txHash") &&
+      hasNumber(p, "signerCount") &&
+      hasNumber(p, "quorumRequired") &&
+      hasString(p, "payloadHash"),
   },
 ];
 
@@ -425,7 +612,7 @@ const WITNESS_SCHEMAS: readonly EventSchema[] = [
  * Create a pre-populated EventCatalog with all Attestia domain events.
  *
  * This is the standard catalog for production use.
- * All 21 event types are registered at version 1.
+ * All 28 event types are registered at version 1.
  */
 export function createAtlestiaCatalog(): EventCatalog {
   const catalog = new EventCatalog();
@@ -437,6 +624,7 @@ export function createAtlestiaCatalog(): EventCatalog {
     ...REGISTRUM_SCHEMAS,
     ...OBSERVER_SCHEMAS,
     ...RECONCILER_SCHEMAS,
+    ...GOVERNANCE_SCHEMAS,
     ...WITNESS_SCHEMAS,
   ];
 

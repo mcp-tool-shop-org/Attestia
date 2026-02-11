@@ -9,6 +9,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { ObserverRegistry } from "../src/registry.js";
 import type {
   ChainObserver,
+  ObserverConfig,
   BalanceQuery,
   BalanceResult,
   TokenBalance,
@@ -17,6 +18,8 @@ import type {
   TransferQuery,
   ConnectionStatus,
 } from "../src/observer.js";
+import { CHAINS } from "../src/chains.js";
+import { ETHEREUM_PROFILE } from "../src/profiles.js";
 
 // =============================================================================
 // Mock Observer
@@ -235,6 +238,84 @@ describe("ObserverRegistry", () => {
       expect(result.successes.length).toBe(1);
       expect(result.errors.length).toBe(1);
       expect(result.errors[0]!.error).toContain("Network error");
+    });
+  });
+
+  describe("backward compatibility with extended config", () => {
+    it("ObserverConfig without profile still type-checks", () => {
+      const config: ObserverConfig = {
+        chain: CHAINS.ETHEREUM_MAINNET,
+        rpcUrl: "https://eth.example.com",
+      };
+      expect(config.profile).toBeUndefined();
+    });
+
+    it("ObserverConfig with profile accepts ChainProfile", () => {
+      const config: ObserverConfig = {
+        chain: CHAINS.ETHEREUM_MAINNET,
+        rpcUrl: "https://eth.example.com",
+        profile: ETHEREUM_PROFILE,
+      };
+      expect(config.profile).toBeDefined();
+      expect(config.profile!.chain.chainId).toBe("eip155:1");
+      expect(config.profile!.finality.confirmations).toBe(12);
+    });
+
+    it("ConnectionStatus without finalized/safe blocks still type-checks", () => {
+      const status: ConnectionStatus = {
+        chainId: "eip155:1",
+        connected: true,
+        latestBlock: 100,
+        checkedAt: new Date().toISOString(),
+      };
+      expect(status.finalizedBlock).toBeUndefined();
+      expect(status.safeBlock).toBeUndefined();
+    });
+
+    it("ConnectionStatus with finalized/safe blocks works", () => {
+      const status: ConnectionStatus = {
+        chainId: "eip155:1",
+        connected: true,
+        latestBlock: 100,
+        checkedAt: new Date().toISOString(),
+        finalizedBlock: 36,
+        safeBlock: 88,
+      };
+      expect(status.finalizedBlock).toBe(36);
+      expect(status.safeBlock).toBe(88);
+    });
+
+    it("BalanceQuery without finality still type-checks", () => {
+      const query: BalanceQuery = { address: "0xabc" };
+      expect(query.finality).toBeUndefined();
+    });
+
+    it("BalanceQuery with finality accepts commitment level", () => {
+      const query: BalanceQuery = {
+        address: "0xabc",
+        finality: "confirmed",
+      };
+      expect(query.finality).toBe("confirmed");
+    });
+
+    it("TransferQuery without finality still type-checks", () => {
+      const query: TransferQuery = { address: "0xabc" };
+      expect(query.finality).toBeUndefined();
+    });
+
+    it("TransferQuery with finality accepts commitment level", () => {
+      const query: TransferQuery = {
+        address: "0xabc",
+        finality: "finalized",
+      };
+      expect(query.finality).toBe("finalized");
+    });
+
+    it("mock observers still satisfy ChainObserver interface", () => {
+      // Existing mock observers must still work — all new fields are optional
+      const observer = createMockObserver("eip155:1");
+      registry.register(observer);
+      expect(registry.has("eip155:1")).toBe(true);
     });
   });
 });
