@@ -96,35 +96,37 @@ No step is optional. No step is automated away.
 | Fail-closed | Disagreement halts the system, never heals silently |
 | Deterministic replay | Same events produce the same state, always |
 | Advisory AI only | AI can analyze, warn, suggest — never approve, sign, or execute |
-| Multi-chain observation | Ethereum, XRPL, L2s — chain-agnostic read layer |
+| Multi-chain observation | Ethereum, XRPL, Solana, L2s — chain-agnostic read layer |
 | Structural identity | Explicit, immutable, unique — not biometric, but constitutional |
 
 ---
 
 ## Status
 
-11 packages, 1,176 tests, 96.80% coverage, all green. Building in public.
+14 packages, 1,853 tests, 96.80% coverage, all green. Building in public.
 
 | Package | Tests | Purpose |
 |---------|-------|---------|
-| `@attestia/types` | 52 | Shared domain types (zero deps) |
+| `@attestia/types` | 62 | Shared domain types (zero deps) |
 | `@attestia/registrum` | 297 | Constitutional governance — 11 invariants, dual-witness |
 | `@attestia/ledger` | 144 | Append-only double-entry engine |
-| `@attestia/chain-observer` | 180 | Multi-chain read-only observation (EVM + XRPL) |
-| `@attestia/vault` | 55 | Personal vault — portfolios, budgets, intents |
+| `@attestia/chain-observer` | 242 | Multi-chain read-only observation (EVM + XRPL + Solana + L2s) |
+| `@attestia/vault` | 67 | Personal vault — portfolios, budgets, intents |
 | `@attestia/treasury` | 63 | Org treasury — payroll, distributions, funding gates |
-| `@attestia/reconciler` | 36 | 3D cross-system matching + Registrum attestation |
-| `@attestia/witness` | 127 | XRPL on-chain attestation, retry, degradation |
-| `@attestia/verify` | 24 | Deterministic replay verification + GlobalStateHash |
-| `@attestia/event-store` | 67 | Append-only event persistence, JSONL, hash chain, snapshots |
-| `@attestia/node` | 131 | Hono REST API — 17 endpoints, auth, multi-tenancy, metrics, export |
+| `@attestia/reconciler` | 56 | 3D cross-system matching + Registrum attestation |
+| `@attestia/witness` | 245 | XRPL on-chain attestation, multi-sig governance, retry |
+| `@attestia/verify` | 200 | Replay verification, compliance evidence, SLA enforcement |
+| `@attestia/event-store` | 190 | Append-only event persistence, JSONL, hash chain, 34 event types |
+| `@attestia/proof` | 53 | Merkle trees, inclusion proofs, attestation proof packaging |
+| `@attestia/sdk` | 50 | Typed HTTP client SDK for external consumers |
+| `@attestia/node` | 184 | Hono REST API — 30+ endpoints, auth, multi-tenancy, public API, compliance |
 
 ### Development
 
 ```bash
 pnpm install          # Install all dependencies
 pnpm build            # Build all packages
-pnpm test             # Run all tests (1,176)
+pnpm test             # Run all tests (1,853)
 pnpm test:coverage    # Run with coverage reporting
 pnpm typecheck        # Type-check all packages
 pnpm bench            # Run benchmarks
@@ -148,10 +150,14 @@ docker compose down               # Stop rippled
 | [ROADMAP.md](ROADMAP.md) | Phase-by-phase project roadmap |
 | [DESIGN.md](DESIGN.md) | Architecture decisions |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Package graph, data flows, security model |
+| [REFERENCE_ARCHITECTURE.md](REFERENCE_ARCHITECTURE.md) | 5-layer stack, deployment patterns, trust boundaries |
+| [INTEGRATION_GUIDE.md](INTEGRATION_GUIDE.md) | API integration with curl examples + SDK usage |
 | [VERIFICATION_GUIDE.md](VERIFICATION_GUIDE.md) | Auditor step-by-step replay guide |
 | [THREAT_MODEL.md](THREAT_MODEL.md) | STRIDE analysis per component |
 | [CONTROL_MATRIX.md](CONTROL_MATRIX.md) | Threat → control → file → test mappings |
 | [SECURITY.md](SECURITY.md) | Responsible disclosure policy |
+| [INSTITUTIONAL_READINESS.md](INSTITUTIONAL_READINESS.md) | Adoption readiness checklist |
+| [PERFORMANCE_BASELINE.md](PERFORMANCE_BASELINE.md) | Recorded benchmarks |
 
 ---
 

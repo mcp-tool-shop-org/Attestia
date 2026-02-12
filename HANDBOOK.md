@@ -1,8 +1,8 @@
 # Attestia — Project Handbook
 
-**Version:** 0.1.0
-**Date:** February 11, 2026
-**Status:** Active development — Phase 9 complete, Phase 10 next
+**Version:** 0.1.1
+**Date:** February 12, 2026
+**Status:** Active development — Phases 1–12 complete
 
 ---
 
@@ -16,13 +16,13 @@ Attestia does not move money. It proves what happened, enforces structural rules
 
 | Metric | Value |
 |--------|-------|
-| Packages | 11 |
+| Packages | 14 |
 | Source lines (TypeScript) | ~19,000 |
-| Tests | 1,176 |
+| Tests | 1,853 |
 | Test coverage | 96.80% |
 | Runtime dependencies (core) | 0 |
-| REST API endpoints | 17 |
-| Supported chains | EVM (Ethereum, Arbitrum, Base, Optimism) + XRPL |
+| REST API endpoints | 30+ |
+| Supported chains | EVM (Ethereum, Arbitrum, Base, Optimism) + XRPL + Solana |
 
 ---
 
@@ -57,7 +57,7 @@ No step is optional. No step is automated away.
 
 ## Architecture
 
-Attestia is a TypeScript monorepo (pnpm workspaces) organized as 11 packages with strict dependency direction. The core domain packages have zero runtime dependencies.
+Attestia is a TypeScript monorepo (pnpm workspaces) organized as 14 packages with strict dependency direction. The core domain packages have zero runtime dependencies.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -85,9 +85,14 @@ Attestia is a TypeScript monorepo (pnpm workspaces) organized as 11 packages wit
 │          │  attestation   │    │  persistence  │               │
 │          └────────────────┘    └──────────────┘               │
 │                                                                │
+│          ┌──────────────┐    ┌──────────────┐                │
+│          │    Proof      │    │     SDK       │                │
+│          │ Merkle trees  │    │ Typed client  │                │
+│          └──────────────┘    └──────────────┘                │
+│                                                                │
 │          ┌────────────────────────────────────┐               │
 │          │  Node (REST API)                    │               │
-│          │  17 endpoints · Auth · Multi-tenant │               │
+│          │  30+ endpoints · Auth · Multi-tenant│               │
 │          └────────────────────────────────────┘               │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -97,19 +102,21 @@ Attestia is a TypeScript monorepo (pnpm workspaces) organized as 11 packages wit
 ```
 @attestia/types          (zero deps — shared domain types)
     ↑
-@attestia/registrum      (zero deps — standalone constitutional layer)
-@attestia/ledger         (zero deps — pure double-entry engine)
-@attestia/chain-observer (viem + xrpl.js — multi-chain read layer)
+@attestia/registrum      (json-canonicalize — standalone constitutional layer)
+@attestia/ledger         (types — pure double-entry engine)
+@attestia/chain-observer (viem + xrpl.js + @solana/web3.js — multi-chain read layer)
     ↑
 @attestia/vault          (types + ledger + chain-observer + registrum)
-@attestia/treasury       (types + ledger + chain-observer + registrum)
+@attestia/treasury       (types + ledger + registrum)
     ↑
-@attestia/reconciler     (types + registrum — 3D cross-system matching)
-@attestia/witness        (types + registrum — XRPL attestation)
-@attestia/verify         (types — deterministic replay + GlobalStateHash)
-@attestia/event-store    (types — append-only persistence, JSONL, snapshots)
+@attestia/reconciler     (types + registrum + json-canonicalize — 3D matching)
+@attestia/witness        (types + registrum + xrpl.js — XRPL attestation + multi-sig)
+@attestia/verify         (types + json-canonicalize — replay, compliance, SLA)
+@attestia/event-store    (types + json-canonicalize — persistence, JSONL, 34 event types)
+@attestia/proof          (json-canonicalize — Merkle trees, inclusion proofs)
     ↑
-@attestia/node           (all packages — Hono REST API)
+@attestia/node           (all packages + hono, pino, zod — REST API)
+@attestia/sdk            (types — typed HTTP client)
 ```
 
 ---
@@ -119,7 +126,7 @@ Attestia is a TypeScript monorepo (pnpm workspaces) organized as 11 packages wit
 ### @attestia/types
 **Purpose:** Shared domain types across the entire stack.
 **Runtime deps:** None.
-**Tests:** 52.
+**Tests:** 62.
 
 Defines the canonical shapes for `Identity`, `Money`, `Intent`, `ChainRef`, `Event`, and all domain event types. Includes type guards, factory functions, and the event metadata builders used by every other package. Zero dependencies by design — this package is the vocabulary of the system.
 
@@ -127,7 +134,7 @@ Defines the canonical shapes for `Identity`, `Money`, `Intent`, `ChainRef`, `Eve
 
 ### @attestia/registrum
 **Purpose:** Constitutional governance — the structural registrar.
-**Runtime deps:** None.
+**Runtime deps:** json-canonicalize.
 **Tests:** 297.
 **Source:** ~5,600 lines (largest package).
 
@@ -160,13 +167,15 @@ Ported from the Python-based Payroll Engine. Zero runtime dependencies — pure 
 
 ### @attestia/chain-observer
 **Purpose:** Multi-chain read-only observation layer.
-**Runtime deps:** viem, xrpl.js.
-**Tests:** 180.
+**Runtime deps:** viem, xrpl.js, @solana/web3.js.
+**Tests:** 242.
 
 Observes blockchain state without modifying it. Supports:
 
 - **EVM chains** — Ethereum, Arbitrum, Base, Optimism (via viem)
-- **XRPL** — XRP Ledger (via xrpl.js)
+- **XRPL** — XRP Ledger (via xrpl.js), including XRPL EVM sidechain
+- **Solana** — SOL + SPL tokens, program log parsing (via @solana/web3.js)
+- L2 adapters with reorg detection and cross-chain reconciliation
 - Balance queries, transaction history, token metadata
 - Chain-agnostic interface — consumers don't need to know which chain they're reading
 
@@ -177,11 +186,11 @@ This is the only package where external chain SDKs are permitted.
 ### @attestia/vault
 **Purpose:** Personal financial management — observe, budget, allocate.
 **Runtime deps:** Internal packages only.
-**Tests:** 55.
+**Tests:** 67.
 
 The individual's view of their finances across chains. Features include:
 
-- **Multi-chain portfolio observation** — aggregate balances across EVM + XRPL
+- **Multi-chain portfolio observation** — aggregate balances across EVM + XRPL + Solana
 - **Envelope budgeting** — allocate funds to named envelopes with spending limits
 - **Intent declaration** — express financial intentions before execution
 - **Allocation tracking** — map intents to budgets with constraint validation
@@ -208,8 +217,8 @@ Evolved from the Python-based Payroll Engine.
 
 ### @attestia/reconciler
 **Purpose:** Cross-system reconciliation — match intents to reality.
-**Runtime deps:** Internal packages only.
-**Tests:** 36.
+**Runtime deps:** Internal packages + json-canonicalize.
+**Tests:** 56.
 
 The truth engine. Reconciler performs 3D matching across three dimensions:
 
@@ -223,13 +232,14 @@ When all three agree, the record is clean. When they disagree, the system halts 
 
 ### @attestia/witness
 **Purpose:** XRPL on-chain attestation — write proofs to the ledger.
-**Runtime deps:** xrpl.js.
-**Tests:** 127.
+**Runtime deps:** xrpl.js, json-canonicalize.
+**Tests:** 245.
 
 Takes reconciliation reports and attestation payloads and writes them to the XRP Ledger as payment memos. Features include:
 
 - **Memo encoding** — structured attestation data in XRPL payment memos
 - **Round-trip verification** — submit, fetch, decode, verify
+- **Multi-sig governance** — event-sourced N-of-M quorum enforcement with signer rotation
 - **Retry with exponential backoff and jitter** — handles transient XRPL failures
 - **Graceful degradation** — `WitnessSubmitResult` returns `submitted` or `degraded` (never throws)
 - **Docker-based integration testing** — standalone `rippled` node, sub-second ledger close
@@ -239,15 +249,19 @@ The witness is the bridge between Attestia's internal truth and public, verifiab
 ---
 
 ### @attestia/verify
-**Purpose:** Deterministic replay verification.
-**Runtime deps:** Internal packages only.
-**Tests:** 24.
+**Purpose:** Deterministic replay verification, compliance evidence, SLA enforcement.
+**Runtime deps:** Internal packages + json-canonicalize.
+**Tests:** 200.
 
 Answers one question: given the same sequence of events, do we arrive at the same state? Features include:
 
 - **Full replay verification** — rebuild state from events and compare
 - **GlobalStateHash** — a single hash representing the complete system state
 - **Hash comparison** — quick integrity check without full replay
+- **External verification** — exportable state bundles, verifier nodes, multi-verifier consensus
+- **Compliance evidence** — SOC 2 Type II and ISO 27001 Annex A control mappings with programmatic scoring
+- **SLA enforcement** — advisory-only evaluation engine with fail-closed semantics
+- **Tenant governance** — create, suspend, reactivate, validate lifecycle
 
 If replay produces a different result, something is wrong. Fail-closed.
 
@@ -255,27 +269,55 @@ If replay produces a different result, something is wrong. Fail-closed.
 
 ### @attestia/event-store
 **Purpose:** Append-only event persistence with hash chaining.
-**Runtime deps:** None.
-**Tests:** 67.
+**Runtime deps:** json-canonicalize.
+**Tests:** 190.
 
 The durable backbone. All domain events flow through the event store. Features include:
 
 - **In-memory store** — for testing and ephemeral workloads
 - **JSONL file store** — one event per line, crash-safe via fsync
-- **Hash chaining** — each event includes a hash of the previous, forming a tamper-evident chain
-- **Snapshot support** — periodic state snapshots for fast recovery
-- **Event catalog** — 20 formalized event types with schema versioning and migration support
+- **Hash chaining** — each event includes a hash of the previous, forming a tamper-evident chain (SHA-256, RFC 8785)
+- **Snapshot support** — periodic state snapshots for fast recovery with hash verification
+- **Event catalog** — 34 formalized event types with schema versioning and migration support
+- **Corruption recovery** — truncated lines, corrupt middle, empty file handling
+
+---
+
+### @attestia/proof
+**Purpose:** Merkle trees, inclusion proofs, attestation proof packaging.
+**Runtime deps:** json-canonicalize.
+**Tests:** 53.
+
+Cryptographic proof infrastructure. Features include:
+
+- **Merkle tree construction** — deterministic, content-addressed (binary SHA-256)
+- **Leaf inclusion proofs** — portable, verifiable offline
+- **Attestation proof packages** — self-contained bundles that can be verified without the full event store
+
+---
+
+### @attestia/sdk
+**Purpose:** Typed HTTP client SDK for external consumers.
+**Runtime deps:** @attestia/types (type-only).
+**Tests:** 50.
+
+The integration layer for third-party systems. Features include:
+
+- **Type-safe API clients** — full intent lifecycle, verification, proofs
+- **Retry logic** — exponential backoff on 5xx errors
+- **Timeout handling** — AbortController-based
+- **API key injection** — automatic header management
 
 ---
 
 ### @attestia/node
 **Purpose:** HTTP service — the deployable API surface.
 **Runtime deps:** Hono, pino, Zod.
-**Tests:** 131.
+**Tests:** 184.
 
 The operational interface to the entire Attestia stack. Built on Hono with a full middleware stack:
 
-**17 API endpoints under `/api/v1/`:**
+**30+ API endpoints under `/api/v1/` and `/public/v1/`:**
 
 | Category | Endpoints |
 |----------|-----------|
@@ -284,22 +326,26 @@ The operational interface to the entire Attestia stack. Built on Hono with a ful
 | Verification | `POST /verify/replay`, `POST /verify/hash` |
 | Reconciliation | `POST /reconcile`, `POST /attest`, `GET /attestations` |
 | Export | `GET /export/events` (NDJSON stream), `GET /export/state` (snapshot + GlobalStateHash) |
+| Proofs | `POST /proofs/generate`, `POST /proofs/verify`, `GET /proofs/:id`, `POST /proofs/inclusion` |
+| Compliance | `GET /compliance/frameworks`, `POST /compliance/report`, `GET /compliance/summary` |
+| Public verification | `GET /public/v1/verify/state-bundle`, `POST /public/v1/verify/submit-report`, `GET /public/v1/verify/consensus`, `POST /public/v1/verify/proof`, `GET /public/v1/openapi.json` |
 
 **Infrastructure endpoints:**
 
 | Endpoint | Purpose |
 |----------|---------|
 | `GET /health` | Liveness probe |
-| `GET /ready` | Readiness probe |
+| `GET /ready` | Readiness probe (per-subsystem status) |
 | `GET /metrics` | Prometheus metrics |
 
 **Cross-cutting concerns:**
 - **Authentication** — API-key (`X-Api-Key`) + JWT bearer (`Authorization: Bearer`)
 - **Authorization** — Role-based (admin > operator > viewer)
 - **Multi-tenancy** — Isolated service instances via `TenantRegistry`
-- **Rate limiting** — Token-bucket per identity with `429 + Retry-After`
+- **Rate limiting** — Token-bucket per identity (authenticated) + IP-based (public endpoints) with `429 + Retry-After`
 - **Idempotency** — `Idempotency-Key` header with TTL cache
 - **ETags** — SHA-256 based conditional requests
+- **CORS** — Configured for browser-based verifiers on public endpoints
 - **Observability** — Prometheus counters/histograms, pino structured logging, `X-Request-Id`
 - **Deployment** — Multi-stage Dockerfile (node:22-slim), Docker Compose with rippled
 - **Graceful shutdown** — SIGTERM/SIGINT handling
@@ -339,6 +385,9 @@ These hold at every phase and are not negotiable:
 | Validation | Zod |
 | EVM interaction | viem |
 | XRPL interaction | xrpl.js |
+| Solana interaction | @solana/web3.js |
+| JSON canonicalization | json-canonicalize (RFC 8785) |
+| Property testing | fast-check |
 | CI | GitHub Actions (Node 20 + 22 matrix) |
 | Coverage | Codecov (OIDC auth) |
 | Container | Docker (node:22-slim, multi-stage) |
@@ -350,7 +399,7 @@ These hold at every phase and are not negotiable:
 
 ### Current State
 
-Phases 1 through 9 are complete. All 11 packages are built, tested, and operational. The system is audit-ready: an auditor can independently replay events to the same GlobalStateHash.
+Phases 1 through 12 are complete. All 14 packages are built, tested, and operational. The system is audit-ready, externally verifiable, compliance-mappable, and SDK-consumable. An auditor can independently replay events to the same GlobalStateHash.
 
 ### Milestones
 
@@ -361,18 +410,19 @@ Phases 1 through 9 are complete. All 11 packages are built, tested, and operatio
 | **M3: Durable** | Event store complete; rehydration pending | In Progress |
 | **M4: API Surface** | Deployable REST API with auth + multi-tenancy | Done |
 | **M5: Audit-Ready** | Hash chain, witness retry, export, benchmarks, auditor docs; 1,176 tests | Done |
-| **M6: Integrated** | Full intent-to-proof pipeline, E2E tests | Planned |
-| **M7: Accessible** | SDK generation, WebSocket/SSE real-time | Planned |
-| **M8: Multi-Chain** | Solana, L2 observers, multi-sig witness | Planned |
+| **M5.5: Category Standard** | 5 RFCs, reference architecture, integration guide, RFC process | Done |
+| **M6: Multi-Chain** | Solana, L2s, XRPL EVM sidechain, multi-sig witness; 1,551 tests | Done |
+| **M7: Trust Standard** | Proof, SDK, public API, compliance, SLA, governance hardening; 1,853 tests | Done |
+| **M8: Integrated** | Full intent-to-proof pipeline, E2E tests | Planned |
 | **M9: Intelligent** | Anomaly detection, intent suggestions, NL queries | Planned |
 | **M10: User-Facing** | Vault UI, Treasury dashboard, Attestation explorer | Planned |
 | **M11: Distributed** | npm publishing, Docker images, documentation site | Planned |
 
-### What's Next (Phase 10)
+### What's Next
 
 - Pipeline orchestration — wire the full Intent-to-Verify flow with fail-closed semantics
 - End-to-end integration test suite (`packages/e2e/`)
-- Typed client SDK auto-generated from OpenAPI spec
+- Rehydration (`fromEvents()`) for vault, treasury, reconciler, witness
 - WebSocket/SSE for real-time reconciliation updates
 - XRPL testnet smoke test and mainnet dry-run verification
 
@@ -391,7 +441,7 @@ Phases 1 through 9 are complete. All 11 packages are built, tested, and operatio
 ```bash
 pnpm install                # Install all dependencies
 pnpm build                  # Build all packages
-pnpm test                   # Run all tests (1,176+)
+pnpm test                   # Run all tests (1,853)
 pnpm test:coverage          # Run with coverage reporting
 pnpm typecheck              # Type-check all packages
 pnpm bench                  # Run benchmarks
@@ -442,24 +492,33 @@ attestia/
 │   ├── witness/            # @attestia/witness
 │   ├── verify/             # @attestia/verify
 │   ├── event-store/        # @attestia/event-store
+│   ├── proof/              # @attestia/proof
+│   ├── sdk/                # @attestia/sdk
 │   └── node/               # @attestia/node
 ├── .github/
 │   ├── workflows/ci.yml
 │   ├── ISSUE_TEMPLATE/
 │   └── pull_request_template.md
+├── specs/                  # 10 formal RFCs (implementation-agnostic)
+├── resources/              # Research and reference materials
 ├── docker-compose.yml
 ├── Dockerfile
 ├── DESIGN.md               # Architecture decisions
 ├── ROADMAP.md              # Full project roadmap
 ├── HANDBOOK.md             # This document
 ├── ARCHITECTURE.md         # Package graph, data flows, security model
+├── REFERENCE_ARCHITECTURE.md # 5-layer stack, deployment patterns
+├── INTEGRATION_GUIDE.md    # API integration with curl examples + SDK
 ├── THREAT_MODEL.md         # STRIDE analysis per component
 ├── CONTROL_MATRIX.md       # Threat → control → file → test mappings
 ├── VERIFICATION_GUIDE.md   # Auditor step-by-step replay guide
 ├── UPGRADE_GUIDE.md        # Deploy without losing state
 ├── SECURITY.md             # Responsible disclosure policy
+├── INSTITUTIONAL_READINESS.md # Adoption readiness checklist
 ├── PILOT_SCOPE.md          # Monthly payroll pilot use case
 ├── PERFORMANCE_BASELINE.md # Benchmark baselines
+├── CHANGELOG.md            # Version history
+├── INDEX.md                # Complete file inventory
 ├── LICENSE                 # MIT
 └── package.json            # Root workspace config
 ```

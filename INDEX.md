@@ -8,9 +8,9 @@
 
 | Metric | Value |
 |--------|-------|
-| Packages | 13 |
+| Packages | 14 (13 + demo) |
 | Source files (`.ts`) | ~160 |
-| Test files | ~95 |
+| Test files | ~130 |
 | Total tests | 1,853 |
 | Root docs | 16 markdown files |
 | Specs (RFCs) | 10 files |
@@ -54,7 +54,7 @@
 │   └── logo.png                    Attestia logo (used in README)
 │
 ├── specs/                          Formal specifications (9 RFCs + definitions)
-├── packages/                       13 monorepo packages
+├── packages/                       14 monorepo packages
 ├── resources/                      Research and reference materials
 └── .github/                        CI workflows, issue/PR templates
 ```
@@ -86,7 +86,8 @@ specs/
 ```
 .github/
 ├── workflows/
-│   └── ci.yml                      CI pipeline (Node 20/22, build, test, coverage, bench)
+│   ├── ci.yml                      CI pipeline (Node 20/22, build, test, coverage, bench)
+│   └── docker.yml                  Docker image publishing to GHCR
 ├── ISSUE_TEMPLATE/
 │   ├── bug_report.yml              Bug report template
 │   └── feature_request.yml         Feature request template
@@ -120,7 +121,7 @@ resources/
 
 ## packages/
 
-13 monorepo packages. Dependency direction flows downward — no circular deps.
+14 monorepo packages (13 + demo). Dependency direction flows downward — no circular deps.
 
 ```
 types → registrum, ledger
@@ -691,6 +692,17 @@ packages/sdk/
 
 ---
 
+### demo
+
+Examples and demonstrations. No tests (not a published package).
+
+```
+packages/demo/
+└── ...                             Example scripts and usage demos
+```
+
+---
+
 ## Registrum Internal Docs
 
 The `@attestia/registrum` package maintains its own extensive documentation library.
@@ -753,7 +765,7 @@ packages/registrum/docs/
 | Type | Count | Description |
 |------|-------|-------------|
 | `.ts` (src) | ~160 | Source files |
-| `.ts` (test) | ~95 | Test files |
+| `.ts` (test) | ~130 | Test files |
 | `.ts` (bench) | 4 | Benchmark files |
 | `.ts` (config) | 13 | vitest.config.ts per package |
 | `.md` (root) | 16 | Top-level documentation |
@@ -761,8 +773,8 @@ packages/registrum/docs/
 | `.md` (registrum) | 30+ | Registrum internal docs |
 | `.md` (node) | 2 | API docs |
 | `.md` (resources) | 7 | Research materials |
-| `.json` | 15 | package.json (13) + tsconfig (1) + invariants (1) |
-| `.yml` | 4 | CI, Docker Compose, issue templates, alerts |
+| `.json` | 17 | package.json (15) + tsconfig (1) + invariants (1) |
+| `.yml` | 5 | CI (2), Docker Compose, issue templates, alerts |
 | `.png` | 1 | Logo |
 
 ---
