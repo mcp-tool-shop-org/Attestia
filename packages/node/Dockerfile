@@ -3,7 +3,7 @@
 # ────────────────────────────────────────────────────────────
 FROM node:22-slim AS builder
 
-RUN corepack enable && corepack prepare pnpm@9 --activate
+RUN corepack enable && corepack prepare pnpm@10 --activate
 
 WORKDIR /build
 
@@ -22,6 +22,9 @@ COPY packages/reconciler/package.json packages/reconciler/
 COPY packages/witness/package.json packages/witness/
 COPY packages/verify/package.json packages/verify/
 COPY packages/event-store/package.json packages/event-store/
+COPY packages/proof/package.json packages/proof/
+COPY packages/sdk/package.json packages/sdk/
+COPY packages/demo/package.json packages/demo/
 COPY packages/node/package.json packages/node/
 
 # Install all dependencies (workspace-wide)
@@ -38,7 +41,7 @@ RUN pnpm -r build
 # ────────────────────────────────────────────────────────────
 FROM node:22-slim AS production
 
-RUN corepack enable && corepack prepare pnpm@9 --activate
+RUN corepack enable && corepack prepare pnpm@10 --activate
 
 WORKDIR /app
 
@@ -57,6 +60,9 @@ COPY packages/reconciler/package.json packages/reconciler/
 COPY packages/witness/package.json packages/witness/
 COPY packages/verify/package.json packages/verify/
 COPY packages/event-store/package.json packages/event-store/
+COPY packages/proof/package.json packages/proof/
+COPY packages/sdk/package.json packages/sdk/
+COPY packages/demo/package.json packages/demo/
 COPY packages/node/package.json packages/node/
 
 # Install production dependencies only
@@ -73,6 +79,7 @@ COPY --from=builder /build/packages/reconciler/dist packages/reconciler/dist
 COPY --from=builder /build/packages/witness/dist packages/witness/dist
 COPY --from=builder /build/packages/verify/dist packages/verify/dist
 COPY --from=builder /build/packages/event-store/dist packages/event-store/dist
+COPY --from=builder /build/packages/proof/dist packages/proof/dist
 COPY --from=builder /build/packages/node/dist packages/node/dist
 
 ENV NODE_ENV=production
