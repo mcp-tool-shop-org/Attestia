@@ -1,6 +1,6 @@
 {
   "name": "@attestia/registrum",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Structural registrar — constitutional governance layer for Attestia",
   "type": "module",
   "main": "dist/index.js",

@@ -1,6 +1,6 @@
 {
   "name": "@attestia/sdk",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Typed HTTP client SDK for the Attestia API",
   "type": "module",
   "main": "dist/index.js",
@@ -12,7 +12,9 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsc",

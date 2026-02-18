@@ -1,6 +1,11 @@
 {
   "name": "@attestia/reconciler",
-  "version": "0.1.0",
+  "version": "0.2.0",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "description": "Cross-system reconciliation — matches intents, ledger entries, and on-chain events with Registrum attestation",
   "type": "module",
   "main": "dist/index.js",

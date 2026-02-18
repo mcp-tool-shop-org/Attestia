@@ -1,6 +1,11 @@
 {
   "name": "@attestia/verify",
-  "version": "0.1.0",
+  "version": "0.2.0",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "description": "Deterministic replay verification and GlobalStateHash for Attestia",
   "type": "module",
   "main": "dist/index.js",

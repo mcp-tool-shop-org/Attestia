@@ -1,6 +1,6 @@
 {
   "name": "@attestia/proof",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Merkle trees, inclusion proofs, and attestation proof packaging for Attestia",
   "type": "module",
   "main": "dist/index.js",
@@ -12,7 +12,9 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsc",

@@ -4,6 +4,17 @@ All notable changes to Attestia, organized by development phase.
 
 ---
 
+## [0.2.0] - 2026-02-18
+
+### Added
+- README.md for all 13 npm-published packages — house style with logo, badges, At a Glance, usage examples, API highlights, ecosystem table
+- `files` field in package.json for packages that were missing it (vault, treasury, reconciler, witness, verify, event-store, node)
+
+### Changed
+- Bumped all 13 packages from 0.1.0 to 0.2.0
+
+---
+
 ## Phase 12 — Institutionalization & Ecosystem Activation
 
 ### 12.1 — External Verification Network
