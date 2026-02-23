@@ -8,4 +8,4 @@
  * Governance: Class A (packaging correctness, no semantic change)
  */
 
-export const REGISTRUM_VERSION = "0.1.0";
+export const REGISTRUM_VERSION = "0.2.0";
