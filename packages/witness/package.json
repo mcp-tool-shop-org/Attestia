@@ -1,12 +1,12 @@
 {
   "name": "@attestia/witness",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "files": [
     "dist",
     "README.md",
     "LICENSE"
   ],
-  "description": "XRPL attestation witness — writes reconciliation proofs on-chain as payment memos",
+  "description": "XRPL attestation witness \u00e2\u20ac\u201d writes reconciliation proofs on-chain as payment memos",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

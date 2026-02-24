@@ -1,12 +1,12 @@
 {
   "name": "@attestia/vault",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "files": [
     "dist",
     "README.md",
     "LICENSE"
   ],
-  "description": "Personal Vault — multi-chain observation, envelope budgeting, intent-based allocation",
+  "description": "Personal Vault \u00e2\u20ac\u201d multi-chain observation, envelope budgeting, intent-based allocation",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

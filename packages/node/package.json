@@ -1,12 +1,12 @@
 {
   "name": "@attestia/node",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "files": [
     "dist",
     "README.md",
     "LICENSE"
   ],
-  "description": "Attestia HTTP service — REST API for intent lifecycle, reconciliation, and attestation",
+  "description": "Attestia HTTP service \u00e2\u20ac\u201d REST API for intent lifecycle, reconciliation, and attestation",
   "type": "module",
   "main": "dist/main.js",
   "types": "dist/main.d.ts",
