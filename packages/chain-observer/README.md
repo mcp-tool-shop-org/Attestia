@@ -1,4 +1,4 @@
-<p align="center"><img src="../../assets/logo.png" alt="Attestia" width="200"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/mcp-tool-shop-org/Attestia/main/assets/logo.png" alt="Attestia" width="200"></p>
 
 # @attestia/chain-observer
 

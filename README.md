@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo.png" alt="Attestia" width="400">
+  <img src="https://raw.githubusercontent.com/mcp-tool-shop-org/Attestia/main/assets/logo.png" alt="Attestia" width="400">
 </p>
 
 <h1 align="center">Attestia</h1>
