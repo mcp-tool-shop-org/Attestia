@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="README.md">English</a> | <a href="README.ja.md">日本語</a> | <a href="README.zh.md">中文</a> | <a href="README.es.md">Español</a> | <a href="README.fr.md">Français</a> | <strong>हिन्दी</strong> | <a href="README.it.md">Italiano</a> | <a href="README.pt-BR.md">Português</a>
+  <strong>English</strong> | <a href="README.ja.md">日本語</a> | <a href="README.zh.md">中文</a> | <a href="README.es.md">Español</a> | <a href="README.fr.md">Français</a> | <a href="README.hi.md">हिन्दी</a> | <a href="README.it.md">Italiano</a> | <a href="README.pt-BR.md">Português</a>
 </p>
 
 <p align="center">
@@ -11,34 +11,36 @@
 <p align="center">
   <a href="https://github.com/mcp-tool-shop-org/Attestia/actions/workflows/ci.yml"><img src="https://github.com/mcp-tool-shop-org/Attestia/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://codecov.io/gh/mcp-tool-shop-org/Attestia"><img src="https://codecov.io/gh/mcp-tool-shop-org/Attestia/graph/badge.svg" alt="codecov"></a>
+  <a href="https://mcp-tool-shop-org.github.io/Attestia/"><img src="https://img.shields.io/badge/Landing_Page-live-blue" alt="Landing Page"></a>
+  <a href="https://opensource.org/license/mit/"><img src="https://img.shields.io/badge/License-MIT-yellow" alt="MIT License"></a>
 </p>
 
-<p align="center"><strong>Financial truth infrastructure for the decentralized world.</strong></p>
+<p align="center"><strong>विकेंद्रीकृत दुनिया के लिए वित्तीय सत्य का आधारभूत ढांचा।</strong></p>
 
-***
+---
 
-## Mission
+## मिशन।
 
-We believe that money — wherever it lives, however it moves — deserves the same rigor as the systems that created it. Smart contracts execute. Blockchains record. But no one *attests*.
+हमारा मानना है कि धन, चाहे वह कहीं भी मौजूद हो या किसी भी रूप में प्रवाहित हो, उन प्रणालियों के समान ही उच्च स्तर की सुरक्षा और सटीकता का हकदार है जिन्होंने इसे बनाया है। स्मार्ट अनुबंधों का क्रियान्वयन होता है, ब्लॉकचेन में रिकॉर्ड दर्ज होते हैं, लेकिन कोई भी इसकी *पुष्टि* नहीं करता।
 
-Attestia is the missing layer: structural governance, deterministic accounting, and human-approved intent — unified across chains, organizations, and individuals.
+अटेस्टिया वह महत्वपूर्ण घटक है जो अभी तक गायब था: संरचनात्मक शासन, निश्चित लेखांकन, और मानव-अनुमोदित उद्देश्य - जो सभी श्रृंखलाओं, संगठनों और व्यक्तियों में एकीकृत है।
 
-We don't move your money. We prove what happened, constrain what can happen, and make the financial record unbreakable.
+हम आपके पैसे को कहीं नहीं ले जाते। हम यह साबित करते हैं कि क्या हुआ, उन चीजों को सीमित करते हैं जो हो सकती हैं, और वित्तीय रिकॉर्ड को अभेद्य बनाते हैं।
 
-### What We Stand For
+### हमारा आदर्श/हमारा उद्देश्य।
 
-- **Truth over speed.** Every financial event is append-only, replayable, and reconcilable. If it can't be proven, it didn't happen.
-- **Humans approve; machines verify.** AI advises, smart contracts execute, but nothing moves without explicit human authorization. Ever.
-- **Structural governance, not political governance.** We don't vote on what's valid. We define invariants that hold unconditionally — identity is explicit, lineage is unbroken, ordering is deterministic.
-- **Intent is not execution.** Declaring what you want and doing it are separate acts with separate gates. The gap between them is where trust lives.
-- **Chains are witnesses, not authorities.** XRPL attests. Ethereum settles. But authority flows from structural rules, not from any chain's consensus.
-- **Boring infrastructure wins.** The world doesn't need another DeFi protocol. It needs the accounting layer underneath — the financial plumbing that makes everything else trustworthy.
+- **सत्य, गति से अधिक महत्वपूर्ण है।** प्रत्येक वित्तीय घटना केवल जोड़ने की अनुमति देती है, जिसे दोहराया और सत्यापित किया जा सकता है। यदि इसे साबित नहीं किया जा सकता, तो वह नहीं हुआ।
+- **मनुष्य अनुमोदन करते हैं; मशीनें सत्यापन करती हैं।** कृत्रिम बुद्धिमत्ता (एआई) सलाह देती है, स्मार्ट अनुबंधों द्वारा क्रियान्वयन होता है, लेकिन कुछ भी स्पष्ट मानवीय प्राधिकरण के बिना आगे नहीं बढ़ता। कभी नहीं।
+- **संरचनात्मक शासन, राजनीतिक शासन नहीं।** हम यह नहीं तय करते कि क्या मान्य है। हम उन अपरिवर्तनीय नियमों को परिभाषित करते हैं जो बिना किसी शर्त के लागू होते हैं - पहचान स्पष्ट है, वंश अविभाज्य है, और क्रम निश्चित है।
+- **इरादा, क्रियान्वयन से अलग है।** आप जो चाहते हैं उसे घोषित करना और उसे करना, ये दो अलग-अलग कार्य हैं जिनके लिए अलग-अलग प्रक्रियाएं हैं। इन दोनों के बीच का अंतर ही वह जगह है जहां विश्वास टिका होता है।
+- **चेन, गवाह हैं, अधिकारी नहीं।** XRPL पुष्टि करता है। एथेरियम निपटान करता है। लेकिन अधिकार किसी भी चेन की सहमति से नहीं, बल्कि संरचनात्मक नियमों से आता है।
+- **सरल बुनियादी ढांचा ही सफल होता है।** दुनिया को एक और डीएफआई (DeFi) प्रोटोकॉल की आवश्यकता नहीं है। इसकी आवश्यकता उस आधारभूत संरचना की है जो सब कुछ को विश्वसनीय बनाती है - वित्तीय प्रणाली जो हर चीज के नीचे काम करती है।
 
-***
+---
 
-## Architecture
+## आर्किटेक्चर।
 
-Attestia is three systems, one truth:
+अटेस्टिया तीन प्रणालियों का एकीकरण है, लेकिन इसका मूल एक ही सत्य पर आधारित है।
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -67,65 +69,65 @@ Attestia is three systems, one truth:
 └─────────────────────────────────────────────────────────┘
 ```
 
-| System             | Role                                                                             | Origin                           |
-| ------------------ | -------------------------------------------------------------------------------- | -------------------------------- |
-| **Personal Vault** | Multi-chain portfolio observation, envelope budgeting, intent declaration        | Evolved from NextLedger          |
-| **Org Treasury**   | Deterministic payroll, DAO distributions, dual-gate funding, double-entry ledger | Evolved from Payroll Engine      |
-| **Registrum**      | Structural registrar — 11 invariants, dual-witness validation, XRPL attestation  | Unchanged — constitutional layer |
+| सिस्टम। | Role | उत्पत्ति। |
+|--------|------|--------|
+| **Personal Vault** | बहु-श्रृंखला पोर्टफोलियो का अवलोकन, बजट आवंटन, और इरादे की घोषणा। | यह 'नेक्स्टलेजर' से विकसित हुआ है। |
+| **Org Treasury** | निश्चित वेतन प्रणाली, डीएओ (DAO) द्वारा किए गए वितरण, दोहरी वित्तपोषण प्रणाली, दोहरी प्रविष्टि खाता प्रणाली। | यह प्रणाली 'पेरोल इंजन' से विकसित हुई है। |
+| **Registrum** | संरचनात्मक रजिस्ट्रार: 11 अपरिवर्तनीयताएँ, द्विदिश सत्यापन, एक्सआरपीएल प्रमाणीकरण। | अपरिवर्तित - संवैधानिक स्तर। |
 
-***
+---
 
-## Core Pattern
+## मुख्य संरचना/पैटर्न।
 
-Every interaction follows one flow:
+प्रत्येक बातचीत एक निश्चित क्रम का पालन करती है:
 
 ```
 Intent → Approve → Execute → Verify
 ```
 
-1. **Intent** — A user or system declares a desired outcome
-1. **Approve** — Registrum validates structurally; a human signs explicitly
-1. **Execute** — The on-chain transaction is submitted
-1. **Verify** — Reconciliation confirms; XRPL attests the record
+1. **इरादा:** एक उपयोगकर्ता या सिस्टम एक वांछित परिणाम की घोषणा करता है।
+2. **अनुमोदन:** रजिस्ट्री संरचनात्मक रूप से इसकी पुष्टि करती है; एक व्यक्ति स्पष्ट रूप से हस्ताक्षर करता है।
+3. **क्रियान्वयन:** ब्लॉकचेन पर लेन-देन सबमिट किया जाता है।
+4. **सत्यापन:** मिलान की पुष्टि होती है; XRPL इस रिकॉर्ड की प्रामाणिकता की पुष्टि करता है।
 
-No step is optional. No step is automated away.
+कोई भी चरण वैकल्पिक नहीं है। कोई भी चरण स्वचालित रूप से निष्पादित नहीं किया जा सकता।
 
-***
+---
 
-## Principles
+## सिद्धांत।
 
-| Principle               | Implementation                                                  |
-| ----------------------- | --------------------------------------------------------------- |
-| Append-only records     | No UPDATE, no DELETE — only new entries                         |
-| Fail-closed             | Disagreement halts the system, never heals silently             |
-| Deterministic replay    | Same events produce the same state, always                      |
-| Advisory AI only        | AI can analyze, warn, suggest — never approve, sign, or execute |
-| Multi-chain observation | Ethereum, XRPL, Solana, L2s — chain-agnostic read layer         |
-| Structural identity     | Explicit, immutable, unique — not biometric, but constitutional |
+| सिद्धांत। | कार्यान्वयन। |
+|-----------|---------------|
+| केवल जोड़ने की अनुमति वाले रिकॉर्ड। | कोई अपडेट नहीं, कोई डिलीट नहीं—केवल नए प्रविष्टियाँ। |
+| सुरक्षित विफलता मोड (सुरक्षित रूप से बंद होने की स्थिति)। | मतभेद प्रणाली को बाधित करता है, और यह कभी भी चुपचाप ठीक नहीं होता। |
+| निश्चित पुन: प्रदर्शन। | समान घटनाएं हमेशा समान परिणाम उत्पन्न करती हैं। |
+| केवल सलाहकार एआई। | कृत्रिम बुद्धिमत्ता (एआई) विश्लेषण कर सकती है, चेतावनी दे सकती है, सुझाव दे सकती है, लेकिन यह कभी भी किसी चीज़ को स्वीकृत नहीं करती, हस्ताक्षर नहीं करती, और न ही उसे लागू करती है। |
+| बहु-श्रृंखला अवलोकन। | इथेरियम, एक्सआरपीएल, सोलाना, एल2 - ये सभी चेन-अग्नोस्टिक रीड लेयर हैं। |
+| संरचनात्मक पहचान। | स्पष्ट, अपरिवर्तनीय, अद्वितीय - यह जैविक पहचान (बायोमेट्रिक) नहीं है, बल्कि संवैधानिक है। |
 
-***
+---
 
-## Status
+## स्थिति।
 
-14 packages, 1,853 tests, 96.80% coverage, all green. Building in public.
+14 पैकेज, 1,853 परीक्षण, 96.80% कवरेज, सब कुछ ठीक है। सार्वजनिक रूप से विकास कार्य जारी हैं।
 
-| Package                    | Tests | Purpose                                                                    |
-| -------------------------- | ----- | -------------------------------------------------------------------------- |
-| `@attestia/types`          | 62    | Shared domain types (zero deps)                                            |
-| `@attestia/registrum`      | 297   | Constitutional governance — 11 invariants, dual-witness                    |
-| `@attestia/ledger`         | 144   | Append-only double-entry engine                                            |
-| `@attestia/chain-observer` | 242   | Multi-chain read-only observation (EVM + XRPL + Solana + L2s)              |
-| `@attestia/vault`          | 67    | Personal vault — portfolios, budgets, intents                              |
-| `@attestia/treasury`       | 63    | Org treasury — payroll, distributions, funding gates                       |
-| `@attestia/reconciler`     | 56    | 3D cross-system matching + Registrum attestation                           |
-| `@attestia/witness`        | 245   | XRPL on-chain attestation, multi-sig governance, retry                     |
-| `@attestia/verify`         | 200   | Replay verification, compliance evidence, SLA enforcement                  |
-| `@attestia/event-store`    | 190   | Append-only event persistence, JSONL, hash chain, 34 event types           |
-| `@attestia/proof`          | 53    | Merkle trees, inclusion proofs, attestation proof packaging                |
-| `@attestia/sdk`            | 50    | Typed HTTP client SDK for external consumers                               |
-| `@attestia/node`           | 184   | Hono REST API — 30+ endpoints, auth, multi-tenancy, public API, compliance |
+| पैकेज. | Tests | उद्देश्य। |
+|---------|-------|---------|
+| `@attestia/types` | 62 | साझा डोमेन प्रकार (शून्य निर्भरता)। |
+| `@attestia/registrum` | 297 | संविधानिक शासन - 11 अपरिवर्तनीय सिद्धांत, द्वितंत्रीय सत्यापन। |
+| `@attestia/ledger` | 144 | केवल जोड़ (अपेंड) करने की अनुमति देने वाला, दोहरी प्रविष्टि वाला सिस्टम। |
+| `@attestia/chain-observer` | 242 | मल्टी-चेन, केवल-पढ़ने योग्य अवलोकन (ईवीएम + एक्सआरपीएल + सोलाना + एल2)। |
+| `@attestia/vault` | 67 | व्यक्तिगत सुरक्षित स्थान - पोर्टफोलियो, बजट, और योजनाएं। |
+| `@attestia/treasury` | 63 | संगठन का कोषागार: वेतन, वितरण, और धन आवंटन प्रक्रियाएं। |
+| `@attestia/reconciler` | 56 | त्रि-आयामी (3D) क्रॉस-सिस्टम मिलान + रजिस्ट्री प्रमाणीकरण। |
+| `@attestia/witness` | 245 | XRPL ब्लॉकचेन पर आधारित प्रमाणन, बहु-हस्ताक्षर शासन, और पुनः प्रयास की सुविधा। |
+| `@attestia/verify` | 200 | पुनरावृत्ति सत्यापन, अनुपालन का प्रमाण, एसएलए (सेवा स्तर समझौते) का अनुपालन। |
+| `@attestia/event-store` | 190 | केवल जोड़ (append) करने की सुविधा वाले इवेंट डेटा का संग्रहण, JSONL प्रारूप, हैश श्रृंखला, 34 प्रकार के इवेंट। |
+| `@attestia/proof` | 53 | मर्केल ट्री, समावेश प्रमाण, और प्रमाण पैकेजिंग। |
+| `@attestia/sdk` | 50 | बाहरी उपयोगकर्ताओं के लिए टाइप-आधारित HTTP क्लाइंट SDK। |
+| `@attestia/node` | 184 | होनो रेस्ट एपीआई: 30 से अधिक एंडपॉइंट, प्रमाणीकरण (ऑथेंटिकेशन), मल्टी-टेनेंसी, सार्वजनिक एपीआई, अनुपालन। |
 
-### Development
+### विकास।
 
 ```bash
 pnpm install          # Install all dependencies
@@ -136,9 +138,9 @@ pnpm typecheck        # Type-check all packages
 pnpm bench            # Run benchmarks
 ```
 
-### XRPL Integration Testing
+### XRPL एकीकरण परीक्षण।
 
-A standalone `rippled` node runs in Docker for deterministic on-chain integration tests — no testnet dependency, no faucet, sub-second ledger close.
+एक स्वतंत्र "रिपलड" नोड डॉकर में चलता है, जिसका उपयोग ब्लॉकचेन पर एक समान तरीके से किए जाने वाले परीक्षणों के लिए किया जाता है। इसके लिए किसी टेस्टनेट की आवश्यकता नहीं होती, न ही किसी "फ़ॉसेट" की, और यह प्रति सेकंड एक से भी कम समय में लेनदेन को पूरा करता है।
 
 ```bash
 docker compose up -d              # Start standalone rippled
@@ -146,25 +148,25 @@ pnpm --filter @attestia/witness run test:integration  # Run on-chain round-trip 
 docker compose down               # Stop rippled
 ```
 
-### Documentation
+### प्रलेखन।
 
-| Document                                                  | Purpose                                              |
-| --------------------------------------------------------- | ---------------------------------------------------- |
-| [HANDBOOK.md](HANDBOOK.md)                                | Executive overview and full package reference        |
-| [ROADMAP.md](ROADMAP.md)                                  | Phase-by-phase project roadmap                       |
-| [DESIGN.md](DESIGN.md)                                    | Architecture decisions                               |
-| [ARCHITECTURE.md](ARCHITECTURE.md)                        | Package graph, data flows, security model            |
-| [REFERENCE\_ARCHITECTURE.md](REFERENCE_ARCHITECTURE.md)   | 5-layer stack, deployment patterns, trust boundaries |
-| [INTEGRATION\_GUIDE.md](INTEGRATION_GUIDE.md)             | API integration with curl examples + SDK usage       |
-| [VERIFICATION\_GUIDE.md](VERIFICATION_GUIDE.md)           | Auditor step-by-step replay guide                    |
-| [THREAT\_MODEL.md](THREAT_MODEL.md)                       | STRIDE analysis per component                        |
-| [CONTROL\_MATRIX.md](CONTROL_MATRIX.md)                   | Threat → control → file → test mappings              |
-| [SECURITY.md](SECURITY.md)                                | Responsible disclosure policy                        |
-| [INSTITUTIONAL\_READINESS.md](INSTITUTIONAL_READINESS.md) | Adoption readiness checklist                         |
-| [PERFORMANCE\_BASELINE.md](PERFORMANCE_BASELINE.md)       | Recorded benchmarks                                  |
+| दस्तावेज़। | उद्देश्य। |
+|----------|---------|
+| [HANDBOOK.md](HANDBOOK.md) | कार्यकारी सारांश और संपूर्ण पैकेज के लिए संदर्भ। |
+| [ROADMAP.md](ROADMAP.md) | परियोजना का चरणबद्ध विकास योजना। |
+| [DESIGN.md](DESIGN.md) | आर्किटेक्चर संबंधी निर्णय। |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | पैकेज ग्राफ, डेटा प्रवाह, सुरक्षा मॉडल। |
+| [REFERENCE_ARCHITECTURE.md](REFERENCE_ARCHITECTURE.md) | पांच-स्तरीय संरचना, परिनियोजन के तरीके, विश्वास की सीमाएं। |
+| [INTEGRATION_GUIDE.md](INTEGRATION_GUIDE.md) | एपीआई का कर्ल (curl) के उदाहरणों के साथ एकीकरण + एसडीके (SDK) का उपयोग। |
+| [VERIFICATION_GUIDE.md](VERIFICATION_GUIDE.md) | ऑडिटर के लिए चरण-दर-चरण पुनरावृत्ति मार्गदर्शिका। |
+| [THREAT_MODEL.md](THREAT_MODEL.md) | STRIDE विश्लेषण का प्रत्येक घटक। |
+| [CONTROL_MATRIX.md](CONTROL_MATRIX.md) | खतरा → नियंत्रण → फ़ाइल → परीक्षण (मैपिंग)। |
+| [SECURITY.md](SECURITY.md) | जिम्मेदार जानकारी देने की नीति। |
+| [INSTITUTIONAL_READINESS.md](INSTITUTIONAL_READINESS.md) | "अपनाना" की तैयारी के लिए जाँच सूची। |
+| [PERFORMANCE_BASELINE.md](PERFORMANCE_BASELINE.md) | दर्ज किए गए प्रदर्शन माप। |
 
-***
+---
 
-## License
+## लाइसेंस।
 
-[MIT](LICENSE)
+[एमआईटी] (लाइसेंस)

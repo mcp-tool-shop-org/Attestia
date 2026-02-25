@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="README.md">English</a> | <a href="README.ja.md">日本語</a> | <a href="README.zh.md">中文</a> | <a href="README.es.md">Español</a> | <a href="README.fr.md">Français</a> | <a href="README.hi.md">हिन्दी</a> | <strong>Italiano</strong> | <a href="README.pt-BR.md">Português</a>
+  <strong>English</strong> | <a href="README.ja.md">日本語</a> | <a href="README.zh.md">中文</a> | <a href="README.es.md">Español</a> | <a href="README.fr.md">Français</a> | <a href="README.hi.md">हिन्दी</a> | <a href="README.it.md">Italiano</a> | <a href="README.pt-BR.md">Português</a>
 </p>
 
 <p align="center">
@@ -11,34 +11,36 @@
 <p align="center">
   <a href="https://github.com/mcp-tool-shop-org/Attestia/actions/workflows/ci.yml"><img src="https://github.com/mcp-tool-shop-org/Attestia/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://codecov.io/gh/mcp-tool-shop-org/Attestia"><img src="https://codecov.io/gh/mcp-tool-shop-org/Attestia/graph/badge.svg" alt="codecov"></a>
+  <a href="https://mcp-tool-shop-org.github.io/Attestia/"><img src="https://img.shields.io/badge/Landing_Page-live-blue" alt="Landing Page"></a>
+  <a href="https://opensource.org/license/mit/"><img src="https://img.shields.io/badge/License-MIT-yellow" alt="MIT License"></a>
 </p>
 
-<p align="center"><strong>Financial truth infrastructure for the decentralized world.</strong></p>
+<p align="center"><strong>Infrastruttura per la trasparenza finanziaria nel mondo decentralizzato.</strong></p>
 
-***
+---
 
-## Mission
+## Missione
 
-We believe that money — wherever it lives, however it moves — deserves the same rigor as the systems that created it. Smart contracts execute. Blockchains record. But no one *attests*.
+Crediamo che il denaro, indipendentemente da dove si trovi o come si muova, meriti la stessa accuratezza dei sistemi che lo hanno creato. Gli smart contract vengono eseguiti, le blockchain registrano le transazioni, ma nessuno *certifica* la loro validità.
 
-Attestia is the missing layer: structural governance, deterministic accounting, and human-approved intent — unified across chains, organizations, and individuals.
+Attestia è lo strato mancante: offre una governance strutturata, una contabilità deterministica e un'approvazione umana degli obiettivi, il tutto integrato tra diverse blockchain, organizzazioni e individui.
 
-We don't move your money. We prove what happened, constrain what can happen, and make the financial record unbreakable.
+Non spostiamo i vostri soldi. Verifichiamo ciò che è accaduto, limitiamo ciò che può accadere e rendiamo la registrazione finanziaria inviolabile.
 
-### What We Stand For
+### I nostri valori
 
-- **Truth over speed.** Every financial event is append-only, replayable, and reconcilable. If it can't be proven, it didn't happen.
-- **Humans approve; machines verify.** AI advises, smart contracts execute, but nothing moves without explicit human authorization. Ever.
-- **Structural governance, not political governance.** We don't vote on what's valid. We define invariants that hold unconditionally — identity is explicit, lineage is unbroken, ordering is deterministic.
-- **Intent is not execution.** Declaring what you want and doing it are separate acts with separate gates. The gap between them is where trust lives.
-- **Chains are witnesses, not authorities.** XRPL attests. Ethereum settles. But authority flows from structural rules, not from any chain's consensus.
-- **Boring infrastructure wins.** The world doesn't need another DeFi protocol. It needs the accounting layer underneath — the financial plumbing that makes everything else trustworthy.
+- **Veridicità al di sopra della velocità.** Ogni evento finanziario è registrato in modo immutabile, riproducibile e riconciliabile. Se non può essere provato, non è accaduto.
+- **Gli esseri umani approvano; le macchine verificano.** L'intelligenza artificiale fornisce suggerimenti, gli smart contract eseguono le operazioni, ma nulla si muove senza l'autorizzazione esplicita degli esseri umani. Mai.
+- **Governance strutturale, non politica.** Non votiamo su ciò che è valido. Definiamo principi fondamentali che sono sempre validi: l'identità è esplicita, la tracciabilità è ininterrotta, l'ordine è deterministico.
+- **L'intenzione non è l'esecuzione.** Dichiarare ciò che si vuole e metterlo in pratica sono due azioni distinte, con controlli separati. Lo spazio tra queste due azioni è dove risiede la fiducia.
+- **Le blockchain sono testimoni, non autorità.** XRPL attesta. Ethereum salda. Ma l'autorità deriva dalle regole strutturali, non dal consenso di nessuna blockchain.
+- **Un'infrastruttura solida è ciò che conta.** Il mondo non ha bisogno di un altro protocollo DeFi. Ha bisogno dello strato sottostante, dell'infrastruttura finanziaria che rende tutto il resto affidabile.
 
-***
+---
 
-## Architecture
+## Architettura
 
-Attestia is three systems, one truth:
+Attestia: tre sistemi, un'unica verità.
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -67,65 +69,65 @@ Attestia is three systems, one truth:
 └─────────────────────────────────────────────────────────┘
 ```
 
-| System             | Role                                                                             | Origin                           |
-| ------------------ | -------------------------------------------------------------------------------- | -------------------------------- |
-| **Personal Vault** | Multi-chain portfolio observation, envelope budgeting, intent declaration        | Evolved from NextLedger          |
-| **Org Treasury**   | Deterministic payroll, DAO distributions, dual-gate funding, double-entry ledger | Evolved from Payroll Engine      |
-| **Registrum**      | Structural registrar — 11 invariants, dual-witness validation, XRPL attestation  | Unchanged — constitutional layer |
+| Sistema. | Role | Origine. |
+|--------|------|--------|
+| **Personal Vault** | Monitoraggio di portafogli diversificati, definizione di budget flessibili, dichiarazione di intenti. | Derivato da NextLedger. |
+| **Org Treasury** | Elaborazione delle buste paga deterministica, distribuzioni tramite DAO (Organizzazioni Autonome Decentralizzate), finanziamenti a doppio canale, sistema di contabilità a partita doppia. | Derivato da Payroll Engine. |
+| **Registrum** | Registro strutturale: 11 invarianti, validazione con doppia conferma, attestazione tramite XRPL. | Inalterato: livello costituzionale. |
 
-***
+---
 
-## Core Pattern
+## Modello fondamentale
 
-Every interaction follows one flow:
+Ogni interazione segue un flusso specifico:
 
 ```
 Intent → Approve → Execute → Verify
 ```
 
-1. **Intent** — A user or system declares a desired outcome
-1. **Approve** — Registrum validates structurally; a human signs explicitly
-1. **Execute** — The on-chain transaction is submitted
-1. **Verify** — Reconciliation confirms; XRPL attests the record
+1. **Intento** – Un utente o un sistema dichiara un risultato desiderato.
+2. **Approvazione** – Registrum verifica la struttura; un operatore autorizza esplicitamente.
+3. **Esecuzione** – La transazione viene inviata alla blockchain.
+4. **Verifica** – La riconciliazione conferma; la rete XRPL attesta la validità della registrazione.
 
-No step is optional. No step is automated away.
+Nessuna fase è facoltativa. Nessuna fase viene automatizzata.
 
-***
+---
 
-## Principles
+## Principi
 
-| Principle               | Implementation                                                  |
-| ----------------------- | --------------------------------------------------------------- |
-| Append-only records     | No UPDATE, no DELETE — only new entries                         |
-| Fail-closed             | Disagreement halts the system, never heals silently             |
-| Deterministic replay    | Same events produce the same state, always                      |
-| Advisory AI only        | AI can analyze, warn, suggest — never approve, sign, or execute |
-| Multi-chain observation | Ethereum, XRPL, Solana, L2s — chain-agnostic read layer         |
-| Structural identity     | Explicit, immutable, unique — not biometric, but constitutional |
+| Principio. | Implementazione. |
+|-----------|---------------|
+| Registrazioni che possono essere solo aggiunte. | Nessun aggiornamento, nessuna cancellazione: solo nuove inserzioni. |
+| Fail-safe. | Il disaccordo interrompe il sistema, e non si risolve mai silenziosamente. |
+| Riproduzione deterministica. | Gli stessi eventi producono sempre lo stesso risultato. |
+| Solo intelligenza artificiale per consulenza. | L'intelligenza artificiale può analizzare, avvertire e suggerire, ma non può mai approvare, firmare o eseguire azioni. |
+| Osservazione multi-catena. | Ethereum, XRPL, Solana, soluzioni di livello 2: un livello di lettura indipendente dalla blockchain. |
+| Identità strutturale. | Esplicito, immutabile, unico: non biometrico, ma costituzionale. |
 
-***
+---
 
-## Status
+## Stato
 
-14 packages, 1,853 tests, 96.80% coverage, all green. Building in public.
+14 pacchetti, 1.853 test, copertura del 96,80%, tutto corretto. Sviluppo in trasparenza.
 
-| Package                    | Tests | Purpose                                                                    |
-| -------------------------- | ----- | -------------------------------------------------------------------------- |
-| `@attestia/types`          | 62    | Shared domain types (zero deps)                                            |
-| `@attestia/registrum`      | 297   | Constitutional governance — 11 invariants, dual-witness                    |
-| `@attestia/ledger`         | 144   | Append-only double-entry engine                                            |
-| `@attestia/chain-observer` | 242   | Multi-chain read-only observation (EVM + XRPL + Solana + L2s)              |
-| `@attestia/vault`          | 67    | Personal vault — portfolios, budgets, intents                              |
-| `@attestia/treasury`       | 63    | Org treasury — payroll, distributions, funding gates                       |
-| `@attestia/reconciler`     | 56    | 3D cross-system matching + Registrum attestation                           |
-| `@attestia/witness`        | 245   | XRPL on-chain attestation, multi-sig governance, retry                     |
-| `@attestia/verify`         | 200   | Replay verification, compliance evidence, SLA enforcement                  |
-| `@attestia/event-store`    | 190   | Append-only event persistence, JSONL, hash chain, 34 event types           |
-| `@attestia/proof`          | 53    | Merkle trees, inclusion proofs, attestation proof packaging                |
-| `@attestia/sdk`            | 50    | Typed HTTP client SDK for external consumers                               |
-| `@attestia/node`           | 184   | Hono REST API — 30+ endpoints, auth, multi-tenancy, public API, compliance |
+| Pacchetto. | Tests | Scopo. |
+|---------|-------|---------|
+| `@attestia/types` | 62 | Tipi di dominio condivisi (senza dipendenze). |
+| `@attestia/registrum` | 297 | Governance costituzionale: 11 principi fondamentali, sistema di doppia verifica. |
+| `@attestia/ledger` | 144 | Motore a doppia scrittura con funzionalità di aggiunta esclusiva. |
+| `@attestia/chain-observer` | 242 | Osservazione in sola lettura su più blockchain (EVM, XRPL, Solana e soluzioni di livello 2). |
+| `@attestia/vault` | 67 | Archivio personale: portafogli, budget, obiettivi. |
+| `@attestia/treasury` | 63 | Tesoreria aziendale: gestione delle buste paga, dei pagamenti e delle autorizzazioni di finanziamento. |
+| `@attestia/reconciler` | 56 | Corrispondenza inter-sistemi in 3D + Certificazione Registrum. |
+| `@attestia/witness` | 245 | Certificazione on-chain di XRPL, governance con firme multiple, funzionalità di ripetizione. |
+| `@attestia/verify` | 200 | Verifica delle registrazioni, documentazione di conformità, applicazione degli accordi di servizio (SLA). |
+| `@attestia/event-store` | 190 | Persistenza degli eventi con aggiunta di dati solo in append, formato JSONL, catena di hash, 34 tipi di eventi. |
+| `@attestia/proof` | 53 | Alberi di Merkle, prove di inclusione, impacchettamento delle prove di attestazione. |
+| `@attestia/sdk` | 50 | SDK per client HTTP, progettato per essere utilizzato da applicazioni esterne. |
+| `@attestia/node` | 184 | Hono REST API: oltre 30 endpoint, autenticazione, supporto per architetture multi-tenant, API pubblica, conformità normativa. |
 
-### Development
+### Sviluppo
 
 ```bash
 pnpm install          # Install all dependencies
@@ -136,9 +138,9 @@ pnpm typecheck        # Type-check all packages
 pnpm bench            # Run benchmarks
 ```
 
-### XRPL Integration Testing
+### Test di integrazione per XRPL
 
-A standalone `rippled` node runs in Docker for deterministic on-chain integration tests — no testnet dependency, no faucet, sub-second ledger close.
+Un nodo "rippled" autonomo viene eseguito in un container Docker per eseguire test di integrazione deterministici sulla blockchain, senza dipendenze da testnet, senza la necessità di un "faucet" e con un tempo di chiusura del registro inferiore al secondo.
 
 ```bash
 docker compose up -d              # Start standalone rippled
@@ -146,25 +148,25 @@ pnpm --filter @attestia/witness run test:integration  # Run on-chain round-trip 
 docker compose down               # Stop rippled
 ```
 
-### Documentation
+### Documentazione
 
-| Document                                                  | Purpose                                              |
-| --------------------------------------------------------- | ---------------------------------------------------- |
-| [HANDBOOK.md](HANDBOOK.md)                                | Executive overview and full package reference        |
-| [ROADMAP.md](ROADMAP.md)                                  | Phase-by-phase project roadmap                       |
-| [DESIGN.md](DESIGN.md)                                    | Architecture decisions                               |
-| [ARCHITECTURE.md](ARCHITECTURE.md)                        | Package graph, data flows, security model            |
-| [REFERENCE\_ARCHITECTURE.md](REFERENCE_ARCHITECTURE.md)   | 5-layer stack, deployment patterns, trust boundaries |
-| [INTEGRATION\_GUIDE.md](INTEGRATION_GUIDE.md)             | API integration with curl examples + SDK usage       |
-| [VERIFICATION\_GUIDE.md](VERIFICATION_GUIDE.md)           | Auditor step-by-step replay guide                    |
-| [THREAT\_MODEL.md](THREAT_MODEL.md)                       | STRIDE analysis per component                        |
-| [CONTROL\_MATRIX.md](CONTROL_MATRIX.md)                   | Threat → control → file → test mappings              |
-| [SECURITY.md](SECURITY.md)                                | Responsible disclosure policy                        |
-| [INSTITUTIONAL\_READINESS.md](INSTITUTIONAL_READINESS.md) | Adoption readiness checklist                         |
-| [PERFORMANCE\_BASELINE.md](PERFORMANCE_BASELINE.md)       | Recorded benchmarks                                  |
+| Documento. | Scopo. |
+|----------|---------|
+| [HANDBOOK.md](HANDBOOK.md) | Panoramica generale e riferimento completo del pacchetto. |
+| [ROADMAP.md](ROADMAP.md) | Roadmap del progetto, suddiviso per fasi. |
+| [DESIGN.md](DESIGN.md) | Decisioni relative all'architettura. |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Grafico dei pacchetti, flussi di dati, modello di sicurezza. |
+| [REFERENCE_ARCHITECTURE.md](REFERENCE_ARCHITECTURE.md) | Struttura a 5 livelli, modelli di implementazione, confini di sicurezza. |
+| [INTEGRATION_GUIDE.md](INTEGRATION_GUIDE.md) | Integrazione delle API con esempi di utilizzo di curl + utilizzo del kit di sviluppo software (SDK). |
+| [VERIFICATION_GUIDE.md](VERIFICATION_GUIDE.md) | Guida dettagliata, passo dopo passo, per la riproduzione delle registrazioni degli audit. |
+| [THREAT_MODEL.md](THREAT_MODEL.md) | Analisi STRIDE per componente. |
+| [CONTROL_MATRIX.md](CONTROL_MATRIX.md) | Minaccia → controllo → file → mappature (o corrispondenze) → test. |
+| [SECURITY.md](SECURITY.md) | Politica di divulgazione responsabile. |
+| [INSTITUTIONAL_READINESS.md](INSTITUTIONAL_READINESS.md) | Lista di controllo per la preparazione all'adozione. |
+| [PERFORMANCE_BASELINE.md](PERFORMANCE_BASELINE.md) | Risultati dei test di riferimento. |
 
-***
+---
 
-## License
+## Licenza
 
-[MIT](LICENSE)
+[Licenza MIT](LICENSE)
