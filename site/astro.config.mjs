@@ -6,7 +6,7 @@ import tailwindcss from '@tailwindcss/vite';
 // https://astro.build/config
 export default defineConfig({
   site: 'https://mcp-tool-shop-org.github.io',
-  base: '/attestia',
+  base: '/Attestia',
   vite: {
     plugins: [tailwindcss()]
   }
