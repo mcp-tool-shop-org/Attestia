@@ -1,5 +1,5 @@
 <p align="center">
-  <strong>English</strong> | <a href="README.ja.md">日本語</a> | <a href="README.zh.md">中文</a> | <a href="README.es.md">Español</a> | <a href="README.fr.md">Français</a> | <a href="README.hi.md">हिन्दी</a> | <a href="README.it.md">Italiano</a> | <a href="README.pt-BR.md">Português</a>
+  <a href="README.md">English</a> | <a href="README.ja.md">日本語</a> | <a href="README.zh.md">中文</a> | <a href="README.es.md">Español</a> | <a href="README.fr.md">Français</a> | <a href="README.hi.md">हिन्दी</a> | <a href="README.it.md">Italiano</a> | <strong>Português</strong>
 </p>
 
 <p align="center">
@@ -15,7 +15,7 @@
 
 <p align="center"><strong>Financial truth infrastructure for the decentralized world.</strong></p>
 
----
+***
 
 ## Mission
 
@@ -34,7 +34,7 @@ We don't move your money. We prove what happened, constrain what can happen, and
 - **Chains are witnesses, not authorities.** XRPL attests. Ethereum settles. But authority flows from structural rules, not from any chain's consensus.
 - **Boring infrastructure wins.** The world doesn't need another DeFi protocol. It needs the accounting layer underneath — the financial plumbing that makes everything else trustworthy.
 
----
+***
 
 ## Architecture
 
@@ -67,13 +67,13 @@ Attestia is three systems, one truth:
 └─────────────────────────────────────────────────────────┘
 ```
 
-| System | Role | Origin |
-|--------|------|--------|
-| **Personal Vault** | Multi-chain portfolio observation, envelope budgeting, intent declaration | Evolved from NextLedger |
-| **Org Treasury** | Deterministic payroll, DAO distributions, dual-gate funding, double-entry ledger | Evolved from Payroll Engine |
-| **Registrum** | Structural registrar — 11 invariants, dual-witness validation, XRPL attestation | Unchanged — constitutional layer |
+| System             | Role                                                                             | Origin                           |
+| ------------------ | -------------------------------------------------------------------------------- | -------------------------------- |
+| **Personal Vault** | Multi-chain portfolio observation, envelope budgeting, intent declaration        | Evolved from NextLedger          |
+| **Org Treasury**   | Deterministic payroll, DAO distributions, dual-gate funding, double-entry ledger | Evolved from Payroll Engine      |
+| **Registrum**      | Structural registrar — 11 invariants, dual-witness validation, XRPL attestation  | Unchanged — constitutional layer |
 
----
+***
 
 ## Core Pattern
 
@@ -84,46 +84,46 @@ Intent → Approve → Execute → Verify
 ```
 
 1. **Intent** — A user or system declares a desired outcome
-2. **Approve** — Registrum validates structurally; a human signs explicitly
-3. **Execute** — The on-chain transaction is submitted
-4. **Verify** — Reconciliation confirms; XRPL attests the record
+1. **Approve** — Registrum validates structurally; a human signs explicitly
+1. **Execute** — The on-chain transaction is submitted
+1. **Verify** — Reconciliation confirms; XRPL attests the record
 
 No step is optional. No step is automated away.
 
----
+***
 
 ## Principles
 
-| Principle | Implementation |
-|-----------|---------------|
-| Append-only records | No UPDATE, no DELETE — only new entries |
-| Fail-closed | Disagreement halts the system, never heals silently |
-| Deterministic replay | Same events produce the same state, always |
-| Advisory AI only | AI can analyze, warn, suggest — never approve, sign, or execute |
-| Multi-chain observation | Ethereum, XRPL, Solana, L2s — chain-agnostic read layer |
-| Structural identity | Explicit, immutable, unique — not biometric, but constitutional |
+| Principle               | Implementation                                                  |
+| ----------------------- | --------------------------------------------------------------- |
+| Append-only records     | No UPDATE, no DELETE — only new entries                         |
+| Fail-closed             | Disagreement halts the system, never heals silently             |
+| Deterministic replay    | Same events produce the same state, always                      |
+| Advisory AI only        | AI can analyze, warn, suggest — never approve, sign, or execute |
+| Multi-chain observation | Ethereum, XRPL, Solana, L2s — chain-agnostic read layer         |
+| Structural identity     | Explicit, immutable, unique — not biometric, but constitutional |
 
----
+***
 
 ## Status
 
 14 packages, 1,853 tests, 96.80% coverage, all green. Building in public.
 
-| Package | Tests | Purpose |
-|---------|-------|---------|
-| `@attestia/types` | 62 | Shared domain types (zero deps) |
-| `@attestia/registrum` | 297 | Constitutional governance — 11 invariants, dual-witness |
-| `@attestia/ledger` | 144 | Append-only double-entry engine |
-| `@attestia/chain-observer` | 242 | Multi-chain read-only observation (EVM + XRPL + Solana + L2s) |
-| `@attestia/vault` | 67 | Personal vault — portfolios, budgets, intents |
-| `@attestia/treasury` | 63 | Org treasury — payroll, distributions, funding gates |
-| `@attestia/reconciler` | 56 | 3D cross-system matching + Registrum attestation |
-| `@attestia/witness` | 245 | XRPL on-chain attestation, multi-sig governance, retry |
-| `@attestia/verify` | 200 | Replay verification, compliance evidence, SLA enforcement |
-| `@attestia/event-store` | 190 | Append-only event persistence, JSONL, hash chain, 34 event types |
-| `@attestia/proof` | 53 | Merkle trees, inclusion proofs, attestation proof packaging |
-| `@attestia/sdk` | 50 | Typed HTTP client SDK for external consumers |
-| `@attestia/node` | 184 | Hono REST API — 30+ endpoints, auth, multi-tenancy, public API, compliance |
+| Package                    | Tests | Purpose                                                                    |
+| -------------------------- | ----- | -------------------------------------------------------------------------- |
+| `@attestia/types`          | 62    | Shared domain types (zero deps)                                            |
+| `@attestia/registrum`      | 297   | Constitutional governance — 11 invariants, dual-witness                    |
+| `@attestia/ledger`         | 144   | Append-only double-entry engine                                            |
+| `@attestia/chain-observer` | 242   | Multi-chain read-only observation (EVM + XRPL + Solana + L2s)              |
+| `@attestia/vault`          | 67    | Personal vault — portfolios, budgets, intents                              |
+| `@attestia/treasury`       | 63    | Org treasury — payroll, distributions, funding gates                       |
+| `@attestia/reconciler`     | 56    | 3D cross-system matching + Registrum attestation                           |
+| `@attestia/witness`        | 245   | XRPL on-chain attestation, multi-sig governance, retry                     |
+| `@attestia/verify`         | 200   | Replay verification, compliance evidence, SLA enforcement                  |
+| `@attestia/event-store`    | 190   | Append-only event persistence, JSONL, hash chain, 34 event types           |
+| `@attestia/proof`          | 53    | Merkle trees, inclusion proofs, attestation proof packaging                |
+| `@attestia/sdk`            | 50    | Typed HTTP client SDK for external consumers                               |
+| `@attestia/node`           | 184   | Hono REST API — 30+ endpoints, auth, multi-tenancy, public API, compliance |
 
 ### Development
 
@@ -148,22 +148,22 @@ docker compose down               # Stop rippled
 
 ### Documentation
 
-| Document | Purpose |
-|----------|---------|
-| [HANDBOOK.md](HANDBOOK.md) | Executive overview and full package reference |
-| [ROADMAP.md](ROADMAP.md) | Phase-by-phase project roadmap |
-| [DESIGN.md](DESIGN.md) | Architecture decisions |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Package graph, data flows, security model |
-| [REFERENCE_ARCHITECTURE.md](REFERENCE_ARCHITECTURE.md) | 5-layer stack, deployment patterns, trust boundaries |
-| [INTEGRATION_GUIDE.md](INTEGRATION_GUIDE.md) | API integration with curl examples + SDK usage |
-| [VERIFICATION_GUIDE.md](VERIFICATION_GUIDE.md) | Auditor step-by-step replay guide |
-| [THREAT_MODEL.md](THREAT_MODEL.md) | STRIDE analysis per component |
-| [CONTROL_MATRIX.md](CONTROL_MATRIX.md) | Threat → control → file → test mappings |
-| [SECURITY.md](SECURITY.md) | Responsible disclosure policy |
-| [INSTITUTIONAL_READINESS.md](INSTITUTIONAL_READINESS.md) | Adoption readiness checklist |
-| [PERFORMANCE_BASELINE.md](PERFORMANCE_BASELINE.md) | Recorded benchmarks |
+| Document                                                  | Purpose                                              |
+| --------------------------------------------------------- | ---------------------------------------------------- |
+| [HANDBOOK.md](HANDBOOK.md)                                | Executive overview and full package reference        |
+| [ROADMAP.md](ROADMAP.md)                                  | Phase-by-phase project roadmap                       |
+| [DESIGN.md](DESIGN.md)                                    | Architecture decisions                               |
+| [ARCHITECTURE.md](ARCHITECTURE.md)                        | Package graph, data flows, security model            |
+| [REFERENCE\_ARCHITECTURE.md](REFERENCE_ARCHITECTURE.md)   | 5-layer stack, deployment patterns, trust boundaries |
+| [INTEGRATION\_GUIDE.md](INTEGRATION_GUIDE.md)             | API integration with curl examples + SDK usage       |
+| [VERIFICATION\_GUIDE.md](VERIFICATION_GUIDE.md)           | Auditor step-by-step replay guide                    |
+| [THREAT\_MODEL.md](THREAT_MODEL.md)                       | STRIDE analysis per component                        |
+| [CONTROL\_MATRIX.md](CONTROL_MATRIX.md)                   | Threat → control → file → test mappings              |
+| [SECURITY.md](SECURITY.md)                                | Responsible disclosure policy                        |
+| [INSTITUTIONAL\_READINESS.md](INSTITUTIONAL_READINESS.md) | Adoption readiness checklist                         |
+| [PERFORMANCE\_BASELINE.md](PERFORMANCE_BASELINE.md)       | Recorded benchmarks                                  |
 
----
+***
 
 ## License
 
