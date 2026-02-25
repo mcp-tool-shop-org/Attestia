@@ -1,6 +1,6 @@
 {
   "name": "@attestia/ledger",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Append-only double-entry ledger engine for Attestia",
   "type": "module",
   "main": "dist/index.js",

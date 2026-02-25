@@ -1,6 +1,6 @@
 {
   "name": "@attestia/chain-observer",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Multi-chain read-only observation layer for Attestia",
   "type": "module",
   "main": "dist/index.js",
