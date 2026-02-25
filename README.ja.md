@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="README.md">English</a> | <strong>日本語</strong> | <a href="README.zh.md">中文</a> | <a href="README.es.md">Español</a> | <a href="README.fr.md">Français</a> | <a href="README.hi.md">हिन्दी</a> | <a href="README.it.md">Italiano</a> | <a href="README.pt-BR.md">Português</a>
+  <strong>English</strong> | <a href="README.ja.md">日本語</a> | <a href="README.zh.md">中文</a> | <a href="README.es.md">Español</a> | <a href="README.fr.md">Français</a> | <a href="README.hi.md">हिन्दी</a> | <a href="README.it.md">Italiano</a> | <a href="README.pt-BR.md">Português</a>
 </p>
 
 <p align="center">
@@ -11,40 +11,36 @@
 <p align="center">
   <a href="https://github.com/mcp-tool-shop-org/Attestia/actions/workflows/ci.yml"><img src="https://github.com/mcp-tool-shop-org/Attestia/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://codecov.io/gh/mcp-tool-shop-org/Attestia"><img src="https://codecov.io/gh/mcp-tool-shop-org/Attestia/graph/badge.svg" alt="codecov"></a>
+  <a href="https://mcp-tool-shop-org.github.io/Attestia/"><img src="https://img.shields.io/badge/Landing_Page-live-blue" alt="Landing Page"></a>
+  <a href="https://opensource.org/license/mit/"><img src="https://img.shields.io/badge/License-MIT-yellow" alt="MIT License"></a>
 </p>
 
-<p align="center"><strong>Financial truth infrastructure for the decentralized world.</strong></p>
+<p align="center"><strong>分散型世界のための、信頼性の高い金融基盤。</strong></p>
 
-***
-
-<a id="mission"></a>
+---
 
 ## ミッション
 
-金銭は、どこに存在し、どのように流動するかに関わらず、それを生み出したシステムと同じ厳密さに値すると私たちは考えています。スマートコントラクトは実行されます。ブロックチェーンは記録します。しかし誰も *証明* しません。
+私たちは、お金が、それが存在する場所や移動する経路に関わらず、それを生み出したシステムと同等の厳格さを持つべきだと考えています。スマートコントラクトは実行され、ブロックチェーンは記録しますが、しかし、それを「証明する」ものは誰もいません。
 
-Attestia は欠けていたレイヤーです。構造的ガバナンス、決定論的な会計、人間が承認した意図を、チェーン、組織、個人を横断して統一します。
+Attestiaは、これまで欠けていた要素を補完するものです。それは、構造的な統治、確実な会計処理、そして人間による承認を得た意図を、ブロックチェーン、組織、そして個人レベルで統合することです。
 
-私たちはあなたの金銭を動かしません。何が起きたかを証明し、何が起きうるかを制約し、金融記録を破棄不可能にします。
+私たちは、お客様のお金を移動させることはありません。私たちがすることは、実際に起こったことを明確にし、起こりうる事態を制限し、金融記録が改ざんされることのないようにすることです。
 
-<a id="what-we-stand-for"></a>
+### 私たちの理念・価値観
 
-### 私たちが支持すること
+- **真実を最優先。** すべての金融取引は、追跡可能で、再現可能、そして照合可能です。証明できないことは、存在しなかったこととします。
+- **人間が承認し、機械が検証する。** AIは助言し、スマートコントラクトが実行しますが、いかなる操作も、明示的な人間の承認なしには行われません。常に。
+- **構造的なガバナンス、政治的なガバナンスではない。** 何が有効かを投票で決めるのではなく、常に有効であるべきとされる基本的な原則を定義します。身元は明確であり、履歴は途切れておらず、順序は決定論的です。
+- **意図と実行は異なる。** 望むことを宣言することと、それを実行することは、それぞれ別のプロセスであり、それぞれ別の承認が必要です。その間のギャップこそが、信頼が存在する場所です。
+- **ブロックチェーンは証拠であり、権威ではない。** XRPLは証拠を提供し、Ethereumは決済を行います。しかし、権威はブロックチェーンのコンセンサスからではなく、構造的なルールから生まれます。
+- **堅牢な基盤が重要。** 世界は、また別のDeFiプロトコルを必要としていません。必要なのは、その基盤となる会計システムです。それは、他のすべての要素を信頼できるものにするための、金融インフラストラクチャです。
 
-- **速度より真実。** すべての金融イベントは追記専用、リプレイ可能、照合可能です。証明できなければ、それは起きていません。
-- **人間が承認し、機械が検証する。** AI はアドバイスし、スマートコントラクトは実行しますが、明示的な人間の認可なしに何も動きません。決してありません。
-- **政治的ガバナンスではなく、構造的ガバナンス。** 私たちは何が有効かを投票で決めません。無条件に成立する不変量を定義します。アイデンティティは明示的、系統は途切れず、順序は決定論的です。
-- **意図は実行ではない。** あなたが望むことを宣言することと、実際に行うことは異なる行為であり、異なるゲートを持ちます。その間隙こそが信頼が存在する場所です。
-- **チェーンは権威ではなく証人である。** XRPL が証明します。Ethereum が決済します。しかし権威はどのチェーンのコンセンサスからではなく、構造的ルールから流れ出ます。
-- **退屈なインフラが勝つ。** 世界は別の DeFi プロトコルを必要としていません。それの下にある会計レイヤーを必要としています。他のすべてを信頼できるものにする金融インフラストラクチャです。
+---
 
-***
+## 建築学
 
-<a id="architecture"></a>
-
-## アーキテクチャ
-
-Attestia は3つのシステム、1つの真実です。
+Attestiaは、3つのシステムでありながら、一つの真実に基づいています。
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -73,71 +69,64 @@ Attestia は3つのシステム、1つの真実です。
 └─────────────────────────────────────────────────────────┘
 ```
 
-| システム               | 役割                                | 出所                  |
-| ------------------ | --------------------------------- | ------------------- |
-| **Personal Vault** | マルチチェーン ポートフォリオ観察、エンベロープ予算編成、意図宣言 | NextLedger から進化     |
-| **Org Treasury**   | 決定論的給与, DAO 分配、二重ゲート資金調達、複式簿記     | Payroll Engine から進化 |
-| **Registrum**      | 構造的レジストラ。11 の不変量、二重証人検証、XRPL 証明   | 変更なし。構憲的レイヤー        |
+| システム | Role | 起源 |
+|--------|------|--------|
+| **Personal Vault** | マルチチェーンポートフォリオの監視、予算管理、意図の明示。 | NextLedgerから派生した技術。 |
+| **Org Treasury** | 決定的な給与計算、DAOによる分配、二重ゲート型資金調達、二重記帳法。 | 「給与計算エンジン」から派生した製品。 |
+| **Registrum** | 構造レジストラー：11の不変量、デュアルウィットネスによる検証、XRPLによる認証。 | 変更なし - 憲法関連部分。 |
 
-***
+---
 
-<a id="core-pattern"></a>
+## 基本パターン
 
-## 中核パターン
-
-すべてのやり取りは1つのフローに従います。
+すべての操作は、以下の手順に従って行われます。
 
 ```
 Intent → Approve → Execute → Verify
 ```
 
-1. **意図** — ユーザーまたはシステムが目的の結果を宣言する
-1. **承認** — Registrum が構造的に検証し、人間が明示的に署名する
-1. **実行** — オンチェーンのトランザクションが送信される
-1. **検証** — 照合が確認され、XRPL が記録を証明する
+1. **意図 (Intent)**：ユーザーまたはシステムが、望ましい結果を宣言します。
+2. **承認 (Approve)**：Registrumが構造的な検証を行い、担当者が明示的に承認します。
+3. **実行 (Execute)**：ブロックチェーン上のトランザクションが送信されます。
+4. **検証 (Verify)**：照合によって確認され、XRPLがその記録を証明します。
 
-ステップは省略できません。ステップは自動化されていません。
+どの手順も省略できません。また、どの手順も自動化によって置き換えられることはありません。
 
-***
-
-<a id="principles"></a>
+---
 
 ## 原則
 
-| 原則            | 実装                                       |
-| ------------- | ---------------------------------------- |
-| 追記専用記録        | UPDATE も DELETE もありません。新しいエントリのみです       |
-| フェイルクローズド     | 不同意がシステムを停止させ、決して静かに修復されません              |
-| 決定論的リプレイ      | 同じイベントは常に同じ状態を生成します                      |
-| アドバイザリー AI のみ | AI は分析、警告、提案できます。承認、署名、実行はできません          |
-| マルチチェーン観察     | Ethereum、XRPL、Solana、L2s。チェーン非依存読み取りレイヤー |
-| 構造的アイデンティティ   | 明示的、不変、一意。生体認証ではなく、構憲的です                 |
+| 原則 | 実装 |
+|-----------|---------------|
+| 追記のみ可能な記録。 | 更新も削除も行いません。新規登録のみ可能です。 |
+| フェイルセーフ。
+または、安全側に倒れる。 | 意見の相違はシステムを停止させますが、静かに解決されることはありません。 |
+| 決定的なリプレイ機能。 | 同じ出来事は、常に同じ状態をもたらします。 |
+| AIによるアドバイスのみ提供。 | AIは分析したり、警告を発したり、提案をしたりすることができますが、決して承認したり、署名したり、実行したりすることはありません。 |
+| マルチチェーン監視機能。 | Ethereum、XRPL、Solana、L2ソリューションなど、様々なブロックチェーンに対応したデータ読み取りレイヤー。 |
+| 構造的な同一性。 | 明示的で、不変で、唯一無二である。生体認証ではなく、むしろ憲法に基づくものである。 |
 
-***
+---
 
-<a id="status"></a>
+## 状態
 
-## ステータス
+14個のパッケージ、1,853件のテスト、96.80%のテストカバレッジ、すべて問題なし。開発プロセスを公開しています。
 
-14 パッケージ、1,853 テスト、96.80% カバレッジ、すべて成功。パブリックで構築中。
-
-| パッケージ                      | テスト | 目的                                                           |
-| -------------------------- | --- | ------------------------------------------------------------ |
-| `@attestia/types`          | 62  | 共有ドメインタイプ (依存関係なし)                                           |
-| `@attestia/registrum`      | 297 | 構憲的ガバナンス。11 の不変量、二重証人                                        |
-| `@attestia/ledger`         | 144 | 追記のみのダブルエントリエンジン                                             |
-| `@attestia/chain-observer` | 242 | マルチチェーン読み取り専用観測（EVM + XRPL + Solana + L2s）                   |
-| `@attestia/vault`          | 67  | 個人向けボルト — ポートフォリオ、予算、インテント                                   |
-| `@attestia/treasury`       | 63  | 組織向けトレジャリー — 給与計算、分配、ファンディングゲート                              |
-| `@attestia/reconciler`     | 56  | 3D クロスシステムマッチング + Registrum アテステーション                         |
-| `@attestia/witness`        | 245 | XRPL オンチェーンアテステーション、マルチシグガバナンス、リトライ                          |
-| `@attestia/verify`         | 200 | リプレイ検証、コンプライアンスエビデンス、SLA 実装                                  |
-| `@attestia/event-store`    | 190 | 追記のみのイベント永続化、JSONL、ハッシュチェーン、34 イベント型                         |
-| `@attestia/proof`          | 53  | マークルツリー、インクルージョンプルーフ、アテステーションプルーフパッケージング                     |
-| `@attestia/sdk`            | 50  | 外部コンシューマー向けの型付き HTTP クライアント SDK                              |
-| `@attestia/node`           | 184 | Hono REST API — 30 以上のエンドポイント、認証、マルチテナンシー、パブリック API、コンプライアンス |
-
-<a id="development"></a>
+| パッケージ | Tests | 目的。 |
+|---------|-------|---------|
+| `@attestia/types` | 62 | 共有されるドメインタイプ（依存関係なし）。 |
+| `@attestia/registrum` | 297 | 憲法に基づく統治：11の原則、二重の証拠。 |
+| `@attestia/ledger` | 144 | 追記のみ可能な二重帳簿システム。 |
+| `@attestia/chain-observer` | 242 | マルチチェーン対応の読み取り専用監視機能（EVM、XRPL、Solana、およびレイヤー2ソリューションに対応）。 |
+| `@attestia/vault` | 67 | 個人用セーフティボックス - ポートフォリオ、予算、目標設定など。 |
+| `@attestia/treasury` | 63 | 組織の財務部門：給与、分配、資金調達の審査プロセス。 |
+| `@attestia/reconciler` | 56 | 3Dクロスシステム照合機能 + Registrumによる認証。 |
+| `@attestia/witness` | 245 | XRPLブロックチェーン上の認証、マルチシグによるガバナンス、リトライ機能。 |
+| `@attestia/verify` | 200 | リプレイ検証、コンプライアンス証明、SLA（サービスレベル合意）遵守状況の確認。 |
+| `@attestia/event-store` | 190 | 追記のみ可能なイベント永続化、JSONL形式、ハッシュチェーン、34種類のイベントタイプ。 |
+| `@attestia/proof` | 53 | マークルトリー、包含証明、証明パッケージング。 |
+| `@attestia/sdk` | 50 | 型安全なHTTPクライアントSDK（外部利用者向け）。 |
+| `@attestia/node` | 184 | Hono REST API：30種類以上のエンドポイント、認証機能、マルチテナント対応、パブリックAPI、コンプライアンス対応。 |
 
 ### 開発
 
@@ -150,11 +139,9 @@ pnpm typecheck        # Type-check all packages
 pnpm bench            # Run benchmarks
 ```
 
-<a id="xrpl-integration-testing"></a>
+### XRPL統合テスト
 
-### XRPL 統合テスト
-
-スタンドアロンの `rippled` ノードが Docker で実行され、決定的なオンチェーン統合テストを可能にします — テストネット依存性なし、ファウセットなし、1 秒未満のレジャークローズ。
+スタンドアロンの`rippled`ノードは、Docker上で動作し、オンチェーンの統合テストを確実に行うことができます。テストネットへの依存がなく、テスト用の仮想通貨供給サービス（ファセット）も不要で、トランザクションの処理速度は1秒未満です。
 
 ```bash
 docker compose up -d              # Start standalone rippled
@@ -162,29 +149,25 @@ pnpm --filter @attestia/witness run test:integration  # Run on-chain round-trip 
 docker compose down               # Stop rippled
 ```
 
-<a id="documentation"></a>
+### ドキュメント
 
-### ドキュメンテーション
+| 文書。 | 目的。 |
+|----------|---------|
+| [HANDBOOK.md](HANDBOOK.md) | 概要と詳細仕様書. |
+| [ROADMAP.md](ROADMAP.md) | 段階ごとのプロジェクト計画ロードマップ。 |
+| [DESIGN.md](DESIGN.md) | システム設計の決定事項。 |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | パッケージ構成、データフロー、セキュリティモデル。 |
+| [REFERENCE_ARCHITECTURE.md](REFERENCE_ARCHITECTURE.md) | 5層構造、デプロイメントパターン、信頼境界。 |
+| [INTEGRATION_GUIDE.md](INTEGRATION_GUIDE.md) | curlを使ったAPI連携のサンプルと、SDKの利用方法。 |
+| [VERIFICATION_GUIDE.md](VERIFICATION_GUIDE.md) | 監査機能の操作手順解説ガイド。 |
+| [THREAT_MODEL.md](THREAT_MODEL.md) | 各コンポーネントに対するSTRIDE分析。 |
+| [CONTROL_MATRIX.md](CONTROL_MATRIX.md) | 脅威 → 制御 → ファイル → マッピングのテスト |
+| [SECURITY.md](SECURITY.md) | 責任ある情報開示に関するポリシー。 |
+| [INSTITUTIONAL_READINESS.md](INSTITUTIONAL_READINESS.md) | 里親になるための準備チェックリスト。 |
+| [PERFORMANCE_BASELINE.md](PERFORMANCE_BASELINE.md) | 記録されたベンチマーク結果。 |
 
-| ドキュメント                                                    | 目的                            |
-| --------------------------------------------------------- | ----------------------------- |
-| [HANDBOOK.md](HANDBOOK.md)                                | エグゼクティブ概要と完全なパッケージリファレンス      |
-| [ROADMAP.md](ROADMAP.md)                                  | フェーズごとのプロジェクトロードマップ           |
-| [DESIGN.md](DESIGN.md)                                    | アーキテクチャ決定                     |
-| [ARCHITECTURE.md](ARCHITECTURE.md)                        | パッケージグラフ、データフロー、セキュリティモデル     |
-| [REFERENCE\_ARCHITECTURE.md](REFERENCE_ARCHITECTURE.md)   | 5 層スタック、デプロイメントパターン、信頼境界      |
-| [INTEGRATION\_GUIDE.md](INTEGRATION_GUIDE.md)             | curl の例と SDK の使用法を含むAPI 統合    |
-| [VERIFICATION\_GUIDE.md](VERIFICATION_GUIDE.md)           | 監査人向けステップバイステップリプレイガイド        |
-| [THREAT\_MODEL.md](THREAT_MODEL.md)                       | コンポーネントごとの STRIDE 分析          |
-| [CONTROL\_MATRIX.md](CONTROL_MATRIX.md)                   | 脅威 → コントロール → ファイル → テストマッピング |
-| [SECURITY.md](SECURITY.md)                                | 責任ある開示ポリシー                    |
-| [INSTITUTIONAL\_READINESS.md](INSTITUTIONAL_READINESS.md) | 導入準備チェックリスト                   |
-| [PERFORMANCE\_BASELINE.md](PERFORMANCE_BASELINE.md)       | 記録されたベンチマーク                   |
-
-***
-
-<a id="license"></a>
+---
 
 ## ライセンス
 
-[MIT](LICENSE)
+[MITライセンス](LICENSE)
