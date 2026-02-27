@@ -4,6 +4,21 @@ All notable changes to Attestia, organized by development phase.
 
 ---
 
+## [1.0.0] - 2026-02-27
+
+### Added
+
+- SHIP_GATE.md and SCORECARD.md for product standards
+- Security & Data Scope section and scorecard in README
+- Verify script in root package.json (build + typecheck + test)
+- Standard footer in README
+
+### Changed
+
+- Bumped root version from 0.2.2 to 1.0.0
+
+---
+
 ## [0.2.0] - 2026-02-18
 
 ### Added

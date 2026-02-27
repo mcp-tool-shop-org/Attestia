@@ -1,6 +1,6 @@
 {
   "name": "attestia",
-  "version": "0.2.2",
+  "version": "1.0.0",
   "private": true,
   "description": "Financial truth infrastructure for the decentralized world",
   "type": "module",
@@ -14,6 +14,7 @@
     "typecheck": "pnpm -r lint",
     "lint": "pnpm -r lint",
     "bench": "pnpm -r run bench",
+    "verify": "pnpm build && pnpm typecheck && pnpm test",
     "clean": "pnpm -r exec rm -rf dist",
     "demo": "pnpm --filter @attestia/demo run demo"
   },

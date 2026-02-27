@@ -165,6 +165,26 @@ docker compose down               # Stop rippled
 
 ---
 
+## Security & Data Scope
+
+- **Data accessed:** Reads and writes financial ledger entries, attestation records, and cryptographic proofs. Connects to blockchain nodes (XRPL) when witness module is active.
+- **Data NOT accessed:** No telemetry. No user credential storage. No third-party analytics.
+- **Permissions required:** Read/write access to local data directories. Network access for blockchain attestation only. See [THREAT_MODEL.md](THREAT_MODEL.md) for full STRIDE analysis.
+
+## Scorecard
+
+| Gate | Status |
+|------|--------|
+| A. Security Baseline | PASS |
+| B. Error Handling | PASS |
+| C. Operator Docs | PASS |
+| D. Shipping Hygiene | PASS |
+| E. Identity | PASS |
+
 ## License
 
 [MIT](LICENSE)
+
+---
+
+Built by <a href="https://mcp-tool-shop.github.io/">MCP Tool Shop</a>
