@@ -14,7 +14,7 @@ export const config: SiteConfig = {
     headlineAccent: 'financial truth infrastructure.',
     description: 'Structural governance, deterministic accounting, and human-approved intent — unified across chains, organizations, and individuals. We don\'t move your money. We prove what happened.',
     primaryCta: { href: '#architecture', label: 'See architecture' },
-    secondaryCta: { href: '#packages', label: 'All packages' },
+    secondaryCta: { href: 'handbook/', label: 'Read the Handbook' },
     previews: [
       { label: 'Flow', code: 'Intent → Approve → Execute → Verify' },
       { label: 'Test', code: 'pnpm test  # 1,853 tests, all green' },
