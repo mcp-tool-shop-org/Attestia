@@ -283,8 +283,8 @@ export class FileSnapshotStore implements SnapshotStore {
   // ─── Internal ───────────────────────────────────────────────────────
 
   private _streamDir(streamId: string): string {
-    // Sanitize stream ID for filesystem use
-    const safe = streamId.replace(/[^a-zA-Z0-9_.-]/g, "_");
+    // Use hash to avoid sanitization collisions (e.g. "a:b" vs "a/b")
+    const safe = createHash("sha256").update(streamId).digest("hex").slice(0, 32);
     return join(this._baseDir, safe);
   }
 

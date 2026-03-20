@@ -229,5 +229,19 @@ describe("FileSnapshotStore", () => {
       const snapshot = store.load("org/repo:branch");
       expect(snapshot!.state).toEqual({ safe: true });
     });
+
+    it("stream IDs differing only in special chars get separate directories (M5)", () => {
+      const store = new FileSnapshotStore(join(testDir, "collision"));
+
+      // These would collide under the old regex sanitizer
+      store.save({ streamId: "stream:a", version: 1, state: { src: "colon" } });
+      store.save({ streamId: "stream/a", version: 1, state: { src: "slash" } });
+
+      const snap1 = store.load("stream:a");
+      const snap2 = store.load("stream/a");
+
+      expect(snap1!.state).toEqual({ src: "colon" });
+      expect(snap2!.state).toEqual({ src: "slash" });
+    });
   });
 });
