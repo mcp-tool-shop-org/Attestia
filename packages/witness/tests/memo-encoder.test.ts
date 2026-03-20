@@ -132,3 +132,35 @@ describe("round-trip", () => {
     expect(decoded).toEqual(original);
   });
 });
+
+// =============================================================================
+// M7: Memo size validation
+// =============================================================================
+
+describe("memo size validation (M7)", () => {
+  it("throws when payload exceeds 256KB", () => {
+    const oversized: AttestationPayload = {
+      hash: "a".repeat(64),
+      timestamp: "2024-01-01T00:00:00Z",
+      source: {
+        kind: "reconciliation",
+        reportId: "r1",
+        reportHash: "x".repeat(300_000), // Well over 256KB
+      },
+      summary: {
+        clean: true,
+        matchedCount: 0,
+        mismatchCount: 0,
+        missingCount: 0,
+        attestedBy: "test",
+      },
+    };
+
+    expect(() => encodeMemo(oversized)).toThrow(/too large/i);
+  });
+
+  it("accepts normal-sized payload", () => {
+    const normal = makePayload();
+    expect(() => encodeMemo(normal)).not.toThrow();
+  });
+});

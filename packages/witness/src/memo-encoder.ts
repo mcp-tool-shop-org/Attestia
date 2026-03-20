@@ -29,12 +29,24 @@ export const MEMO_FORMAT = "application/json";
  * Converts the payload to JSON, then hex-encodes all memo fields
  * per XRPL convention.
  */
+/** Maximum memo data size in bytes (XRPL limit) */
+const MAX_MEMO_BYTES = 256 * 1024;
+
 export function encodeMemo(payload: AttestationPayload): XrplMemo {
   const payloadJson = JSON.stringify(payload);
+  const hexData = toHex(payloadJson);
+
+  // Each hex char = 0.5 bytes, so hex length / 2 = byte count
+  const byteSize = hexData.length / 2;
+  if (byteSize > MAX_MEMO_BYTES) {
+    throw new Error(
+      `Memo payload too large: ${byteSize} bytes (max ${MAX_MEMO_BYTES} bytes)`,
+    );
+  }
 
   return {
     MemoType: toHex(MEMO_TYPE),
-    MemoData: toHex(payloadJson),
+    MemoData: hexData,
     MemoFormat: toHex(MEMO_FORMAT),
   };
 }
