@@ -911,3 +911,40 @@ describe("HttpClient response size limit", () => {
     expect(result.data).toEqual({ ok: true });
   });
 });
+
+// =============================================================================
+// M8: Total request deadline across retries
+// =============================================================================
+
+describe("request deadline (M8)", () => {
+  it("aborts retries when total deadline would be exceeded", async () => {
+    // Simulate slow server: each response takes time, 500 triggers retry
+    let callCount = 0;
+    const slowFetch = async (_url: string, _init?: RequestInit): Promise<Response> => {
+      callCount++;
+      // Simulate ~100ms per call
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      return new Response(JSON.stringify({ error: { code: "SERVER_ERROR" } }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    };
+
+    const client = new HttpClient({
+      baseUrl: "https://api.example.com",
+      fetchFn: slowFetch,
+      timeout: 500,    // 500ms total deadline
+      retries: 10,     // Would be 10 retries if not deadline-limited
+    });
+
+    const start = Date.now();
+    await expect(client.get("/slow")).rejects.toThrow();
+    const elapsed = Date.now() - start;
+
+    // Should have stopped well before 10 retries × backoff would take
+    // With deadline of 500ms, we shouldn't go beyond ~600ms (some tolerance)
+    expect(elapsed).toBeLessThan(3000);
+    // Should have made at least 1 attempt
+    expect(callCount).toBeGreaterThanOrEqual(1);
+  });
+});

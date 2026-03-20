@@ -229,10 +229,20 @@ export class HttpClient {
     }
 
     let lastError: Error | null = null;
+    const deadline = Date.now() + this.timeout;
 
     for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
+      const remainingMs = deadline - Date.now();
+      if (remainingMs <= 0) {
+        throw new AttestiaError(
+          "TIMEOUT",
+          `Request deadline exceeded after ${attempt} attempts`,
+          0,
+        );
+      }
+
       try {
-        const response = await this.fetchWithTimeout(url, init);
+        const response = await this.fetchWithTimeout(url, init, remainingMs);
         const responseBody = await parseResponseBody(response);
         const responseHeaders = extractHeaders(response);
 
@@ -311,9 +321,10 @@ export class HttpClient {
   /**
    * Fetch with a timeout using AbortController.
    */
-  private async fetchWithTimeout(url: string, init: RequestInit): Promise<Response> {
+  private async fetchWithTimeout(url: string, init: RequestInit, timeoutMs?: number): Promise<Response> {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+    const effectiveTimeout = timeoutMs !== undefined ? Math.min(timeoutMs, this.timeout) : this.timeout;
+    const timeoutId = setTimeout(() => controller.abort(), effectiveTimeout);
 
     try {
       return await this.fetchFn(url, {
