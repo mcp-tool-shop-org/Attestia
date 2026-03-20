@@ -114,9 +114,9 @@ describe("SolanaObserver RPC resilience", () => {
       ).rejects.toThrow("RPC timeout");
     });
 
-    it("getTransfers propagates signature lookup errors", async () => {
+    it("getTransfers propagates non-retryable errors immediately", async () => {
       mockGetSignaturesForAddress.mockRejectedValue(
-        new Error("429 Too Many Requests"),
+        new Error("Invalid public key"),
       );
 
       const observer = new SolanaObserver(createConfig());
@@ -126,8 +126,27 @@ describe("SolanaObserver RPC resilience", () => {
         observer.getTransfers({
           address: "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM",
         }),
-      ).rejects.toThrow("429 Too Many Requests");
+      ).rejects.toThrow("Invalid public key");
     });
+
+    it("getTransfers retries transient 429 errors then exhausts", async () => {
+      mockGetSignaturesForAddress.mockRejectedValue(
+        new Error("429 Too Many Requests"),
+      );
+
+      const observer = new SolanaObserver(createConfig());
+      await observer.connect();
+
+      // With retry, it will exhaust retries and then throw
+      await expect(
+        observer.getTransfers({
+          address: "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM",
+        }),
+      ).rejects.toThrow("429 Too Many Requests");
+
+      // Should have been called multiple times (initial + retries)
+      expect(mockGetSignaturesForAddress.mock.calls.length).toBeGreaterThan(1);
+    }, 30_000);
 
     it("getTransfers does not emit partial events on transaction fetch failure", async () => {
       mockGetSignaturesForAddress.mockResolvedValue([
@@ -141,7 +160,7 @@ describe("SolanaObserver RPC resilience", () => {
       const observer = new SolanaObserver(createConfig());
       await observer.connect();
 
-      // The entire call should fail, not return partial results
+      // Non-retryable error propagates immediately, not partial results
       await expect(
         observer.getTransfers({
           address: "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM",

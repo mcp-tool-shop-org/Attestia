@@ -46,6 +46,7 @@ import {
   DEFAULT_SOLANA_RPC_CONFIG,
   type SolanaRpcConfig,
 } from "./rpc-config.js";
+import { withRetry } from "./with-retry.js";
 
 // =============================================================================
 // Solana Observer
@@ -144,8 +145,8 @@ export class SolanaObserver implements ChainObserver {
       (query.finality ?? this.rpcConfig.commitment) as Commitment;
 
     const [balance, slot] = await Promise.all([
-      connection.getBalance(pubkey, commitment),
-      connection.getSlot(commitment),
+      withRetry(() => connection.getBalance(pubkey, commitment), this.rpcConfig.maxRetries, this.rpcConfig.retryDelayMs),
+      withRetry(() => connection.getSlot(commitment), this.rpcConfig.maxRetries, this.rpcConfig.retryDelayMs),
     ]);
 
     return {
@@ -165,9 +166,10 @@ export class SolanaObserver implements ChainObserver {
     const mintPubkey = new PublicKey(query.token);
 
     // Find token accounts for this owner + mint combination
-    const response = await connection.getParsedTokenAccountsByOwner(
-      ownerPubkey,
-      { mint: mintPubkey },
+    const response = await withRetry(
+      () => connection.getParsedTokenAccountsByOwner(ownerPubkey, { mint: mintPubkey }),
+      this.rpcConfig.maxRetries,
+      this.rpcConfig.retryDelayMs,
     );
 
     if (response.value.length === 0) {
@@ -215,9 +217,11 @@ export class SolanaObserver implements ChainObserver {
       rawCommitment === "processed" ? "confirmed" : rawCommitment as Finality;
 
     // Get recent transaction signatures for this address
-    const signatures = await connection.getSignaturesForAddress(pubkey, {
-      limit: query.limit ?? 100,
-    }, finality);
+    const signatures = await withRetry(
+      () => connection.getSignaturesForAddress(pubkey, { limit: query.limit ?? 100 }, finality),
+      this.rpcConfig.maxRetries,
+      this.rpcConfig.retryDelayMs,
+    );
 
     if (signatures.length === 0) {
       return [];
@@ -225,10 +229,11 @@ export class SolanaObserver implements ChainObserver {
 
     // Fetch full parsed transactions
     const txHashes = signatures.map((s) => s.signature);
-    const transactions = await connection.getParsedTransactions(txHashes, {
-      commitment: finality,
-      maxSupportedTransactionVersion: 0,
-    });
+    const transactions = await withRetry(
+      () => connection.getParsedTransactions(txHashes, { commitment: finality, maxSupportedTransactionVersion: 0 }),
+      this.rpcConfig.maxRetries,
+      this.rpcConfig.retryDelayMs,
+    );
 
     const events: TransferEvent[] = [];
     const now = new Date().toISOString();
