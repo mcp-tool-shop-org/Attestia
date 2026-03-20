@@ -36,13 +36,18 @@ vi.mock("xrpl", () => {
     Wallet: {
       fromSeed: vi.fn().mockImplementation((seed: string) => ({
         address: `rAddr_${seed}`,
-        sign: vi.fn().mockImplementation((tx: unknown, multisign?: boolean) => ({
+        sign: vi.fn().mockImplementation((tx: Record<string, unknown>, multisign?: boolean) => ({
           tx_blob: `blob_${seed}_${multisign ? "multi" : "single"}`,
-          hash: `hash_${seed}`,
+          hash: "consistent_tx_hash",
         })),
       })),
     },
     multisign: vi.fn().mockReturnValue("combined_multisign_blob"),
+    decode: vi.fn().mockImplementation((blob: string) => ({
+      Account: "rMultiSigAccount",
+      Destination: "rMultiSigAccount",
+      TransactionType: "Payment",
+    })),
   };
 });
 

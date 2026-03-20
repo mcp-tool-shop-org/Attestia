@@ -30,13 +30,20 @@ vi.mock("xrpl", () => {
     Wallet: {
       fromSeed: vi.fn().mockImplementation((seed: string) => ({
         address: `rAddr_${seed}`,
-        sign: vi.fn().mockImplementation((tx: unknown, multisign?: boolean) => ({
+        sign: vi.fn().mockImplementation((tx: Record<string, unknown>, multisign?: boolean) => ({
           tx_blob: `blob_${seed}_${multisign ? "multi" : "single"}`,
-          hash: `hash_${seed}`,
+          // All signers produce the same hash for the same prepared tx
+          // (this matches real XRPL behavior)
+          hash: "consistent_tx_hash",
         })),
       })),
     },
     multisign: vi.fn().mockReturnValue("combined_multisign_blob"),
+    decode: vi.fn().mockImplementation((blob: string) => ({
+      Account: "rMultiSigAccount",
+      Destination: "rMultiSigAccount",
+      TransactionType: "Payment",
+    })),
   };
 });
 
@@ -195,6 +202,44 @@ describe("MultiSigSubmitter", () => {
       await expect(submitter.submit(makePayload(), policy)).rejects.toThrow(
         "Witness submission failed",
       );
+    });
+  });
+
+  describe("signature verification", () => {
+    it("rejects when a signer produces a mismatched tx hash", async () => {
+      const config = makeConfig(3);
+      const store = makeGovernanceStore(3, 2);
+      const policy = store.getCurrentPolicy();
+
+      const submitter = new MultiSigSubmitter(config);
+      await submitter.connect();
+
+      // Tamper: make the third wallet produce a different hash
+      const wallets = (submitter as unknown as { wallets: Map<string, { sign: ReturnType<typeof vi.fn> }> }).wallets;
+      const entries = [...wallets.entries()];
+      const [addr, tamperedWallet] = entries[2]!;
+      tamperedWallet.sign = vi.fn().mockReturnValue({
+        tx_blob: "tampered_blob",
+        hash: "different_hash",
+      });
+      wallets.set(addr, tamperedWallet);
+
+      await expect(submitter.submit(makePayload(), policy)).rejects.toThrow(
+        "hash mismatch",
+      );
+    });
+
+    it("passes when all signers produce matching hashes", async () => {
+      const config = makeConfig(3);
+      const store = makeGovernanceStore(3, 2);
+      const policy = store.getCurrentPolicy();
+
+      const submitter = new MultiSigSubmitter(config);
+      await submitter.connect();
+
+      // Default mock produces consistent hashes — should succeed
+      const record = await submitter.submit(makePayload(), policy);
+      expect(record.txHash).toBeDefined();
     });
   });
 

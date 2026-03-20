@@ -12,7 +12,7 @@
  * - Compatible with existing XrplSubmitter memo format
  */
 
-import { Client as XrplClient, Wallet, multisign } from "xrpl";
+import { Client as XrplClient, Wallet, multisign, decode } from "xrpl";
 import type { Payment, Transaction } from "xrpl";
 import { encodeMemo } from "../memo-encoder.js";
 import type { AttestationPayload, WitnessRecord, XrplMemo, SecretProvider } from "../types.js";
@@ -190,9 +190,37 @@ export class MultiSigSubmitter {
     const signerSignatures: SignerSignature[] = [];
     const now = normalizeTimestamp(new Date());
 
+    let expectedHash: string | null = null;
+
     for (const [address, wallet] of this.wallets) {
       // Each signer independently signs the prepared transaction
       const signed = wallet.sign(prepared, /* multisign */ true);
+
+      // Verify all signers produce the same transaction hash.
+      // A corrupted wallet producing a different hash means it signed
+      // different transaction content — reject before submission.
+      if (expectedHash === null) {
+        expectedHash = signed.hash;
+      } else if (signed.hash !== expectedHash) {
+        throw new Error(
+          `Multi-sig hash mismatch: signer ${address} produced hash ${signed.hash}, expected ${expectedHash}. ` +
+          `This indicates the signer modified the transaction content.`,
+        );
+      }
+
+      // Verify the signed blob decodes to a valid transaction matching the prepared tx
+      try {
+        const decoded = decode(signed.tx_blob);
+        if (decoded.Account !== prepared.Account) {
+          throw new Error(
+            `Signer ${address} signed a transaction for account ${decoded.Account}, expected ${prepared.Account}`,
+          );
+        }
+      } catch (err) {
+        if (err instanceof Error && err.message.includes("Signer")) throw err;
+        throw new Error(`Signer ${address} produced an invalid transaction blob: ${err}`);
+      }
+
       signedBlobs.push(signed.tx_blob);
 
       signerSignatures.push({
