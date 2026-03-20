@@ -6,6 +6,7 @@
  * response is returned instead of re-executing the handler.
  */
 
+import { createHash } from "node:crypto";
 import type { MiddlewareHandler } from "hono";
 import type { AppEnv } from "../types/api-contract.js";
 
@@ -18,6 +19,8 @@ export interface CachedResponse {
   readonly body: string;
   readonly headers: Record<string, string>;
   readonly cachedAt: number;
+  /** SHA-256 hex digest of the original request body */
+  readonly bodyHash: string;
 }
 
 export interface IdempotencyStore {
@@ -83,8 +86,25 @@ export function idempotencyMiddleware(
       return next();
     }
 
+    // Read the request body and compute its hash for comparison
+    const requestBody = await c.req.text();
+    const requestBodyHash = createHash("sha256").update(requestBody).digest("hex");
+
     const cached = store.get(idempotencyKey);
     if (cached !== undefined) {
+      // Same key but different body → cache poisoning attempt
+      if (cached.bodyHash !== requestBodyHash) {
+        return c.json(
+          {
+            error: {
+              code: "IDEMPOTENCY_MISMATCH",
+              message: "Idempotency key reuse with different request body",
+            },
+          },
+          422,
+        );
+      }
+
       for (const [key, value] of Object.entries(cached.headers)) {
         c.header(key, value);
       }
@@ -107,6 +127,7 @@ export function idempotencyMiddleware(
         body,
         headers,
         cachedAt: Date.now(),
+        bodyHash: requestBodyHash,
       });
     }
   };

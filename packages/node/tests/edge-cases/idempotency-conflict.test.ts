@@ -3,7 +3,7 @@
  *
  * Verifies behavior when:
  * - Same key + same body → cached response returned
- * - Same key + different body → cached response returned (documents behavior)
+ * - Same key + different body → 422 (body hash mismatch prevents cache poisoning)
  * - Missing key → request processed normally
  */
 
@@ -44,7 +44,7 @@ describe("idempotency edge cases", () => {
     expect(body2).toEqual(body1);
   });
 
-  it("same key + different body → returns cached response (not new)", async () => {
+  it("same key + different body → returns 422 (body hash mismatch)", async () => {
     const { app } = createTestApp();
     const key = "idem-diff-1";
 
@@ -62,8 +62,6 @@ describe("idempotency edge cases", () => {
     );
     expect(res1.status).toBe(201);
 
-    const responseBody1 = await res1.json();
-
     // Same key, different body
     const body2 = {
       id: "idem-intent-2b",
@@ -77,11 +75,11 @@ describe("idempotency edge cases", () => {
         "Idempotency-Key": key,
       }),
     );
-    // Should return the cached response from the first request
-    expect(res2.status).toBe(201);
+    // Body hash mismatch → 422
+    expect(res2.status).toBe(422);
 
-    const responseBody2 = await res2.json();
-    expect(responseBody2).toEqual(responseBody1);
+    const errBody = (await res2.json()) as { error: { code: string } };
+    expect(errBody.error.code).toBe("IDEMPOTENCY_MISMATCH");
   });
 
   it("no idempotency key → request processed normally", async () => {

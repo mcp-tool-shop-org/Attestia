@@ -16,6 +16,7 @@ describe("InMemoryIdempotencyStore lifecycle", () => {
       body: "{}",
       headers: {},
       cachedAt: Date.now(),
+      bodyHash: "0".repeat(64),
     });
     expect(store.size).toBe(1);
 
@@ -24,6 +25,7 @@ describe("InMemoryIdempotencyStore lifecycle", () => {
       body: '{"ok":true}',
       headers: {},
       cachedAt: Date.now(),
+      bodyHash: "0".repeat(64),
     });
     expect(store.size).toBe(2);
   });
@@ -36,12 +38,14 @@ describe("InMemoryIdempotencyStore lifecycle", () => {
       body: "{}",
       headers: {},
       cachedAt: Date.now(),
+      bodyHash: "0".repeat(64),
     });
     store.set("k2", {
       status: 200,
       body: "{}",
       headers: {},
       cachedAt: Date.now(),
+      bodyHash: "0".repeat(64),
     });
 
     expect(store.size).toBe(2);

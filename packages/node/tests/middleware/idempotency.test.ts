@@ -132,6 +132,7 @@ describe("InMemoryIdempotencyStore", () => {
       body: "{}",
       headers: {},
       cachedAt: Date.now() - 100_000_000, // well past TTL
+      bodyHash: "0".repeat(64),
     });
 
     expect(idempotencyStore.get("expired-key")).toBeUndefined();
@@ -145,10 +146,76 @@ describe("InMemoryIdempotencyStore", () => {
       body: '{"ok":true}',
       headers: {},
       cachedAt: Date.now(),
+      bodyHash: "0".repeat(64),
     });
 
     const entry = idempotencyStore.get("fresh-key");
     expect(entry).toBeDefined();
     expect(entry!.body).toBe('{"ok":true}');
+  });
+});
+
+// =============================================================================
+// M1: Body hash comparison
+// =============================================================================
+
+describe("idempotency body hash (M1)", () => {
+  it("returns cached response when same key + same body", async () => {
+    const { app } = createTestApp();
+
+    const body = {
+      id: "hash-same",
+      kind: "transfer",
+      description: "Body hash test",
+      params: {},
+    };
+
+    const res1 = await app.request(
+      jsonRequest("/api/v1/intents", "POST", body, {
+        "Idempotency-Key": "hash-key-1",
+      }),
+    );
+    expect(res1.status).toBe(201);
+
+    const res2 = await app.request(
+      jsonRequest("/api/v1/intents", "POST", body, {
+        "Idempotency-Key": "hash-key-1",
+      }),
+    );
+    expect(res2.status).toBe(201);
+    expect(res2.headers.get("X-Idempotent-Replay")).toBe("true");
+  });
+
+  it("returns 422 when same key + different body", async () => {
+    const { app } = createTestApp();
+
+    const body1 = {
+      id: "hash-diff-1",
+      kind: "transfer",
+      description: "First body",
+      params: {},
+    };
+    const body2 = {
+      id: "hash-diff-2",
+      kind: "swap",
+      description: "Different body",
+      params: {},
+    };
+
+    const res1 = await app.request(
+      jsonRequest("/api/v1/intents", "POST", body1, {
+        "Idempotency-Key": "hash-key-2",
+      }),
+    );
+    expect(res1.status).toBe(201);
+
+    const res2 = await app.request(
+      jsonRequest("/api/v1/intents", "POST", body2, {
+        "Idempotency-Key": "hash-key-2",
+      }),
+    );
+    expect(res2.status).toBe(422);
+    const errBody = (await res2.json()) as { error: { code: string } };
+    expect(errBody.error.code).toBe("IDEMPOTENCY_MISMATCH");
   });
 });
