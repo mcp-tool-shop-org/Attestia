@@ -36,10 +36,28 @@ function sleep(ms: number): Promise<void> {
 /**
  * Parse a response body as JSON, handling empty responses.
  */
+/** Maximum response body size (10MB) to prevent deserialization bombs */
+const MAX_RESPONSE_BODY_SIZE = 10_000_000;
+
 async function parseResponseBody(response: Response): Promise<unknown> {
   const text = await response.text();
   if (text.length === 0) {
     return {};
+  }
+  if (text.length > MAX_RESPONSE_BODY_SIZE) {
+    throw new AttestiaError(
+      "RESPONSE_TOO_LARGE",
+      `Response body exceeds ${MAX_RESPONSE_BODY_SIZE / 1_000_000}MB limit (${text.length} bytes)`,
+      0,
+    );
+  }
+  const contentType = response.headers.get("content-type") ?? "";
+  if (contentType && !contentType.includes("json") && !contentType.includes("text")) {
+    throw new AttestiaError(
+      "INVALID_CONTENT_TYPE",
+      `Unexpected content type: ${contentType}`,
+      0,
+    );
   }
   try {
     return JSON.parse(text);

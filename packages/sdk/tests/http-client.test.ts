@@ -864,3 +864,50 @@ describe("HttpClient config defaults", () => {
     expect(result.data).toEqual({ ok: true });
   });
 });
+
+// =============================================================================
+// Response Size Limit (H6)
+// =============================================================================
+
+describe("HttpClient response size limit", () => {
+  it("throws RESPONSE_TOO_LARGE for bodies exceeding 10MB", async () => {
+    // Create a response with > 10MB body
+    const largeBody = "x".repeat(10_000_001);
+    const mockFetch = vi.fn(async () => {
+      return new Response(largeBody, {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    }) as unknown as typeof fetch;
+
+    const client = new HttpClient({
+      baseUrl: "https://api.example.com",
+      fetchFn: mockFetch,
+      retries: 0,
+    });
+
+    try {
+      await client.get("/huge");
+      expect.fail("Should have thrown");
+    } catch (error) {
+      expect(error).toBeInstanceOf(AttestiaError);
+      const attError = error as AttestiaError;
+      expect(attError.code).toBe("RESPONSE_TOO_LARGE");
+    }
+  });
+
+  it("accepts responses under 10MB", async () => {
+    const mockFetch = createMockFetch([
+      { status: 200, body: { data: { ok: true } } },
+    ]);
+
+    const client = new HttpClient({
+      baseUrl: "https://api.example.com",
+      fetchFn: mockFetch,
+      retries: 0,
+    });
+
+    const result = await client.get<{ ok: boolean }>("/normal");
+    expect(result.data).toEqual({ ok: true });
+  });
+});
