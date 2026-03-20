@@ -442,3 +442,76 @@ describe("errors", () => {
     expect(store.filePath).toBe(path);
   });
 });
+
+// =============================================================================
+// File Locking (C1 — concurrent append protection)
+// =============================================================================
+
+describe("file locking", () => {
+  it("concurrent appends produce unique global positions and valid hash chain", () => {
+    const path = freshPath();
+    const store = new JsonlEventStore({ filePath: path });
+
+    // Fire multiple synchronous appends rapidly — since append() is synchronous
+    // and locked, they should serialize correctly
+    const results = [];
+    for (let i = 0; i < 10; i++) {
+      results.push(store.append(`stream-${i % 3}`, [makeEvent(`concurrent.${i}`)]));
+    }
+
+    // All global positions should be unique
+    const all = store.readAll();
+    const positions = all.map((e) => e.globalPosition);
+    expect(new Set(positions).size).toBe(10);
+    expect(positions).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+
+    // Hash chain should verify
+    const integrity = store.verifyIntegrity();
+    expect(integrity.valid).toBe(true);
+  });
+
+  it("lockfile is cleaned up after successful append", () => {
+    const path = freshPath();
+    const store = new JsonlEventStore({ filePath: path });
+
+    store.append("stream-1", [makeEvent("test")]);
+
+    // The .lock file should not exist after append completes
+    expect(existsSync(path + ".lock")).toBe(false);
+  });
+
+  it("lockfile is cleaned up after failed append", () => {
+    const path = freshPath();
+    const store = new JsonlEventStore({ filePath: path });
+    store.append("stream-1", [makeEvent("first")]);
+
+    // Force a concurrency conflict — lock should still be released
+    try {
+      store.append("stream-1", [makeEvent("conflict")], { expectedVersion: 999 });
+    } catch {
+      // Expected
+    }
+
+    expect(existsSync(path + ".lock")).toBe(false);
+  });
+
+  it("second store instance serializes appends via lockfile", () => {
+    const path = freshPath();
+
+    const store1 = new JsonlEventStore({ filePath: path });
+    store1.append("stream-1", [makeEvent("from-store1")]);
+
+    const store2 = new JsonlEventStore({ filePath: path });
+    store2.append("stream-1", [makeEvent("from-store2")]);
+
+    // Both appends should be in the file
+    const content = readFileSync(path, "utf-8").trim().split("\n");
+    expect(content).toHaveLength(2);
+
+    // Reload and verify positions are unique
+    const store3 = new JsonlEventStore({ filePath: path });
+    const all = store3.readAll();
+    const positions = all.map((e) => e.globalPosition);
+    expect(new Set(positions).size).toBe(2);
+  });
+});

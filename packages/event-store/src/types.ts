@@ -301,7 +301,8 @@ export type EventStoreErrorCode =
   | "INVALID_STREAM_ID"
   | "EMPTY_APPEND"
   | "INVALID_VERSION"
-  | "STORE_CLOSED";
+  | "STORE_CLOSED"
+  | "LOCK_TIMEOUT";
 
 /**
  * Error thrown by EventStore operations.

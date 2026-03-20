@@ -35,7 +35,10 @@ import {
   existsSync,
   fsyncSync,
   mkdirSync,
+  unlinkSync,
+  writeFileSync,
 } from "node:fs";
+import { constants } from "node:fs";
 import { dirname } from "node:path";
 import type { DomainEvent } from "@attestia/types";
 import type {
@@ -109,6 +112,9 @@ export class JsonlEventStore implements EventStore {
   /** Hash of the last event in the chain (for linking new appends) */
   private _lastHash: string = GENESIS_HASH;
 
+  /** Path to the lockfile for concurrent append protection */
+  private readonly _lockPath: string;
+
   /**
    * Create a new JsonlEventStore.
    *
@@ -118,6 +124,7 @@ export class JsonlEventStore implements EventStore {
    */
   constructor(options: JsonlEventStoreOptions) {
     this._filePath = options.filePath;
+    this._lockPath = this._filePath + ".lock";
 
     // Ensure parent directory exists
     const dir = dirname(this._filePath);
@@ -176,57 +183,63 @@ export class JsonlEventStore implements EventStore {
       this._streams.set(streamId, stream);
     }
 
-    // Build stored events with hash chain
-    const fromVersion = currentVersion + 1;
-    const storedEvents: StoredEvent[] = [];
-    const appendedAt = new Date().toISOString();
-    let lines = "";
+    // Acquire file lock to prevent concurrent append races
+    this._acquireLock();
+    try {
+      // Build stored events with hash chain
+      const fromVersion = currentVersion + 1;
+      const storedEvents: StoredEvent[] = [];
+      const appendedAt = new Date().toISOString();
+      let lines = "";
 
-    for (let i = 0; i < events.length; i++) {
-      const event = events[i]!;
-      const version = fromVersion + i;
-      const globalPosition = this._nextGlobalPosition++;
+      for (let i = 0; i < events.length; i++) {
+        const event = events[i]!;
+        const version = fromVersion + i;
+        const globalPosition = this._nextGlobalPosition++;
 
-      const base: StoredEvent = {
-        event: {
-          type: event.type,
-          metadata: event.metadata,
-          payload: event.payload,
-        },
+        const base: StoredEvent = {
+          event: {
+            type: event.type,
+            metadata: event.metadata,
+            payload: event.payload,
+          },
+          streamId,
+          version,
+          globalPosition,
+          appendedAt,
+        };
+
+        const previousHash = this._lastHash;
+        const hash = computeEventHash(base, previousHash);
+
+        const hashed = Object.assign(base, { hash, previousHash }) as StoredEvent;
+        this._lastHash = hash;
+
+        storedEvents.push(hashed);
+        lines += JSON.stringify(hashed) + "\n";
+      }
+
+      // Write to file atomically (all lines in one write + fsync)
+      this._writeAndSync(lines);
+
+      // Update in-memory state only after successful write
+      for (const stored of storedEvents) {
+        stream.push(stored);
+        this._globalLog.push(stored);
+      }
+
+      // Dispatch to subscribers
+      this._dispatch(streamId, storedEvents);
+
+      return {
         streamId,
-        version,
-        globalPosition,
-        appendedAt,
+        fromVersion,
+        toVersion: fromVersion + events.length - 1,
+        count: events.length,
       };
-
-      const previousHash = this._lastHash;
-      const hash = computeEventHash(base, previousHash);
-
-      const hashed = Object.assign(base, { hash, previousHash }) as StoredEvent;
-      this._lastHash = hash;
-
-      storedEvents.push(hashed);
-      lines += JSON.stringify(hashed) + "\n";
+    } finally {
+      this._releaseLock();
     }
-
-    // Write to file atomically (all lines in one write + fsync)
-    this._writeAndSync(lines);
-
-    // Update in-memory state only after successful write
-    for (const stored of storedEvents) {
-      stream.push(stored);
-      this._globalLog.push(stored);
-    }
-
-    // Dispatch to subscribers
-    this._dispatch(streamId, storedEvents);
-
-    return {
-      streamId,
-      fromVersion,
-      toVersion: fromVersion + events.length - 1,
-      count: events.length,
-    };
   }
 
   // ─── Read ───────────────────────────────────────────────────────────
@@ -449,6 +462,56 @@ export class JsonlEventStore implements EventStore {
       if (stored.globalPosition >= this._nextGlobalPosition) {
         this._nextGlobalPosition = stored.globalPosition + 1;
       }
+    }
+  }
+
+  /**
+   * Acquire an exclusive lockfile for concurrent append protection.
+   * Uses O_CREAT | O_EXCL to atomically create the lockfile — if it
+   * already exists, another process holds the lock.
+   *
+   * Retries with a short spin-wait for up to 5 seconds before giving up.
+   */
+  private _acquireLock(): void {
+    const maxWaitMs = 5_000;
+    const spinMs = 5;
+    const deadline = Date.now() + maxWaitMs;
+
+    while (true) {
+      try {
+        // O_CREAT | O_EXCL | O_WRONLY — atomic create-or-fail
+        const fd = openSync(this._lockPath, constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY);
+        // Write PID for debugging stale locks
+        writeFileSync(fd, String(process.pid), "utf-8");
+        closeSync(fd);
+        return;
+      } catch (err: unknown) {
+        if ((err as NodeJS.ErrnoException).code !== "EEXIST") {
+          throw err;
+        }
+        if (Date.now() >= deadline) {
+          throw new EventStoreError(
+            "LOCK_TIMEOUT",
+            `Failed to acquire lock on ${this._lockPath} within ${maxWaitMs}ms — another process may be writing`,
+          );
+        }
+        // Spin-wait (synchronous to match the synchronous append API)
+        const end = Date.now() + spinMs;
+        while (Date.now() < end) {
+          // busy wait
+        }
+      }
+    }
+  }
+
+  /**
+   * Release the lockfile.
+   */
+  private _releaseLock(): void {
+    try {
+      unlinkSync(this._lockPath);
+    } catch {
+      // Lock file already removed — not critical
     }
   }
 
