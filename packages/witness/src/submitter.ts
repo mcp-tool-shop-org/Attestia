@@ -19,7 +19,7 @@ import { Client as XrplClient, Wallet } from "xrpl";
 import type { Payment } from "xrpl";
 import { encodeMemo } from "./memo-encoder.js";
 import type { AttestationPayload, WitnessConfig, WitnessRecord, XrplMemo } from "./types.js";
-import { WitnessSubmitError } from "./types.js";
+import { WitnessSubmitError, resolveSecret } from "./types.js";
 import {
   withRetry,
   DEFAULT_RETRY_CONFIG,
@@ -40,13 +40,15 @@ export class XrplSubmitter {
 
   /**
    * Connect to the XRPL node and prepare the wallet.
+   * Resolves the secret via SecretProvider if configured.
    */
   async connect(): Promise<void> {
     this.client = new XrplClient(this.config.rpcUrl, {
       timeout: this.config.timeoutMs ?? 30_000,
     });
     await this.client.connect();
-    this.wallet = Wallet.fromSeed(this.config.secret);
+    const secret = await resolveSecret(this.config.secret, this.config.account);
+    this.wallet = Wallet.fromSeed(secret);
   }
 
   /**

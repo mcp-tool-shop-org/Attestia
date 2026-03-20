@@ -57,8 +57,9 @@ export type {
   WitnessRecord,
   VerificationResult,
   WitnessConfig,
+  SecretProvider,
 } from "./types.js";
-export { WitnessSubmitError } from "./types.js";
+export { WitnessSubmitError, InlineSecretProvider, resolveSecret } from "./types.js";
 
 // Multi-sig governance
 export {

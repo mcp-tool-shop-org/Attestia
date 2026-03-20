@@ -121,6 +121,46 @@ export interface VerificationResult {
 }
 
 // =============================================================================
+// Secret Provider
+// =============================================================================
+
+/**
+ * Interface for providing secrets without exposing them in config objects.
+ *
+ * Production deployments should use a vault-backed implementation
+ * (e.g., HashiCorp Vault, AWS Secrets Manager) instead of inline secrets.
+ */
+export interface SecretProvider {
+  /** Retrieve the secret for the given account address. */
+  getSecret(address: string): Promise<string>;
+}
+
+/**
+ * Simple inline secret provider for backward compatibility and testing.
+ * Wraps a plain string secret — NOT recommended for production use.
+ */
+export class InlineSecretProvider implements SecretProvider {
+  constructor(private readonly _secret: string) {}
+
+  async getSecret(_address: string): Promise<string> {
+    return this._secret;
+  }
+}
+
+/**
+ * Resolve a secret value from either a plain string or a SecretProvider.
+ */
+export async function resolveSecret(
+  secretOrProvider: string | SecretProvider,
+  address: string,
+): Promise<string> {
+  if (typeof secretOrProvider === "string") {
+    return secretOrProvider;
+  }
+  return secretOrProvider.getSecret(address);
+}
+
+// =============================================================================
 // Configuration
 // =============================================================================
 
@@ -137,8 +177,12 @@ export interface WitnessConfig {
   /** Witness account address (r-address) */
   readonly account: string;
 
-  /** Witness account secret/seed (for signing attestation txs) */
-  readonly secret: string;
+  /**
+   * Witness account secret/seed (for signing attestation txs).
+   * Accepts a plain string (backward compatible) or a SecretProvider
+   * for vault-backed secret management.
+   */
+  readonly secret: string | SecretProvider;
 
   /** Optional: fee in drops (defaults to 12) */
   readonly feeDrops?: string;

@@ -15,8 +15,8 @@
 import { Client as XrplClient, Wallet, multisign } from "xrpl";
 import type { Payment, Transaction } from "xrpl";
 import { encodeMemo } from "../memo-encoder.js";
-import type { AttestationPayload, WitnessRecord, XrplMemo } from "../types.js";
-import { WitnessSubmitError } from "../types.js";
+import type { AttestationPayload, WitnessRecord, XrplMemo, SecretProvider } from "../types.js";
+import { WitnessSubmitError, resolveSecret } from "../types.js";
 import {
   withRetry,
   DEFAULT_RETRY_CONFIG,
@@ -41,8 +41,12 @@ export interface SignerConfig {
   /** Signer's XRPL address */
   readonly address: string;
 
-  /** Signer's secret/seed for signing */
-  readonly secret: string;
+  /**
+   * Signer's secret/seed for signing.
+   * Accepts a plain string (backward compatible) or a SecretProvider
+   * for vault-backed secret management.
+   */
+  readonly secret: string | SecretProvider;
 }
 
 /**
@@ -111,7 +115,8 @@ export class MultiSigSubmitter {
 
     this.wallets.clear();
     for (const signer of this.config.signers) {
-      const wallet = Wallet.fromSeed(signer.secret);
+      const secret = await resolveSecret(signer.secret, signer.address);
+      const wallet = Wallet.fromSeed(secret);
       this.wallets.set(signer.address, wallet);
     }
   }
