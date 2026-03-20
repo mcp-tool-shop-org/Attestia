@@ -220,6 +220,25 @@ describe("Invariant: state.lineage.explicit", () => {
       );
     }
   });
+
+  it("B.1.4 Reject: non-root transition with isRoot=true is invalid", () => {
+    // Given: Registered root state
+    const parent = createState("S1", { isRoot: true });
+    registrar.register(createTransition(null, parent));
+
+    // When: Non-root transition (from !== null) with isRoot: true — contradictory
+    const child = createState("S1", { isRoot: true, version: 2 });
+    const transition = createTransition("S1", child);
+
+    // Then: Registration is rejected
+    const result = registrar.register(transition);
+    expect(result.kind).toBe("rejected");
+    if (result.kind === "rejected") {
+      expect(result.violations).toContainEqual(
+        expect.objectContaining({ invariantId: "state.lineage.explicit" })
+      );
+    }
+  });
 });
 
 describe("Invariant: state.lineage.parent_exists", () => {

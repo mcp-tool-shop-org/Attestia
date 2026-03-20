@@ -176,13 +176,28 @@ export const lineageExplicitInvariant: Invariant = {
   appliesTo: ["from", "structure.isRoot"],
   failureMode: "reject",
   description:
-    "Every Transition must explicitly declare its parent State, except for root States.",
+    "Every Transition must explicitly declare its parent State, except for root States. " +
+    "Root states (from === null) MUST have isRoot === true. " +
+    "Non-root states (from !== null) MUST NOT have isRoot === true.",
   predicate: (input: InvariantInput): boolean => {
     const transition = getTransition(input);
     if (!transition) return true;
 
-    // Either has explicit parent OR is a root state
-    return transition.from !== null || isRootState(transition.to);
+    const isRoot = isRootState(transition.to);
+    const hasParent = transition.from !== null;
+
+    // Root states: from === null AND isRoot === true
+    // Non-root states: from !== null AND isRoot !== true
+    if (!hasParent && !isRoot) {
+      // from === null but missing isRoot flag
+      return false;
+    }
+    if (hasParent && isRoot) {
+      // from !== null but claims to be root — contradictory
+      return false;
+    }
+
+    return true;
   },
 };
 
