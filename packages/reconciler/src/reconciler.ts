@@ -51,13 +51,12 @@ export interface ReconciliationInput {
 // Reconciler
 // =============================================================================
 
-let reportCounter = 0;
-
 export class Reconciler {
   private readonly intentLedgerMatcher = new IntentLedgerMatcher();
   private readonly ledgerChainMatcher = new LedgerChainMatcher();
   private readonly intentChainMatcher = new IntentChainMatcher();
   private readonly attestor: Attestor | null;
+  private reportCounter = 0;
 
   constructor(config: ReconcilerConfig = {}) {
     if (config.registrar) {
@@ -105,8 +104,8 @@ export class Reconciler {
       intentChainMatches,
     );
 
-    reportCounter += 1;
-    const id = `recon:${Date.now()}:${reportCounter}`;
+    this.reportCounter += 1;
+    const id = `recon:${Date.now()}:${this.reportCounter}`;
 
     return {
       id,

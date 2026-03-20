@@ -5,7 +5,7 @@
  *
  * Design:
  * - All hashing uses SHA-256 (caller provides pre-hashed leaves)
- * - Internal nodes: SHA-256(left || right) — concatenation of hex strings
+ * - Internal nodes: SHA-256(leftBytes || rightBytes) — binary concatenation of decoded hex
  * - Odd leaf count: duplicate the last leaf to make even
  * - Empty tree: null root
  * - Single leaf: leaf IS the root (no internal nodes)
@@ -17,15 +17,36 @@ import { createHash } from "node:crypto";
 import type { MerkleNode, MerkleProof, MerkleProofStep } from "./types.js";
 
 // =============================================================================
+// Validation
+// =============================================================================
+
+const SHA256_HEX_RE = /^[a-f0-9]{64}$/;
+
+function assertValidSha256Hex(hash: string, context: string): void {
+  if (!SHA256_HEX_RE.test(hash)) {
+    throw new Error(
+      `Invalid SHA-256 hex hash (${context}): expected 64 lowercase hex chars, got "${hash.length > 80 ? hash.slice(0, 80) + "…" : hash}"`,
+    );
+  }
+}
+
+// =============================================================================
 // Internal Helpers
 // =============================================================================
 
 /**
  * Hash two child hashes to produce a parent hash.
- * Uses SHA-256(leftHex + rightHex) — concatenation of hex strings.
+ *
+ * Uses SHA-256(leftBytes || rightBytes) — binary concatenation of the
+ * decoded hex digests. Because both inputs are fixed-length (32 bytes
+ * each for SHA-256), the boundary is unambiguous and second-preimage
+ * collisions via string concatenation are impossible.
  */
 function hashPair(left: string, right: string): string {
-  return createHash("sha256").update(left + right).digest("hex");
+  const buf = Buffer.allocUnsafe(64);
+  buf.set(Buffer.from(left, "hex"), 0);
+  buf.set(Buffer.from(right, "hex"), 32);
+  return createHash("sha256").update(buf).digest("hex");
 }
 
 /**
@@ -99,6 +120,9 @@ export class MerkleTree {
    * @returns Immutable MerkleTree instance
    */
   static build(leaves: readonly string[]): MerkleTree {
+    for (let i = 0; i < leaves.length; i++) {
+      assertValidSha256Hex(leaves[i]!, `leaf[${i}]`);
+    }
     return new MerkleTree(leaves);
   }
 

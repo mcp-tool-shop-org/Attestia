@@ -37,13 +37,13 @@ const SubmitReportSchema = z.object({
   verdict: z.enum(["PASS", "FAIL"]),
   subsystemChecks: z.array(
     z.object({
-      subsystem: z.string(),
-      expected: z.string(),
-      actual: z.string(),
+      subsystem: z.string().max(256),
+      expected: z.string().max(1024),
+      actual: z.string().max(1024),
       matches: z.boolean(),
     }),
-  ),
-  discrepancies: z.array(z.string()),
+  ).max(1000),
+  discrepancies: z.array(z.string().max(1024)).max(1000),
   bundleHash: z.string().min(1),
   verifiedAt: z.string().min(1),
 });

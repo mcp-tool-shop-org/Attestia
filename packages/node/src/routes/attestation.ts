@@ -10,6 +10,7 @@ import { Hono } from "hono";
 import type { AppEnv } from "../types/api-contract.js";
 import { ReconcileSchema, PaginationQuerySchema } from "../types/dto.js";
 import { validateBody } from "../middleware/validate.js";
+import { requirePermission } from "../middleware/auth.js";
 import { paginate } from "../types/pagination.js";
 import { createErrorEnvelope } from "../types/error.js";
 import type { ReconcileDto } from "../types/dto.js";
@@ -40,7 +41,7 @@ export function createAttestationRoutes(deps?: AttestationRouteDeps): Hono<AppEn
   }
 
   // POST /api/v1/reconcile
-  routes.post("/reconcile", validateBody(ReconcileSchema), (c) => {
+  routes.post("/reconcile", requirePermission("write"), validateBody(ReconcileSchema), (c) => {
     const service = c.get("service");
     const body = c.get("validatedBody") as ReconcileDto;
 
@@ -53,7 +54,7 @@ export function createAttestationRoutes(deps?: AttestationRouteDeps): Hono<AppEn
   });
 
   // POST /api/v1/attest
-  routes.post("/attest", validateBody(ReconcileSchema), async (c) => {
+  routes.post("/attest", requirePermission("write"), validateBody(ReconcileSchema), async (c) => {
     const service = c.get("service");
     const body = c.get("validatedBody") as ReconcileDto;
 

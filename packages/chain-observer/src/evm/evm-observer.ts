@@ -345,13 +345,17 @@ export class EvmObserver implements ChainObserver {
     const uniqueTokenAddresses = [...new Set(
       allLogs.map((log) => (log.address as string).toLowerCase()),
     )];
-    const metaEntries = await Promise.all(
+    const metaResults = await Promise.allSettled(
       uniqueTokenAddresses.map(async (addr) => {
         const meta = await this.resolveTokenMeta(addr as `0x${string}`);
         return [addr, meta] as const;
       }),
     );
-    const tokenMetaMap = new Map(metaEntries);
+    const tokenMetaMap = new Map(
+      metaResults
+        .filter((r): r is PromiseFulfilledResult<readonly [string, { symbol: string; decimals: number }]> => r.status === "fulfilled")
+        .map((r) => r.value),
+    );
 
     // Convert logs to TransferEvents with resolved metadata
     const events: TransferEvent[] = allLogs.map((log) => {

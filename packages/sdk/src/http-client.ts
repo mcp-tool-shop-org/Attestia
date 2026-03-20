@@ -15,6 +15,7 @@
  * - Custom fetch function for testing
  */
 
+import { randomBytes } from "node:crypto";
 import type { AttestiaClientConfig } from "./types.js";
 import { AttestiaError } from "./types.js";
 
@@ -22,9 +23,9 @@ import { AttestiaError } from "./types.js";
 // Internal Helpers
 // =============================================================================
 
-/** Generate a simple request ID */
+/** Generate a cryptographically secure request ID */
 function generateRequestId(): string {
-  return `sdk-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  return `sdk-${randomBytes(12).toString("hex")}`;
 }
 
 /** Sleep for the given number of milliseconds */

@@ -135,11 +135,18 @@ export function createApp(options: CreateAppOptions): AppInstance {
       app.use("/api/*", rateLimitMiddleware(rateLimitStore));
     }
   } else {
-    // Unsecured mode (tests, dev): X-Tenant-Id header or default tenant
+    // Unsecured mode (tests, dev): use default tenant with synthetic admin auth
     app.use("/api/*", async (c, next) => {
       const tenantId = c.req.header("X-Tenant-Id") ?? defaultTenantId;
       const service = tenantRegistry.getOrCreate(tenantId);
       c.set("service", service);
+      // Set synthetic auth so requirePermission() works in unsecured mode
+      c.set("auth", {
+        type: "api-key" as const,
+        identity: "unsecured-dev",
+        role: "admin" as const,
+        tenantId,
+      });
       await next();
     });
   }

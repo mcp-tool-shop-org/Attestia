@@ -7,12 +7,13 @@
 
 import { Hono } from "hono";
 import type { AppEnv } from "../types/api-contract.js";
+import { requirePermission } from "../middleware/auth.js";
 
 export function createExportRoutes(): Hono<AppEnv> {
   const routes = new Hono<AppEnv>();
 
   // GET /api/v1/export/events — NDJSON stream of all events
-  routes.get("/events", (c) => {
+  routes.get("/events", requirePermission("read"), (c) => {
     const service = c.get("service");
     const events = service.getAllEventsForExport();
 
@@ -25,7 +26,7 @@ export function createExportRoutes(): Hono<AppEnv> {
   });
 
   // GET /api/v1/export/state — State snapshot + GlobalStateHash
-  routes.get("/state", (c) => {
+  routes.get("/state", requirePermission("read"), (c) => {
     const service = c.get("service");
     const snapshot = service.getStateSnapshot();
 

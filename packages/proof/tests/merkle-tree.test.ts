@@ -25,6 +25,17 @@ function sha256(data: string): string {
   return createHash("sha256").update(data).digest("hex");
 }
 
+/**
+ * Hash pair using the same binary concatenation as production code.
+ * SHA-256(leftBytes || rightBytes) where both are 32-byte buffers.
+ */
+function hashPair(left: string, right: string): string {
+  const buf = Buffer.allocUnsafe(64);
+  buf.set(Buffer.from(left, "hex"), 0);
+  buf.set(Buffer.from(right, "hex"), 32);
+  return createHash("sha256").update(buf).digest("hex");
+}
+
 /** Generate N distinct leaf hashes */
 function makeLeaves(count: number): string[] {
   return Array.from({ length: count }, (_, i) => sha256(`leaf-${i}`));
@@ -53,7 +64,7 @@ describe("MerkleTree construction", () => {
     const [a, b] = makeLeaves(2);
     const tree = MerkleTree.build([a!, b!]);
 
-    const expectedRoot = sha256(a! + b!);
+    const expectedRoot = hashPair(a!, b!);
     expect(tree.getRoot()).toBe(expectedRoot);
     expect(tree.getLeafCount()).toBe(2);
   });
@@ -66,9 +77,9 @@ describe("MerkleTree construction", () => {
     expect(tree.getLeafCount()).toBe(3);
 
     // Manually compute: H(H(L0,L1), H(L2,L2))
-    const h01 = sha256(leaves[0]! + leaves[1]!);
-    const h22 = sha256(leaves[2]! + leaves[2]!);
-    const expectedRoot = sha256(h01 + h22);
+    const h01 = hashPair(leaves[0]!, leaves[1]!);
+    const h22 = hashPair(leaves[2]!, leaves[2]!);
+    const expectedRoot = hashPair(h01, h22);
     expect(tree.getRoot()).toBe(expectedRoot);
   });
 
@@ -76,9 +87,9 @@ describe("MerkleTree construction", () => {
     const leaves = makeLeaves(4);
     const tree = MerkleTree.build(leaves);
 
-    const h01 = sha256(leaves[0]! + leaves[1]!);
-    const h23 = sha256(leaves[2]! + leaves[3]!);
-    const expectedRoot = sha256(h01 + h23);
+    const h01 = hashPair(leaves[0]!, leaves[1]!);
+    const h23 = hashPair(leaves[2]!, leaves[3]!);
+    const expectedRoot = hashPair(h01, h23);
     expect(tree.getRoot()).toBe(expectedRoot);
   });
 

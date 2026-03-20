@@ -18,6 +18,7 @@ import type {
   TxHash,
   Money,
 } from "@attestia/types";
+import { compareMoney } from "@attestia/ledger";
 import { BudgetEngine } from "./budget.js";
 import type {
   VaultIntent,
@@ -105,18 +106,8 @@ export class IntentManager {
         decimals: envelope.decimals,
       };
 
-      const requestedAmount = BigInt(
-        Math.round(
-          parseFloat(params.amount.amount) * 10 ** params.amount.decimals,
-        ),
-      );
-      const availableAmount = BigInt(
-        Math.round(
-          parseFloat(available.amount) * 10 ** available.decimals,
-        ),
-      );
-
-      if (requestedAmount > availableAmount) {
+      // Use BigInt-safe comparison from @attestia/ledger (no floating-point)
+      if (compareMoney(params.amount, available) > 0) {
         throw new IntentError(
           "BUDGET_EXCEEDED",
           `Intent requires ${params.amount.amount} ${params.amount.currency} but envelope '${envelopeId}' only has ${envelope.available} available`,

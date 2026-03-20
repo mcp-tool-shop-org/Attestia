@@ -21,6 +21,7 @@ import {
   ListIntentsQuerySchema,
 } from "../types/dto.js";
 import { validateBody } from "../middleware/validate.js";
+import { requirePermission } from "../middleware/auth.js";
 import { setETag } from "../middleware/etag.js";
 import { createErrorEnvelope } from "../types/error.js";
 import { paginate } from "../types/pagination.js";
@@ -39,7 +40,7 @@ export function createIntentRoutes(deps?: IntentRouteDeps): Hono<AppEnv> {
   const auditLog = deps?.auditLog;
 
   // POST /api/v1/intents — Declare
-  routes.post("/", validateBody(DeclareIntentSchema), (c) => {
+  routes.post("/", requirePermission("write"), validateBody(DeclareIntentSchema), (c) => {
     const service = c.get("service");
     const body = c.get("validatedBody") as DeclareIntentDto;
 
@@ -113,7 +114,7 @@ export function createIntentRoutes(deps?: IntentRouteDeps): Hono<AppEnv> {
   });
 
   // POST /api/v1/intents/:id/approve
-  routes.post("/:id/approve", validateBody(ApproveIntentSchema), (c) => {
+  routes.post("/:id/approve", requirePermission("write"), validateBody(ApproveIntentSchema), (c) => {
     const service = c.get("service");
     const id = c.req.param("id");
     const body = c.get("validatedBody") as { reason?: string };
@@ -134,7 +135,7 @@ export function createIntentRoutes(deps?: IntentRouteDeps): Hono<AppEnv> {
   });
 
   // POST /api/v1/intents/:id/reject
-  routes.post("/:id/reject", validateBody(RejectIntentSchema), (c) => {
+  routes.post("/:id/reject", requirePermission("write"), validateBody(RejectIntentSchema), (c) => {
     const service = c.get("service");
     const id = c.req.param("id");
     const body = c.get("validatedBody") as { reason: string };
@@ -155,7 +156,7 @@ export function createIntentRoutes(deps?: IntentRouteDeps): Hono<AppEnv> {
   });
 
   // POST /api/v1/intents/:id/execute
-  routes.post("/:id/execute", validateBody(ExecuteIntentSchema), (c) => {
+  routes.post("/:id/execute", requirePermission("write"), validateBody(ExecuteIntentSchema), (c) => {
     const service = c.get("service");
     const id = c.req.param("id");
     const body = c.get("validatedBody") as {
@@ -179,7 +180,7 @@ export function createIntentRoutes(deps?: IntentRouteDeps): Hono<AppEnv> {
   });
 
   // POST /api/v1/intents/:id/verify
-  routes.post("/:id/verify", validateBody(VerifyIntentSchema), (c) => {
+  routes.post("/:id/verify", requirePermission("write"), validateBody(VerifyIntentSchema), (c) => {
     const service = c.get("service");
     const id = c.req.param("id");
     const body = c.get("validatedBody") as {

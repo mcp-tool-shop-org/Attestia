@@ -15,6 +15,7 @@ import { z } from "zod";
 import type { AppEnv } from "../types/api-contract.js";
 import { createErrorEnvelope } from "../types/error.js";
 import { validateBody } from "../middleware/validate.js";
+import { requirePermission } from "../middleware/auth.js";
 import {
   MerkleTree,
   packageAttestationProof,
@@ -125,7 +126,7 @@ export function createProofRoutes(): Hono<AppEnv> {
   });
 
   // POST /api/v1/proofs/verify
-  routes.post("/verify", validateBody(ProofPackageSchema), (c) => {
+  routes.post("/verify", requirePermission("write"), validateBody(ProofPackageSchema), (c) => {
     const pkg = c.get("validatedBody") as AttestationProofPackage;
     const valid = verifyAttestationProof(pkg);
 

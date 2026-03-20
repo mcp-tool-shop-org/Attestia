@@ -14,7 +14,7 @@
  * - Strict mode: missing optional fields (chainHashes) cause FAIL
  */
 
-import { createHash } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { canonicalize } from "json-canonicalize";
 import type {
   ExportableStateBundle,
@@ -40,7 +40,8 @@ function sha256(data: string): string {
 }
 
 function generateReportId(verifierId: string, bundleHash: string): string {
-  return sha256(canonicalize({ verifierId, bundleHash, nonce: Date.now() }));
+  const nonce = randomBytes(16).toString("hex");
+  return sha256(canonicalize({ verifierId, bundleHash, nonce }));
 }
 
 // =============================================================================

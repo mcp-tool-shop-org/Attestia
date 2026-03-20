@@ -9,13 +9,14 @@ import { Hono } from "hono";
 import type { AppEnv } from "../types/api-contract.js";
 import { ReplayVerifySchema, HashVerifySchema } from "../types/dto.js";
 import { validateBody } from "../middleware/validate.js";
+import { requirePermission } from "../middleware/auth.js";
 import type { ReplayVerifyDto, HashVerifyDto } from "../types/dto.js";
 
 export function createVerifyRoutes(): Hono<AppEnv> {
   const routes = new Hono<AppEnv>();
 
   // POST /api/v1/verify/replay
-  routes.post("/replay", validateBody(ReplayVerifySchema), (c) => {
+  routes.post("/replay", requirePermission("write"), validateBody(ReplayVerifySchema), (c) => {
     const service = c.get("service");
     const body = c.get("validatedBody") as ReplayVerifyDto;
 
@@ -35,7 +36,7 @@ export function createVerifyRoutes(): Hono<AppEnv> {
   });
 
   // POST /api/v1/verify/hash
-  routes.post("/hash", validateBody(HashVerifySchema), (c) => {
+  routes.post("/hash", requirePermission("write"), validateBody(HashVerifySchema), (c) => {
     const service = c.get("service");
     const body = c.get("validatedBody") as HashVerifyDto;
 

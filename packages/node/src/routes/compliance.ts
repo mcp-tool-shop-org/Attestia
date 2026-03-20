@@ -12,6 +12,7 @@
 import { Hono } from "hono";
 import type { AppEnv } from "../types/api-contract.js";
 import { createErrorEnvelope } from "../types/error.js";
+import { requirePermission } from "../middleware/auth.js";
 import {
   SOC2_FRAMEWORK,
   SOC2_MAPPINGS,
@@ -57,7 +58,7 @@ export function createComplianceRoutes(): Hono<AppEnv> {
   });
 
   // GET /api/v1/compliance/report/:frameworkId
-  routes.get("/report/:frameworkId", (c) => {
+  routes.get("/report/:frameworkId", requirePermission("read"), (c) => {
     const frameworkId = c.req.param("frameworkId");
     const entry = FRAMEWORK_REGISTRY.get(frameworkId);
 
@@ -65,7 +66,7 @@ export function createComplianceRoutes(): Hono<AppEnv> {
       return c.json(
         createErrorEnvelope(
           "NOT_FOUND",
-          `Framework '${frameworkId}' not found. Available: ${[...FRAMEWORK_REGISTRY.keys()].join(", ")}`,
+          `Framework '${frameworkId}' not found`,
         ),
         404,
       );
