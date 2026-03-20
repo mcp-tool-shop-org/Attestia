@@ -99,3 +99,20 @@ describe("error handling", () => {
     expect(res.status).toBe(404);
   });
 });
+
+// =============================================================================
+// M4: Security headers
+// =============================================================================
+
+describe("security headers (M4)", () => {
+  it("includes security headers on every response", async () => {
+    const { app } = createTestApp();
+    const res = await app.request("/health");
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("X-Content-Type-Options")).toBe("nosniff");
+    expect(res.headers.get("X-Frame-Options")).toBe("DENY");
+    expect(res.headers.get("Content-Security-Policy")).toBe("default-src 'none'");
+    expect(res.headers.get("Referrer-Policy")).toBe("no-referrer");
+  });
+});

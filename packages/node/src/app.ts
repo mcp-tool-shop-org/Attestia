@@ -105,6 +105,15 @@ export function createApp(options: CreateAppOptions): AppInstance {
   // ─── Global Middleware ───────────────────────────────────────────
   app.use("*", requestIdMiddleware());
 
+  // Security headers
+  app.use("*", async (c, next) => {
+    await next();
+    c.header("X-Content-Type-Options", "nosniff");
+    c.header("X-Frame-Options", "DENY");
+    c.header("Content-Security-Policy", "default-src 'none'");
+    c.header("Referrer-Policy", "no-referrer");
+  });
+
   if (options.logFn !== undefined) {
     app.use("*", loggerMiddleware(options.logFn));
   }
