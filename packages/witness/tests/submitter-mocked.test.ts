@@ -74,6 +74,8 @@ function injectMockClientAndWallet(submitter: XrplSubmitter) {
         meta: { ledger_index: 999 },
       },
     }),
+    // Default: tx not found (first submission)
+    request: vi.fn().mockRejectedValue(new Error("txnNotFound")),
   };
   const mockWallet = {
     sign: vi.fn().mockReturnValue({
@@ -152,6 +154,35 @@ describe("XrplSubmitter (mocked)", () => {
 
       const record = await submitter.submit(payload);
       expect(record.ledgerIndex).toBe(0);
+    });
+
+    it("skips resubmission when tx is already confirmed on-chain", async () => {
+      const payload = makePayload();
+      const { mockClient } = injectMockClientAndWallet(submitter);
+
+      // Simulate tx already confirmed
+      mockClient.request.mockResolvedValue({
+        result: { validated: true, ledger_index: 777 },
+      });
+
+      const record = await submitter.submit(payload);
+
+      // Should return the existing result without calling submitAndWait
+      expect(record.ledgerIndex).toBe(777);
+      expect(mockClient.submitAndWait).not.toHaveBeenCalled();
+    });
+
+    it("proceeds with submission when tx is not found on-chain", async () => {
+      const payload = makePayload();
+      const { mockClient } = injectMockClientAndWallet(submitter);
+
+      // tx not found — default mock behavior
+      mockClient.request.mockRejectedValue(new Error("txnNotFound"));
+
+      const record = await submitter.submit(payload);
+
+      expect(record.txHash).toBe("TXHASH_ABC123");
+      expect(mockClient.submitAndWait).toHaveBeenCalledWith("SIGNED_BLOB");
     });
 
     it("includes Fee when config has feeDrops", async () => {

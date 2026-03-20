@@ -128,6 +128,33 @@ export class XrplSubmitter {
   }
 
   /**
+   * Check if a transaction is already confirmed on-chain.
+   * Returns ledger index if confirmed, null otherwise.
+   */
+  private async _checkExistingTx(
+    client: XrplClient,
+    txHash: string,
+  ): Promise<{ ledgerIndex: number } | null> {
+    try {
+      const response = await client.request({
+        command: "tx",
+        transaction: txHash,
+      });
+      const result = response.result as unknown as Record<string, unknown>;
+      if (result.validated === true) {
+        const ledgerIndex = typeof result.ledger_index === "number"
+          ? result.ledger_index
+          : 0;
+        return { ledgerIndex };
+      }
+      return null;
+    } catch {
+      // tx not found — proceed with submission
+      return null;
+    }
+  }
+
+  /**
    * Single submission attempt (no retry).
    */
   private async _submitOnce(
@@ -159,6 +186,22 @@ export class XrplSubmitter {
 
     // Sign with witness wallet
     const signed = wallet.sign(prepared);
+
+    // Idempotency check: if the tx is already confirmed on-chain, return
+    // the existing result instead of resubmitting (prevents duplicate
+    // attestations when a retry fires after a successful-but-lost response)
+    const existing = await this._checkExistingTx(client, signed.hash);
+    if (existing) {
+      return {
+        id: `witness:${payload.hash.slice(0, 16)}`,
+        payload,
+        chainId: this.config.chainId,
+        txHash: signed.hash,
+        ledgerIndex: existing.ledgerIndex,
+        witnessedAt: new Date().toISOString(),
+        witnessAccount: this.config.account,
+      };
+    }
 
     // Submit and wait for validation
     const result = await client.submitAndWait(signed.tx_blob);
