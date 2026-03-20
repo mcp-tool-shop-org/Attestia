@@ -61,6 +61,12 @@ export interface PublicVerifyDeps {
 
   /** Minimum verifiers required for consensus. Default: 1 */
   readonly minimumVerifiers?: number;
+
+  /**
+   * Allowed CORS origins. Default: [] (no cross-origin access).
+   * Pass ["*"] to allow all origins (NOT recommended for production).
+   */
+  readonly corsOrigins?: readonly string[];
 }
 
 // =============================================================================
@@ -73,13 +79,18 @@ export function createPublicVerifyRoutes(
   const routes = new Hono<AppEnv>();
 
   // ─── CORS ──────────────────────────────────────────────────────
+  const allowedOrigins = deps?.corsOrigins ?? [];
   routes.use(
     "*",
     cors({
-      origin: "*",
+      origin: allowedOrigins.length === 0
+        ? () => ""  // Deny all cross-origin by default
+        : allowedOrigins.includes("*")
+          ? "*"
+          : (origin) => allowedOrigins.includes(origin) ? origin : "",
       allowMethods: ["GET", "POST", "OPTIONS"],
       allowHeaders: ["Content-Type"],
-      maxAge: 86400,
+      maxAge: 3600,
     }),
   );
 

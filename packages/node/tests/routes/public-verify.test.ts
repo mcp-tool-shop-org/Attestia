@@ -89,7 +89,7 @@ describe("GET /public/v1/verify/health", () => {
     expect(body.data.timestamp).toBeTruthy();
   });
 
-  it("includes CORS headers", async () => {
+  it("denies CORS by default (no corsOrigins configured)", async () => {
     const res = await instance.app.request(
       makeRequest("/public/v1/verify/health", "GET", undefined, {
         Origin: "https://external-verifier.example.com",
@@ -97,7 +97,9 @@ describe("GET /public/v1/verify/health", () => {
     );
 
     expect(res.status).toBe(200);
-    expect(res.headers.get("access-control-allow-origin")).toBe("*");
+    // Default: no allowed origins → empty or absent CORS header
+    const acao = res.headers.get("access-control-allow-origin");
+    expect(acao === null || acao === "").toBe(true);
   });
 
   it("responds to OPTIONS preflight", async () => {
@@ -436,5 +438,57 @@ describe("GET /public/v1/verify/consensus", () => {
     expect(res.status).toBe(200);
     const body = (await res.json()) as { data: { quorumReached: boolean } };
     expect(body.data.quorumReached).toBe(false);
+  });
+});
+
+// =============================================================================
+// M3: CORS origin configuration
+// =============================================================================
+
+describe("CORS origin configuration (M3)", () => {
+  it("allows configured origin", async () => {
+    const instance = createTestAppWithPublicVerify({
+      corsOrigins: ["https://verifier.example.com"],
+    });
+
+    const res = await instance.app.request(
+      makeRequest("/public/v1/verify/health", "GET", undefined, {
+        Origin: "https://verifier.example.com",
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("access-control-allow-origin")).toBe("https://verifier.example.com");
+  });
+
+  it("rejects unconfigured origin", async () => {
+    const instance = createTestAppWithPublicVerify({
+      corsOrigins: ["https://verifier.example.com"],
+    });
+
+    const res = await instance.app.request(
+      makeRequest("/public/v1/verify/health", "GET", undefined, {
+        Origin: "https://evil.example.com",
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    const acao = res.headers.get("access-control-allow-origin");
+    expect(acao === null || acao === "").toBe(true);
+  });
+
+  it("maxAge is 3600 (1 hour)", async () => {
+    const instance = createTestAppWithPublicVerify({
+      corsOrigins: ["https://verifier.example.com"],
+    });
+
+    const res = await instance.app.request(
+      makeRequest("/public/v1/verify/health", "OPTIONS", undefined, {
+        Origin: "https://verifier.example.com",
+        "Access-Control-Request-Method": "GET",
+      }),
+    );
+
+    expect(res.headers.get("access-control-max-age")).toBe("3600");
   });
 });
