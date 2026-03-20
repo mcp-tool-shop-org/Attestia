@@ -755,3 +755,40 @@ describe("createAtlestiaCatalog", () => {
     }
   });
 });
+
+// =============================================================================
+// M6: Atomic migration (structuredClone before migration chain)
+// =============================================================================
+
+describe("migration atomicity (M6)", () => {
+  it("failing mid-chain migration preserves original payload", () => {
+    const catalog = new EventCatalog();
+
+    catalog.register(makeSchema("test.atomic.event", 3));
+    // v1→v2: succeeds
+    catalog.registerMigration("test.atomic.event", 1, (p: Record<string, unknown>) => ({ ...p, addedInV2: true }));
+    // v2→v3: throws
+    catalog.registerMigration("test.atomic.event", 2, () => { throw new Error("migration v2→v3 failed"); });
+
+    const original = { name: "original", value: 42 };
+    const originalCopy = structuredClone(original);
+
+    expect(() => catalog.migrate("test.atomic.event", original, 1)).toThrow(
+      "migration v2→v3 failed",
+    );
+
+    // Original must be untouched
+    expect(original).toEqual(originalCopy);
+  });
+
+  it("successful multi-step migration returns fully migrated payload", () => {
+    const catalog = new EventCatalog();
+
+    catalog.register(makeSchema("test.multi.event", 3));
+    catalog.registerMigration("test.multi.event", 1, (p: Record<string, unknown>) => ({ ...p, v2: true }));
+    catalog.registerMigration("test.multi.event", 2, (p: Record<string, unknown>) => ({ ...p, v3: true }));
+
+    const result = catalog.migrate("test.multi.event", { base: 1 }, 1);
+    expect(result).toEqual({ base: 1, v2: true, v3: true });
+  });
+});

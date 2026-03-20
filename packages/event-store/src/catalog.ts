@@ -235,7 +235,8 @@ export class EventCatalog {
     }
 
     // Apply migrations sequentially: fromVersion → fromVersion+1 → ... → targetVersion
-    let current = payload;
+    // Clone first so a failing mid-chain migration doesn't corrupt the original
+    let current = structuredClone(payload);
     for (let v = fromVersion; v < targetVersion; v++) {
       const migration = entry.migrations.get(v);
       if (migration === undefined) {
