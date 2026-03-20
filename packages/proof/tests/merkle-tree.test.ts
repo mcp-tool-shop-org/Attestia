@@ -425,3 +425,40 @@ describe("MerkleTree edge cases", () => {
     expect(MerkleTree.verifyProof(proof)).toBe(true);
   });
 });
+
+// =============================================================================
+// H10: verifyProof hash validation
+// =============================================================================
+
+describe("MerkleTree.verifyProof hash validation (H10)", () => {
+  function validProof() {
+    const leaves = makeLeaves(4);
+    const tree = MerkleTree.build(leaves);
+    return tree.getProof(0)!;
+  }
+
+  it("throws on non-hex leafHash", () => {
+    const proof = validProof();
+    const bad = { ...proof, leafHash: "not-a-hex-string" };
+    expect(() => MerkleTree.verifyProof(bad)).toThrow("proof.leafHash");
+  });
+
+  it("throws on wrong-length root", () => {
+    const proof = validProof();
+    const bad = { ...proof, root: "abcd" };
+    expect(() => MerkleTree.verifyProof(bad)).toThrow("proof.root");
+  });
+
+  it("throws on invalid sibling hash", () => {
+    const proof = validProof();
+    const badSiblings = [...proof.siblings];
+    badSiblings[0] = { ...badSiblings[0]!, hash: "ZZZZ" };
+    const bad = { ...proof, siblings: badSiblings };
+    expect(() => MerkleTree.verifyProof(bad)).toThrow("proof.siblings[0]");
+  });
+
+  it("valid proof still passes after validation is added", () => {
+    const proof = validProof();
+    expect(MerkleTree.verifyProof(proof)).toBe(true);
+  });
+});

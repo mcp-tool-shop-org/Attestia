@@ -226,6 +226,12 @@ export class MerkleTree {
    * @returns true if the proof is valid
    */
   static verifyProof(proof: MerkleProof): boolean {
+    assertValidSha256Hex(proof.leafHash, "proof.leafHash");
+    assertValidSha256Hex(proof.root, "proof.root");
+    for (let i = 0; i < proof.siblings.length; i++) {
+      assertValidSha256Hex(proof.siblings[i]!.hash, `proof.siblings[${i}]`);
+    }
+
     let currentHash = proof.leafHash;
 
     for (const step of proof.siblings) {
