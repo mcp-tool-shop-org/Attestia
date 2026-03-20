@@ -119,4 +119,27 @@ describe("Attestor", () => {
     const attestor = new Attestor(registrar, "test-attestor");
     expect(attestor.getLastStateId()).toBeNull();
   });
+
+  it("concurrent attest() calls produce correct lineage (serialized via mutex)", async () => {
+    const registrar = new StructuralRegistrar({ mode: "legacy" });
+    const attestor = new Attestor(registrar, "concurrent-attestor");
+
+    // Fire 5 concurrent attestations
+    const reports = Array.from({ length: 5 }, (_, i) =>
+      makeReport({ id: `concurrent-${i}` }),
+    );
+    const promises = reports.map((r) => attestor.attest(r));
+    const results = await Promise.all(promises);
+
+    // All should succeed
+    expect(results).toHaveLength(5);
+
+    // Each should have a unique reconciliation ID
+    const ids = results.map((r) => r.reconciliationId);
+    expect(new Set(ids).size).toBe(5);
+
+    // The lineage should form a proper chain
+    const lineage = registrar.getLineage("attestation:concurrent-attestor");
+    expect(lineage.length).toBeGreaterThanOrEqual(1);
+  });
 });

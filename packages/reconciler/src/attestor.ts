@@ -19,6 +19,9 @@ export class Attestor {
   private readonly stateId: string;
   private lastStateId: string | null = null;
 
+  /** Async mutex to serialize concurrent attest() calls and protect lastStateId lineage */
+  private _attestLock: Promise<void> = Promise.resolve();
+
   constructor(registrar: Registrar, attestorId: string) {
     this.registrar = registrar;
     this.attestorId = attestorId;
@@ -35,6 +38,25 @@ export class Attestor {
    * each new attestation is a transition (update) of that state.
    */
   async attest(report: ReconciliationReport): Promise<AttestationRecord> {
+    // Serialize concurrent calls to protect lastStateId lineage ordering.
+    // Without this, two concurrent attest() calls could both read the same
+    // lastStateId, producing broken parent→child chains.
+    let releaseLock: () => void;
+    const prevLock = this._attestLock;
+    this._attestLock = new Promise<void>((resolve) => {
+      releaseLock = resolve;
+    });
+
+    await prevLock;
+
+    try {
+      return await this._attestInner(report);
+    } finally {
+      releaseLock!();
+    }
+  }
+
+  private async _attestInner(report: ReconciliationReport): Promise<AttestationRecord> {
     const reportHash = this.hashReport(report);
     const attestedAt = new Date().toISOString();
 
