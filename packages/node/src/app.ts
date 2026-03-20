@@ -59,6 +59,12 @@ export interface CreateAppOptions {
   readonly rateLimit?: { rpm: number; burst: number } | undefined;
   /** Enable metrics collection. Default: true */
   readonly enableMetrics?: boolean | undefined;
+  /**
+   * Auth configuration for /metrics endpoint.
+   * When provided, metrics require authentication (prevents reconnaissance).
+   * When not provided, metrics are unauthenticated (backward compatible for dev).
+   */
+  readonly metricsAuth?: AuthConfig | undefined;
   /** Public verification endpoint configuration */
   readonly publicVerify?: PublicVerifyDeps | undefined;
 }
@@ -114,9 +120,18 @@ export function createApp(options: CreateAppOptions): AppInstance {
   const healthRoutes = createHealthRoutes(tenantRegistry);
   app.route("/", healthRoutes);
 
-  // ─── Metrics Route (no auth for Prometheus scraping) ────────────
+  // ─── Metrics Route ──────────────────────────────────────────────
   if (enableMetrics) {
-    app.route("/", createMetricsRoute(metricsCollector));
+    if (options.metricsAuth !== undefined) {
+      // Secured: require auth for metrics (prevents reconnaissance)
+      const metricsApp = new Hono<AppEnv>();
+      metricsApp.use("*", authMiddleware(options.metricsAuth));
+      metricsApp.route("/", createMetricsRoute(metricsCollector));
+      app.route("/", metricsApp);
+    } else {
+      // Unsecured: backward compatible for dev/testing
+      app.route("/", createMetricsRoute(metricsCollector));
+    }
   }
 
   // ─── Public Routes (no auth required) ──────────────────────────

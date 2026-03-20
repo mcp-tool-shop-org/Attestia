@@ -33,6 +33,13 @@ export interface AuthConfig {
   readonly jwtSecret?: string | undefined;
   /** Expected JWT issuer */
   readonly jwtIssuer?: string | undefined;
+  /**
+   * Optional server-side role validator for JWT claims.
+   * Called after signature verification to check claims against a
+   * server-side registry (e.g., verify tenant membership, check revocation).
+   * Return false to reject the token.
+   */
+  readonly roleValidator?: ((claims: JwtClaims) => boolean) | undefined;
 }
 
 /**
@@ -78,6 +85,13 @@ export function authMiddleware(config: AuthConfig): MiddlewareHandler<AppEnv> {
         if (claims === undefined) {
           return c.json(
             createErrorEnvelope("UNAUTHORIZED", "Invalid or expired JWT"),
+            401,
+          );
+        }
+        // Server-side role validation (e.g., check revocation, tenant membership)
+        if (config.roleValidator !== undefined && !config.roleValidator(claims)) {
+          return c.json(
+            createErrorEnvelope("UNAUTHORIZED", "JWT role rejected by server-side validator"),
             401,
           );
         }

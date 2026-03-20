@@ -224,3 +224,93 @@ describe("permission guard", () => {
     expect(res.status).toBe(403);
   });
 });
+
+// =============================================================================
+// Role Validator (H7)
+// =============================================================================
+
+describe("JWT roleValidator", () => {
+  it("rejects JWT when roleValidator returns false", async () => {
+    const keyMap = new Map<string, ApiKeyRecord>();
+    const app = new Hono<AppEnv>();
+    app.use(
+      "*",
+      authMiddleware({
+        apiKeys: keyMap,
+        jwtSecret: JWT_SECRET,
+        jwtIssuer: "attestia",
+        roleValidator: (_claims) => false, // Always reject
+      }),
+    );
+    app.get("/test", (c) => c.json({ ok: true }));
+
+    const token = signJwt({
+      sub: "user-1",
+      role: "admin",
+      tenantId: "t1",
+      iss: "attestia",
+      exp: Math.floor(Date.now() / 1000) + 3600,
+    }, JWT_SECRET);
+
+    const res = await app.request("/test", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.status).toBe(401);
+    const body = await res.json() as { error: { code: string } };
+    expect(body.error.code).toBe("UNAUTHORIZED");
+  });
+
+  it("accepts JWT when roleValidator returns true", async () => {
+    const keyMap = new Map<string, ApiKeyRecord>();
+    const app = new Hono<AppEnv>();
+    app.use(
+      "*",
+      authMiddleware({
+        apiKeys: keyMap,
+        jwtSecret: JWT_SECRET,
+        jwtIssuer: "attestia",
+        roleValidator: (claims) => claims.tenantId === "t1",
+      }),
+    );
+    app.get("/test", (c) => c.json({ ok: true }));
+
+    const token = signJwt({
+      sub: "user-1",
+      role: "admin",
+      tenantId: "t1",
+      iss: "attestia",
+      exp: Math.floor(Date.now() / 1000) + 3600,
+    }, JWT_SECRET);
+
+    const res = await app.request("/test", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.status).toBe(200);
+  });
+
+  it("works without roleValidator (backward compatible)", async () => {
+    const keyMap = new Map<string, ApiKeyRecord>();
+    const app = new Hono<AppEnv>();
+    app.use(
+      "*",
+      authMiddleware({
+        apiKeys: keyMap,
+        jwtSecret: JWT_SECRET,
+        // No roleValidator
+      }),
+    );
+    app.get("/test", (c) => c.json({ ok: true }));
+
+    const token = signJwt({
+      sub: "user-1",
+      role: "admin",
+      tenantId: "t1",
+      exp: Math.floor(Date.now() / 1000) + 3600,
+    }, JWT_SECRET);
+
+    const res = await app.request("/test", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.status).toBe(200);
+  });
+});
