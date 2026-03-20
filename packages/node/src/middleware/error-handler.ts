@@ -92,9 +92,9 @@ export function handleError(err: Error, c: Context): Response {
   const status = getStatusCode(domainError);
   const code = getErrorCode(domainError);
 
-  // Don't leak internal details in production
+  // Don't leak internal details — return only the error code, not the full message
   const message =
-    status === 500 ? "Internal server error" : domainError.message;
+    status >= 500 ? "Internal server error" : (domainError.code ?? "Request failed");
 
   const envelope = createErrorEnvelope(code, message);
   return c.json(envelope, status as 400);

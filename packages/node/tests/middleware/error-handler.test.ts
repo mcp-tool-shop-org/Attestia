@@ -6,6 +6,9 @@
  */
 
 import { describe, it, expect } from "vitest";
+import { Hono } from "hono";
+import type { AppEnv } from "../../src/types/api-contract.js";
+import { handleError } from "../../src/middleware/error-handler.js";
 import { createTestApp, jsonRequest } from "../setup.js";
 
 describe("error handler", () => {
@@ -55,5 +58,51 @@ describe("error handler", () => {
     expect(body.error).toBeDefined();
     expect(typeof body.error.code).toBe("string");
     expect(typeof body.error.message).toBe("string");
+  });
+});
+
+// =============================================================================
+// M2: Error message sanitization
+// =============================================================================
+
+describe("error message sanitization (M2)", () => {
+  function makeErrorApp(errorCode: string, errorMessage: string) {
+    const app = new Hono<AppEnv>();
+    app.onError(handleError);
+    app.get("/throw", () => {
+      const err = new Error(errorMessage) as Error & { code: string };
+      err.code = errorCode;
+      throw err;
+    });
+    return app;
+  }
+
+  it("domain error message is NOT exposed in response", async () => {
+    const sensitiveMsg = "Account acc_secret_123 has balance $50,000 in table users.accounts";
+    const app = makeErrorApp("BUDGET_EXCEEDED", sensitiveMsg);
+
+    const res = await app.request("/throw");
+    expect(res.status).toBe(422);
+
+    const body = (await res.json()) as { error: { code: string; message: string } };
+    expect(body.error.code).toBe("BUDGET_EXCEEDED");
+    // Message should be the error code, NOT the sensitive details
+    expect(body.error.message).toBe("BUDGET_EXCEEDED");
+    expect(body.error.message).not.toContain("acc_secret_123");
+  });
+
+  it("500 errors return generic 'Internal server error'", async () => {
+    const app = new Hono<AppEnv>();
+    app.onError(handleError);
+    app.get("/throw", () => {
+      throw new Error("Connection to postgres://admin:password@db:5432 refused");
+    });
+
+    const res = await app.request("/throw");
+    expect(res.status).toBe(500);
+
+    const body = (await res.json()) as { error: { code: string; message: string } };
+    expect(body.error.message).toBe("Internal server error");
+    expect(body.error.message).not.toContain("postgres");
   });
 });
