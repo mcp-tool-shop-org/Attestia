@@ -72,11 +72,13 @@ export function aggregateVerifierReports(
   const passCount = reports.filter((r) => r.verdict === "PASS").length;
   const failCount = total - passCount;
 
-  // Majority rule: strictly more than 50% must PASS for consensus PASS
-  const verdict: VerificationVerdict =
-    passCount > total / 2 ? "PASS" : "FAIL";
-
   const quorumReached = total >= minimumVerifiers;
+
+  // Majority rule: strictly more than 50% must PASS for consensus PASS.
+  // If quorum is not reached, verdict is always FAIL — a compromised single
+  // verifier cannot approve anything when minimumVerifiers requires more.
+  const verdict: VerificationVerdict =
+    quorumReached && passCount > total / 2 ? "PASS" : "FAIL";
 
   // Dissenters are those who disagree with the majority verdict
   const dissenters = reports

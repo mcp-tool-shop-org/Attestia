@@ -177,11 +177,45 @@ describe("aggregateVerifierReports", () => {
     expect(result.quorumReached).toBe(true);
   });
 
-  it("single verifier, minimum 3 → quorum not reached", () => {
+  it("single verifier, minimum 3 → quorum not reached → FAIL", () => {
     const reports = [makeReport("v1", "PASS")];
     const result = aggregateVerifierReports(reports, 3);
 
+    // Even though 1/1 verifiers PASS, quorum is not met → FAIL
+    expect(result.verdict).toBe("FAIL");
+    expect(result.quorumReached).toBe(false);
+  });
+
+  it("1 PASS report with minimumVerifiers=3 returns FAIL", () => {
+    const reports = [makeReport("v1", "PASS")];
+    const result = aggregateVerifierReports(reports, 3);
+
+    expect(result.verdict).toBe("FAIL");
+    expect(result.quorumReached).toBe(false);
+    expect(result.passCount).toBe(1);
+  });
+
+  it("3/3 PASS with minimumVerifiers=3 returns PASS", () => {
+    const reports = [
+      makeReport("v1", "PASS"),
+      makeReport("v2", "PASS"),
+      makeReport("v3", "PASS"),
+    ];
+    const result = aggregateVerifierReports(reports, 3);
+
     expect(result.verdict).toBe("PASS");
+    expect(result.quorumReached).toBe(true);
+    expect(result.passCount).toBe(3);
+  });
+
+  it("2/2 PASS with minimumVerifiers=5 returns FAIL (quorum not met)", () => {
+    const reports = [
+      makeReport("v1", "PASS"),
+      makeReport("v2", "PASS"),
+    ];
+    const result = aggregateVerifierReports(reports, 5);
+
+    expect(result.verdict).toBe("FAIL");
     expect(result.quorumReached).toBe(false);
   });
 
