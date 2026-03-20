@@ -56,7 +56,9 @@ export function isLedgerEntry(value: unknown): value is LedgerEntry {
     isLedgerEntryType(v.type) &&
     isMoney(v.money) &&
     typeof v.timestamp === "string" &&
-    typeof v.correlationId === "string"
+    typeof v.correlationId === "string" &&
+    (v.intentId === undefined || typeof v.intentId === "string") &&
+    (v.txHash === undefined || typeof v.txHash === "string")
   );
 }
 

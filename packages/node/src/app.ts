@@ -41,6 +41,7 @@ import type { PublicVerifyDeps } from "./routes/public-verify.js";
 import { createPublicOpenApiRoutes } from "./routes/public-openapi.js";
 import { createProofRoutes, createPublicProofRoutes } from "./routes/proofs.js";
 import { createComplianceRoutes, createPublicComplianceRoutes } from "./routes/compliance.js";
+import { createAuditLogRoutes } from "./routes/audit-log.js";
 import { AuditLog } from "./services/audit-log.js";
 
 // =============================================================================
@@ -187,6 +188,7 @@ export function createApp(options: CreateAppOptions): AppInstance {
   app.route("/api/v1/export", createExportRoutes());
   app.route("/api/v1/proofs", createProofRoutes());
   app.route("/api/v1/compliance", createComplianceRoutes());
+  app.route("/api/v1/audit-logs", createAuditLogRoutes(auditLog));
 
   return { app, tenantRegistry, idempotencyStore, metricsCollector, auditLog, rateLimitStore };
 }

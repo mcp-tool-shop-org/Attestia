@@ -41,7 +41,7 @@ export class TokenBucketStore {
    *
    * @returns Object with `allowed` flag and metadata.
    */
-  consume(identity: string): {
+  consume(identity: string, cost: number = 1): {
     allowed: boolean;
     remaining: number;
     retryAfterMs: number;
@@ -60,8 +60,8 @@ export class TokenBucketStore {
     bucket.tokens = Math.min(this._burst, bucket.tokens + tokensToAdd);
     bucket.lastRefill = now;
 
-    if (bucket.tokens >= 1) {
-      bucket.tokens -= 1;
+    if (bucket.tokens >= cost) {
+      bucket.tokens -= cost;
       return {
         allowed: true,
         remaining: Math.floor(bucket.tokens),
@@ -69,8 +69,8 @@ export class TokenBucketStore {
       };
     }
 
-    // Calculate when the next token will be available
-    const retryAfterMs = Math.ceil((1 - bucket.tokens) / this._rpm * 60000);
+    // Calculate when enough tokens will be available
+    const retryAfterMs = Math.ceil((cost - bucket.tokens) / this._rpm * 60000);
     return {
       allowed: false,
       remaining: 0,
@@ -101,7 +101,9 @@ export function rateLimitMiddleware(
 ): MiddlewareHandler<AppEnv> {
   return async (c, next) => {
     const auth = c.get("auth");
-    const result = store.consume(auth.identity);
+    // Write operations cost more tokens than reads
+    const cost = c.req.method === "GET" || c.req.method === "HEAD" ? 1 : 5;
+    const result = store.consume(auth.identity, cost);
 
     c.header("X-RateLimit-Remaining", String(result.remaining));
 

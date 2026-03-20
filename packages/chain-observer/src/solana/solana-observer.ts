@@ -198,7 +198,7 @@ export class SolanaObserver implements ChainObserver {
       chainId: this.chainId,
       address: query.address,
       token: query.token,
-      symbol: query.token.slice(0, 8), // SPL tokens need on-chain metadata for real symbol
+      symbol: `SPL:${query.token}`, // Full mint address — avoids misleading truncated hash
       balance: tokenAmount.amount,
       decimals: tokenAmount.decimals,
       observedAt: new Date().toISOString(),
@@ -347,7 +347,7 @@ export class SolanaObserver implements ChainObserver {
           to,
           amount,
           decimals,
-          symbol: mint?.slice(0, 8) ?? "SPL",
+          symbol: mint !== undefined ? `SPL:${mint}` : "SPL",
           ...(mint !== undefined ? { token: mint } : {}),
           timestamp,
           observedAt,

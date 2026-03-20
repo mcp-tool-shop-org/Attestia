@@ -46,9 +46,18 @@ export function encodeCursor(field: string, value: string): string {
  *
  * @returns Decoded cursor, or undefined if the cursor is invalid.
  */
+/** Max cursor length (base64url of reasonable JSON). */
+const MAX_CURSOR_LENGTH = 512;
+const BASE64URL_RE = /^[A-Za-z0-9_-]+={0,2}$/;
+
 export function decodeCursor(
   cursor: string,
 ): { field: string; value: string } | undefined {
+  // Format validation: must be reasonable length, valid base64url
+  if (cursor.length === 0 || cursor.length > MAX_CURSOR_LENGTH || !BASE64URL_RE.test(cursor)) {
+    return undefined;
+  }
+
   try {
     const json = Buffer.from(cursor, "base64url").toString("utf-8");
     const data = JSON.parse(json) as Record<string, unknown>;

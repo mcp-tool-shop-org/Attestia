@@ -59,6 +59,9 @@ export interface StoredSnapshot<TState = unknown> {
 
   /** SHA-256 hash of the canonical state (for integrity verification) */
   readonly stateHash: string;
+
+  /** Hash algorithm used for stateHash. Default: "sha256". */
+  readonly hashAlgorithm?: string;
 }
 
 /**
@@ -161,6 +164,7 @@ export class InMemorySnapshotStore implements SnapshotStore {
       state: options.state,
       createdAt: new Date().toISOString(),
       stateHash: computeSnapshotHash(options.state),
+      hashAlgorithm: "sha256",
     };
 
     // Insert sorted by version
@@ -234,6 +238,7 @@ export class FileSnapshotStore implements SnapshotStore {
       state: options.state,
       createdAt: new Date().toISOString(),
       stateHash: computeSnapshotHash(options.state),
+      hashAlgorithm: "sha256",
     };
 
     const filePath = this._snapshotPath(options.streamId, options.version);
@@ -322,7 +327,19 @@ export class FileSnapshotStore implements SnapshotStore {
 
     try {
       const content = readFileSync(filePath, "utf-8");
-      return JSON.parse(content) as StoredSnapshot;
+      const parsed = JSON.parse(content) as Record<string, unknown>;
+
+      // Validate required fields
+      if (
+        typeof parsed.streamId !== "string" ||
+        typeof parsed.version !== "number" ||
+        typeof parsed.stateHash !== "string" ||
+        parsed.state === undefined
+      ) {
+        return undefined;
+      }
+
+      return parsed as unknown as StoredSnapshot;
     } catch {
       return undefined;
     }

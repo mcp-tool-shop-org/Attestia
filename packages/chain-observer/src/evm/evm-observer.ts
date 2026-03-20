@@ -378,7 +378,8 @@ export class EvmObserver implements ChainObserver {
   // Private helpers
   // ===========================================================================
 
-  /** Per-token metadata cache to avoid repeated on-chain queries. */
+  /** Per-token metadata cache to avoid repeated on-chain queries. Max 1000 entries. */
+  private static readonly MAX_TOKEN_CACHE = 1000;
   private readonly tokenMetaCache = new Map<string, { symbol: string; decimals: number }>();
 
   private requireClient(): PublicClient<HttpTransport, Chain> {
@@ -416,13 +417,25 @@ export class EvmObserver implements ChainObserver {
         }),
       ]);
       const meta = { symbol: symbol as string, decimals: Number(decimals) };
+      this.evictOldestIfFull();
       this.tokenMetaCache.set(tokenAddress, meta);
       return meta;
     } catch {
       // If metadata query fails, use defaults rather than failing the transfer scan.
       const fallback = { symbol: "ERC20", decimals: 18 };
+      this.evictOldestIfFull();
       this.tokenMetaCache.set(tokenAddress, fallback);
       return fallback;
+    }
+  }
+
+  /** Evict the oldest cache entry if at capacity. */
+  private evictOldestIfFull(): void {
+    if (this.tokenMetaCache.size >= EvmObserver.MAX_TOKEN_CACHE) {
+      const oldest = this.tokenMetaCache.keys().next().value;
+      if (oldest !== undefined) {
+        this.tokenMetaCache.delete(oldest);
+      }
     }
   }
 

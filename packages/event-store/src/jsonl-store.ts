@@ -533,14 +533,22 @@ export class JsonlEventStore implements EventStore {
     if (streamSubs !== undefined) {
       for (const handler of streamSubs) {
         for (const event of events) {
-          handler(event);
+          try {
+            handler(event);
+          } catch {
+            // One misbehaving subscriber must not block others
+          }
         }
       }
     }
 
     for (const handler of this._globalSubscribers) {
       for (const event of events) {
-        handler(event);
+        try {
+          handler(event);
+        } catch {
+          // One misbehaving subscriber must not block others
+        }
       }
     }
   }

@@ -108,7 +108,8 @@ export function verifyHashChain(
     }
 
     // Verify previousHash links to predecessor
-    if (record.previousHash !== previousHash) {
+    const isPreviousHashBreak = record.previousHash !== previousHash;
+    if (isPreviousHashBreak) {
       errors.push({
         position: event.globalPosition,
         reason: `previousHash mismatch at position ${event.globalPosition}: expected "${previousHash}", got "${record.previousHash}"`,
@@ -124,6 +125,7 @@ export function verifyHashChain(
       });
     }
 
+    // Continue with the actual stored hash to avoid cascading false positives
     previousHash = record.hash;
     lastVerifiedPosition = event.globalPosition;
   }

@@ -198,7 +198,7 @@ describe("Solana replay determinism", () => {
     const result = await observer.getTransfers({ address: FIXTURE_ADDRESS });
 
     // First event (slot 050): SPL transfer
-    expect(result[0]!.symbol).toBe("EPjFWdd5"); // Truncated mint
+    expect(result[0]!.symbol).toBe("SPL:EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"); // Full mint with SPL: prefix
     expect(result[0]!.decimals).toBe(6);
     expect(result[0]!.token).toBe("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
 
