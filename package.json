@@ -15,6 +15,7 @@
     "lint": "pnpm -r lint",
     "bench": "pnpm -r run bench",
     "verify": "pnpm build && pnpm typecheck && pnpm test",
+    "status": "node scripts/status.js",
     "clean": "pnpm -r exec rm -rf dist",
     "demo": "pnpm --filter @attestia/demo run demo"
   },
