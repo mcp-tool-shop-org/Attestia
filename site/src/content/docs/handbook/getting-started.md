@@ -31,19 +31,22 @@ The monorepo provides top-level scripts that operate across all 14 packages:
 |---------|-------------|
 | `pnpm install` | Install all dependencies across the workspace |
 | `pnpm build` | Build all packages in dependency order |
-| `pnpm test` | Run the full test suite (1,853 tests) |
+| `pnpm test` | Run the full test suite (1,928 tests) |
 | `pnpm test:coverage` | Run tests with coverage reporting (target: 96.80%) |
 | `pnpm typecheck` | Type-check all packages with TypeScript |
 | `pnpm bench` | Run performance benchmarks |
+| `pnpm verify` | Build, typecheck, and test in one step |
+| `pnpm demo` | Run the interactive CLI demo |
 
 A typical development cycle looks like:
 
 ```bash
 pnpm install          # Install all dependencies
 pnpm build            # Build all packages
-pnpm test             # Run all tests (1,853)
+pnpm test             # Run all tests (1,928)
 pnpm test:coverage    # Run with coverage reporting
 pnpm typecheck        # Type-check all packages
+pnpm verify           # All three in sequence (build + typecheck + test)
 ```
 
 ## XRPL integration testing
@@ -76,6 +79,7 @@ Attestia is a monorepo with 14 packages under `packages/`. Each package is indep
 
 ## Next steps
 
-- Read the [Architecture](/Attestia/handbook/architecture/) page to understand the three-tier system
-- Review the [Principles](/Attestia/handbook/principles/) to understand the invariants enforced in code
-- Check the [Reference](/Attestia/handbook/reference/) for the full package table and documentation index
+- **[Beginners](/Attestia/handbook/beginners/)** — Plain-language walkthrough if you are new to the project
+- **[Architecture](/Attestia/handbook/architecture/)** — Understand the three-tier system and supporting infrastructure
+- **[Principles](/Attestia/handbook/principles/)** — The six invariants enforced in code
+- **[Reference](/Attestia/handbook/reference/)** — Full package table and documentation index

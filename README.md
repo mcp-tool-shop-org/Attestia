@@ -107,30 +107,31 @@ No step is optional. No step is automated away.
 
 ## Status
 
-14 packages, 1,853 tests, 96.80% coverage, all green. Building in public.
+14 packages, 1,928 tests, 96.80% coverage, all green. Building in public.
 
 | Package | Tests | Purpose |
 |---------|-------|---------|
 | `@attestia/types` | 62 | Shared domain types (zero deps) |
-| `@attestia/registrum` | 297 | Constitutional governance — 11 invariants, dual-witness |
+| `@attestia/registrum` | 298 | Constitutional governance — 11 invariants, dual-witness |
 | `@attestia/ledger` | 144 | Append-only double-entry engine |
-| `@attestia/chain-observer` | 242 | Multi-chain read-only observation (EVM + XRPL + Solana + L2s) |
+| `@attestia/chain-observer` | 251 | Multi-chain read-only observation (EVM + XRPL + Solana + L2s) |
 | `@attestia/vault` | 67 | Personal vault — portfolios, budgets, intents |
 | `@attestia/treasury` | 63 | Org treasury — payroll, distributions, funding gates |
-| `@attestia/reconciler` | 56 | 3D cross-system matching + Registrum attestation |
-| `@attestia/witness` | 245 | XRPL on-chain attestation, multi-sig governance, retry |
-| `@attestia/verify` | 200 | Replay verification, compliance evidence, SLA enforcement |
-| `@attestia/event-store` | 190 | Append-only event persistence, JSONL, hash chain, 34 event types |
-| `@attestia/proof` | 53 | Merkle trees, inclusion proofs, attestation proof packaging |
-| `@attestia/sdk` | 50 | Typed HTTP client SDK for external consumers |
-| `@attestia/node` | 184 | Hono REST API — 30+ endpoints, auth, multi-tenancy, public API, compliance |
+| `@attestia/reconciler` | 57 | 3D cross-system matching + Registrum attestation |
+| `@attestia/witness` | 258 | XRPL on-chain attestation, multi-sig governance, retry |
+| `@attestia/verify` | 203 | Replay verification, compliance evidence, SLA enforcement |
+| `@attestia/event-store` | 197 | Append-only event persistence, JSONL, hash chain, 32 event types |
+| `@attestia/proof` | 57 | Merkle trees, inclusion proofs, attestation proof packaging |
+| `@attestia/sdk` | 73 | Typed HTTP client SDK for external consumers |
+| `@attestia/node` | 198 | Hono REST API — 34 endpoints, auth, multi-tenancy, public API, compliance |
+| `@attestia/demo` | — | Interactive CLI demo — walk through the full Attestia pipeline (private, no tests) |
 
 ### Development
 
 ```bash
 pnpm install          # Install all dependencies
 pnpm build            # Build all packages
-pnpm test             # Run all tests (1,853)
+pnpm test             # Run all tests (1,928)
 pnpm test:coverage    # Run with coverage reporting
 pnpm typecheck        # Type-check all packages
 pnpm bench            # Run benchmarks

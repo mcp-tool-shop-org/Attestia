@@ -86,3 +86,17 @@ The reconciler (`@attestia/reconciler`) performs 3D matching across all three sy
 The witness module (`@attestia/witness`) is responsible for writing attestation records to the XRP Ledger. XRPL serves as the final witness — an immutable, external proof that a financial event occurred and was structurally valid. The witness supports multi-sig governance, retry logic, and batch submissions.
 
 Chains are witnesses, not authorities. XRPL attests. But authority flows from structural rules, not from any chain's consensus.
+
+## Supporting infrastructure
+
+### Event store
+
+The event store (`@attestia/event-store`) is the persistence backbone. Every operation across all three systems is recorded as an append-only, hash-chained JSONL entry. There are 32 domain event types covering vault intents, ledger transactions, treasury operations, governance changes, observer events, reconciliation outcomes, and witness submissions. Each event references the hash of its predecessor, making the chain tamper-evident and independently verifiable.
+
+### Proof packaging
+
+The proof module (`@attestia/proof`) builds Merkle trees over attestation records and packages inclusion proofs. When an external party needs to verify that a specific event was attested, the proof package provides the Merkle root, the leaf data, and the sibling hashes needed for independent verification without replaying the entire event log.
+
+### Replay verification
+
+The verify module (`@attestia/verify`) replays event sequences and confirms that the resulting state matches expectations. This is the foundation of Attestia's auditability: an auditor does not need to trust the system. They feed the same events into the verify module and check that the output matches. The module also handles compliance evidence generation and SLA enforcement.

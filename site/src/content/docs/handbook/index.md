@@ -15,8 +15,9 @@ Attestia does not move your money. It proves what happened, constrains what can 
 
 ## Handbook contents
 
-This handbook is organized into four sections:
+This handbook is organized into five sections:
 
+- **[Beginners](/Attestia/handbook/beginners/)** — New to Attestia? Start here for a plain-language walkthrough of what the project does, who it is for, core concepts, a hands-on tutorial, and answers to common questions.
 - **[Getting Started](/Attestia/handbook/getting-started/)** — Install dependencies, run the test suite, and try XRPL integration testing with a local standalone rippled node.
 - **[Architecture](/Attestia/handbook/architecture/)** — Understand the three-tier system (Personal Vault, Org Treasury, Registrum) and the core Intent-Approve-Execute-Verify flow.
 - **[Principles](/Attestia/handbook/principles/)** — The six non-negotiable principles enforced in every line of Attestia code, and why they matter.
@@ -27,7 +28,7 @@ This handbook is organized into four sections:
 | Metric | Value |
 |--------|-------|
 | Packages | 14 |
-| Tests | 1,853 |
+| Tests | 1,928 |
 | Coverage | 96.80% |
 | License | MIT |
 | Chain support | XRPL, Ethereum, Solana, L2s |
