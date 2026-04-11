@@ -49,3 +49,19 @@ export type {
   DomainEvent,
   EventMetadata,
 } from "./event.js";
+
+// Runtime type guards
+export {
+  isMoney,
+  isAccountRef,
+  isLedgerEntryType,
+  isLedgerEntry,
+  isIntentStatus,
+  isIntent,
+  isEventMetadata,
+  isDomainEvent,
+  isChainRef,
+  isBlockRef,
+  isTokenRef,
+  isOnChainEvent,
+} from "./guards.js";
