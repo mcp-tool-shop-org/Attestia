@@ -66,6 +66,9 @@ importers:
       '@attestia/vault':
         specifier: workspace:*
         version: link:../vault
+      json-canonicalize:
+        specifier: ^2.0.0
+        version: 2.0.0
     devDependencies:
       '@types/node':
         specifier: ^20.0.0
@@ -78,6 +81,10 @@ importers:
         version: 1.6.1(@types/node@20.19.33)
 
   packages/registrum:
+    dependencies:
+      json-canonicalize:
+        specifier: ^2.0.0
+        version: 2.0.0
     devDependencies:
       '@types/node':
         specifier: ^22.0.0
@@ -147,6 +154,9 @@ importers:
       '@attestia/types':
         specifier: workspace:*
         version: link:../types
+      json-canonicalize:
+        specifier: ^2.0.0
+        version: 2.0.0
       xrpl:
         specifier: ^4.2.0
         version: 4.5.0
@@ -624,6 +634,9 @@ packages:
 
   js-tokens@9.0.1:
     resolution: {integrity: sha512-mxa9E9ITFOt0ban3j6L5MpjwegGz6lBQmM1IJkWeBZGcMxto50+eWdjC/52xDbS2vy0k7vIMK0Fe2wfL9OQSpQ==}
+
+  json-canonicalize@2.0.0:
+    resolution: {integrity: sha512-yyrnK/mEm6Na3ChbJUWueXdapueW0p380RUyTW87XGb1ww8l8hU0pRrGC3vSWHe9CxrbPHX2fGUOZpNiHR0IIg==}
 
   local-pkg@0.5.1:
     resolution: {integrity: sha512-9rrA30MRRP3gBD3HTGnC6cDFpaE1kVDWxWgqWJUN0RvDNAo+Nz/9GxB+nHOH0ifbVFy0hSA1V6vFDvnx54lTEQ==}
@@ -1246,6 +1259,8 @@ snapshots:
       ws: 8.18.3
 
   js-tokens@9.0.1: {}
+
+  json-canonicalize@2.0.0: {}
 
   local-pkg@0.5.1:
     dependencies:
