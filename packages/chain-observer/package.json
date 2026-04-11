@@ -26,6 +26,7 @@
     "build": "tsc",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "lint": "tsc --noEmit"
   },
   "keywords": [
@@ -45,6 +46,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "@vitest/coverage-v8": "^1.6.1",
     "typescript": "^5.3.0",
     "vitest": "^1.2.0"
   },

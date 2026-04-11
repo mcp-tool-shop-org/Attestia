@@ -10,6 +10,8 @@
   "scripts": {
     "build": "pnpm -r build",
     "test": "pnpm -r test",
+    "test:coverage": "pnpm -r run test:coverage",
+    "typecheck": "pnpm -r lint",
     "lint": "pnpm -r lint",
     "clean": "pnpm -r exec rm -rf dist"
   },
@@ -22,5 +24,8 @@
   ],
   "author": "mcp-tool-shop-org",
   "license": "MIT",
-  "packageManager": "pnpm@10.28.2"
+  "packageManager": "pnpm@10.28.2",
+  "devDependencies": {
+    "@vitest/coverage-v8": "^1.6.1"
+  }
 }

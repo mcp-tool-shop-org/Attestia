@@ -7,15 +7,19 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "@attestia/types": "workspace:*",
-    "@attestia/ledger": "workspace:*",
     "@attestia/chain-observer": "workspace:*",
-    "@attestia/registrum": "workspace:*"
+    "@attestia/ledger": "workspace:*",
+    "@attestia/registrum": "workspace:*",
+    "@attestia/types": "workspace:*"
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "^1.6.1",
     "typescript": "^5.3.0",
     "vitest": "^1.2.0"
   }
